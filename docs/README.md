@@ -1,6 +1,8 @@
 # wl-skills-gate 操作手册
 
-当前版本 0.6.0（安装需 registry 可用及对应访问权限）；对照落地执行文档 V3.2 主体、V3.3 附录 B/C 及隔离增补。
+当前版本 0.6.1（npm 公开获取，使用须事先书面授权）；对照落地执行文档 V3.2 主体、V3.3 附录 B/C 及隔离增补。
+
+授权声明见 [LICENSE](../LICENSE)；公开获取不授予使用、复制、修改或再分发授权，申请入口为 [仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
 
 状态分开登记：**代码能力已验证 / 接线模板待验收 / 平台能力待建设**。以下手册描述包的能力和平台接线约束，不将本地自测标成生产落地。
 
@@ -18,7 +20,7 @@
 | [10 强制与权限](10-enforcement.md) | 1.2/12.6/B.4 | 防绕过、可信来源、密钥隔离与审计 |
 | [11 首轮评审修复](11-hardening-review.md) | 0.5.0 历史记录 | 修复项、验证结果、兼容变化和未验证项 |
 | [12 第二轮深入复核](12-closed-loop-review.md) | 0.5.1 与附录 C | 精准修复、覆盖与管理边界、隔离验证、下一步验收 |
-| [13 质量成本与隔离](13-quality-cost-and-isolation.md) | 当前 0.6.0 / BD 0.40.0 | 规则分级、共享报告转换、三档执行、Java profile 拆分、预警与执行边界 |
+| [13 质量成本与隔离](13-quality-cost-and-isolation.md) | 当前 0.6.1 / BD 0.40.0 | 规则分级、共享报告转换、三档执行、Java profile 拆分、预警与执行边界 |
 | [14 低 token 执行](14-low-token-execution.md) | 执行附录 E | 确定性扫描、摘要与按需分页、本轮 Java 共享生产、原生只读游标、离线成本统计和 AI 使用边界 |
 | [15 Java 原生报告分级与复核](15-java-report-triage.md) | Java scanner / 当前源码修订 | P3C与原引擎身份、成员指纹、Gate单源风险表、多模块sourceRoots、上下文复核和基线迁移 |
 

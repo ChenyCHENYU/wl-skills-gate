@@ -1,6 +1,6 @@
 # 06 GitLab 接线
 
-对应 B1～B6；当前为接线说明/模板，平台权限和实际 Runner 尚待验收。以下 registry 是可选的内网接线示例，不代表本包已发布到该地址；固定 0.6.0 版本须先核验目标 registry 的发布回执。
+对应 B1～B6；当前为接线说明/模板，平台权限和实际 Runner 尚待验收。本包配置为公共 npm 发布；使用须先取得 AGILE TEAM 书面授权，见 [LICENSE](../LICENSE)。以下 registry 是可选内网镜像/托管接线示例，不代表本包已发布到该地址；使用内网地址时须另行核验实际镜像版本与访问权限。
 
 ## 发布到内网 registry
 
@@ -25,7 +25,7 @@ wl-quality-check:
     - corepack enable
     - pnpm install --frozen-lockfile
     - >-
-      npx -y @agile-team/wl-skills-gate@0.6.0 run
+      npx -y @agile-team/wl-skills-gate@0.6.1 run
       --profile standard --sha "$CI_COMMIT_SHA"
       --expect-policy-hash "$WL_APPROVED_POLICY_HASH"
       --expect-rules-hash "$WL_APPROVED_RULES_HASH"

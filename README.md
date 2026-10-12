@@ -1,6 +1,6 @@
 # wl-skills-gate
 
-统一质量门禁引擎，当前版本 **0.6.0**。对应《工程化与代码质量管控体系-落地执行（V3）》V3.2 主体、V3.3 附录 B/C 及质量成本与隔离增补；安装需 registry 可用及对应包的访问权限，发布流程核验版本与工件摘要。
+统一质量门禁引擎，当前版本 **0.6.1**。对应《工程化与代码质量管控体系-落地执行（V3）》V3.2 主体、V3.3 附录 B/C 及质量成本与隔离增补；包配置为 npm 公开发布；公开获取不授予使用授权，使用前须取得 AGILE TEAM 事先书面授权，详见 [LICENSE](LICENSE)。发布流程核验版本与工件摘要。
 
 包集中维护检查执行、结果归一、门禁裁决、修复计划和证据验证。项目引用固定版本；平台分别配置检查、Review、证明签发、分支更新、部署、台账与通知的权限。代码自测通过不代表内网接线已验收。
 
@@ -31,11 +31,11 @@
 
 ## 先只读试运行
 
-配置目标 registry 和对应访问权限后，在业务仓库安装固定版本：
+取得事先书面授权并按授权范围使用后，可从公共 npm registry 安装固定版本：
 
 ```bash
-# 从已配置的 registry 安装；离线验收可安装已核验的本地 tgz。
-pnpm add -D --save-exact @agile-team/wl-skills-gate@0.6.0
+# 公开获取不构成使用授权；先申请授权，再按其约定使用。
+pnpm add -D --save-exact @agile-team/wl-skills-gate@0.6.1
 # 按真实技术栈配置 quality/policy.yml 和 rules.lock.json；工具需实际安装。
 pnpm exec wl-skills-gate run --profile standard
 pnpm exec wl-skills-gate validate-report quality-reports/quality-summary.json
@@ -60,7 +60,7 @@ Gate 自身零依赖。前端仍需 ESLint/TypeScript 和工程检查器；后�
 
 使用 Node ≥20 执行 `npm test` 后运行 `npm pack --ignore-scripts --json --pack-destination <工件目录>`；对这个 tgz 独立安装、调用 CLI/自测并校验哈希，再提交和发布同一产物。`files` 包含所有运行模块、schema、模板、手册、fixture 与自测脚本，不依赖兄弟包源码。
 
-目前访问策略保持 `restricted`、许可保持 `UNLICENSED`；发布 registry、仓库和访问权限以已确认的发布配置为准，不因匿名查询 E404 推定私有包不存在。源仓库为 [ChenyCHENYU/wl-skills-gate](https://github.com/ChenyCHENYU/wl-skills-gate)，默认分支 `main`；仓库推送与 npm 发布由发布流程分别核验。平台接线、真实权限、部署和群通知仍按下文单独验收。
+npm 发布访问策略为 `public`，授权状态仍为 `UNLICENSED`。未经 AGILE TEAM 事先书面授权，不得使用、复制、修改或再分发；公开获取不等于使用授权。授权申请通过 [仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)，完整条款见 [LICENSE](LICENSE)。源仓库为 [ChenyCHENYU/wl-skills-gate](https://github.com/ChenyCHENYU/wl-skills-gate)，默认分支 `main`；仓库推送与 npm 发布由发布流程分别核验。平台接线、真实权限、部署和群通知仍按下文单独验收。
 
 ## 0.4 → 0.5 迁移
 

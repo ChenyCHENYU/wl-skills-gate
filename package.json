@@ -1,6 +1,6 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "统一质量门禁共享包 — 三档执行、原生报告归一（含 P3C/PMD/Checkstyle/SpotBugs）、单源 Java 风险分级与多模块源码定位、修复闭环、受控晋级、签名制品验证、失败关闭和完整自测",
   "type": "module",
   "main": "./lib/run.js",
@@ -20,7 +20,8 @@
     "fixtures/",
     "scripts/",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "keywords": [
     "quality-gate",
@@ -33,7 +34,7 @@
   "author": "AGILE TEAM",
   "license": "UNLICENSED",
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "engines": {
     "node": ">=20.0.0"

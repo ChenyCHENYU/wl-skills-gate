@@ -2,7 +2,7 @@
 
 对应 3.3/3.4/3.6、A1。项目 quality/ 支持 policy.yml/.yaml/.json、waivers.yml/.yaml/.json、baseline.json、rules.lock.json。
 
-0.6.0：`cmd-json.format` 可选 wl-kit/wl-ui/wl-bd，`captureStdout: true` 必须同时声明 file；`java-xml` 必填 format=checkstyle/pmd/p3c/spotbugs 与 file，可用相同 producer/command/timeoutMs 在本轮共用一次生产，见 [检查片段](../templates/quality/java-static-checks.yml) 和 [14 执行约束](14-low-token-execution.md)。仅 java-xml 允许 `sourceRoots`，须为无重复、实际存在且没有符号链接的项目内相对目录数组；SpotBugs 未配置时只兼容 `src/main/java`，不搜索整个仓库。详见 [Java 分级与定位](15-java-report-triage.md)。完整配置示例、风险分级和测试拆分见 [13 质量成本与隔离](13-quality-cost-and-isolation.md)。`enforceWarnings: false` 只控制 Gate 警告，不改变原生 Maven 插件的失败行为。
+0.6.1：`cmd-json.format` 可选 wl-kit/wl-ui/wl-bd，`captureStdout: true` 必须同时声明 file；`java-xml` 必填 format=checkstyle/pmd/p3c/spotbugs 与 file，可用相同 producer/command/timeoutMs 在本轮共用一次生产，见 [检查片段](../templates/quality/java-static-checks.yml) 和 [14 执行约束](14-low-token-execution.md)。仅 java-xml 允许 `sourceRoots`，须为无重复、实际存在且没有符号链接的项目内相对目录数组；SpotBugs 未配置时只兼容 `src/main/java`，不搜索整个仓库。详见 [Java 分级与定位](15-java-report-triage.md)。完整配置示例、风险分级和测试拆分见 [13 质量成本与隔离](13-quality-cost-and-isolation.md)。`enforceWarnings: false` 只控制 Gate 警告，不改变原生 Maven 插件的失败行为。
 
 policy 必需。没有 baseline/waivers 表示没有登记任何基线/例外，摘要为 `sha256("absent")`；存在的文件损坏时失败关闭。受控 `--sha`、release 和正式签发时，有文件就必须提供批准的 `--expect-baseline-hash` / `--expect-waivers-hash`，空文件也一样；本地非受控诊断可不传。
 

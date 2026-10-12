@@ -13,9 +13,11 @@ node bin/wl-skills-gate.js self-test
 
 ## 业务项目接入
 
+使用前须取得 AGILE TEAM 事先书面授权，并遵循该授权约定范围；公开 npm 包可下载不构成使用许可。详见 [LICENSE](../LICENSE)，申请通过 [仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
+
 ```bash
-# 先配置目标 registry 和访问权限；离线验收可安装已核验的本地 tgz。
-pnpm add -D --save-exact @agile-team/wl-skills-gate@0.6.0
+# 取得书面授权后，从公共 npm registry 安装固定版本。
+pnpm add -D --save-exact @agile-team/wl-skills-gate@0.6.1
 mkdir -p quality
 # 从安装包 templates/quality 取模板，按真实检查器和工具版本修改。
 pnpm exec wl-skills-gate run --profile standard
