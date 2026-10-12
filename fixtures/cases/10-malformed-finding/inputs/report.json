@@ -1,0 +1,6 @@
+{
+  "toolVersion": "demo/1.0",
+  "findings": [
+    { "ruleId": "DEMO-E9", "severity": "error", "file": "src/b.ts", "line": 1 }
+  ]
+}

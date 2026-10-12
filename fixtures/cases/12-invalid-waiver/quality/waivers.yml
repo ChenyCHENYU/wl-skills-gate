@@ -1,0 +1,6 @@
+- id: WAIVER-2026-002
+  ruleId: DEMO-E1
+  path: src/b.ts
+  reason: 缺少 approver 的无效豁免
+  owner: "409322"
+  expiresAt: "2099-12-31"

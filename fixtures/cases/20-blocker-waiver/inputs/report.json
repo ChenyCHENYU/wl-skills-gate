@@ -1,0 +1,6 @@
+{
+  "toolVersion": "demo/1.0",
+  "findings": [
+    { "ruleId": "DEMO/B1", "severity": "blocker", "file": "src/x.ts", "line": 1, "message": "blocker 默认不允许豁免（正文 3.4）" }
+  ]
+}

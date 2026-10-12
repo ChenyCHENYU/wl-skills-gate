@@ -1,0 +1,49 @@
+{
+  "name": "@agile-team/wl-skills-gate",
+  "version": "0.6.0",
+  "description": "统一质量门禁共享包 — 三档执行、原生报告归一（含 P3C/PMD/Checkstyle/SpotBugs）、单源 Java 风险分级与多模块源码定位、修复闭环、受控晋级、签名制品验证、失败关闭和完整自测",
+  "type": "module",
+  "main": "./lib/run.js",
+  "bin": {
+    "wl-skills-gate": "bin/wl-skills-gate.js"
+  },
+  "scripts": {
+    "test": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs",
+    "verify": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "schemas/",
+    "docs/",
+    "templates/",
+    "fixtures/",
+    "scripts/",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "quality-gate",
+    "ci",
+    "gitlab",
+    "jenkins",
+    "fail-closed",
+    "agile-team"
+  ],
+  "author": "AGILE TEAM",
+  "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChenyCHENYU/wl-skills-gate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChenyCHENYU/wl-skills-gate/issues"
+  },
+  "homepage": "https://github.com/ChenyCHENYU/wl-skills-gate#readme"
+}

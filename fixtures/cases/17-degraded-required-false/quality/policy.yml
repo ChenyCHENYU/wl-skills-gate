@@ -1,0 +1,11 @@
+schemaVersion: 1
+project: fixture-degraded
+checks:
+  - id: RAW-OPTIONAL
+    dimension: 扫描与门禁
+    tool: raw-json
+    profiles: [fast, standard, release]
+    file: inputs/missing.json
+    required: false
+    naReason: 外部结果文件按需提供，登记缺失时不判 invalid 仅降级
+    alternative: 上游工具接入后改回默认 required

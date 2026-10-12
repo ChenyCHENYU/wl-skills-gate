@@ -1,0 +1,8 @@
+schemaVersion: 1
+project: fixture-sarif
+checks:
+  - id: SCAN-SARIF
+    dimension: 扫描与门禁
+    tool: sarif
+    profiles: [standard, release]
+    file: inputs/report.sarif

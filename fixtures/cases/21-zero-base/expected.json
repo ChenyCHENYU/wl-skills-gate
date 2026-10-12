@@ -1,0 +1,1 @@
+{"exit": 2, "status": "invalid", "reasonIncludes": "全零", "args": ["--base", "0000000000000000000000000000000000000000", "--head", "deadbeef"]}

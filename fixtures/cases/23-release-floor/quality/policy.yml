@@ -1,0 +1,9 @@
+schemaVersion: 1
+project: fixture-release-floor
+releaseRequires: [TS-TYPECHECK]
+checks:
+  - id: TS-TYPECHECK
+    dimension: 编码规范
+    tool: typecheck
+    bin: node_modules/.bin/vue-tsc-not-exist
+    profiles: [standard]

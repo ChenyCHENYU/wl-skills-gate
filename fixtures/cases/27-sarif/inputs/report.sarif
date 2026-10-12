@@ -1,0 +1,18 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": { "driver": { "name": "demo-scanner", "version": "1.4.2" } },
+      "results": [
+        {
+          "ruleId": "DEMO-S1",
+          "level": "error",
+          "message": { "text": "SARIF 适配演示：危险写操作缺少租户条件" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "src/main/java/demo/Foo.java" }, "region": { "startLine": 42 } } }
+          ]
+        }
+      ]
+    }
+  ]
+}

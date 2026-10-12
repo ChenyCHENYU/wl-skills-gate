@@ -1,0 +1,11 @@
+#!/bin/sh
+if ! command -v node >/dev/null 2>&1; then
+  echo "[quality] Node 不可用，不能验证提交说明"
+  exit 2
+fi
+gate_bin="node_modules/@agile-team/wl-skills-gate/bin/wl-skills-gate.js"
+if [ ! -f "$gate_bin" ]; then
+  echo "[quality] 请安装项目锁定版本的 @agile-team/wl-skills-gate"
+  exit 2
+fi
+node "$gate_bin" commit-message "$1"

@@ -1,0 +1,8 @@
+schemaVersion: 1
+project: fixture-duplicate-occurrences
+checks:
+  - id: RAW-DEMO
+    dimension: 编码规范
+    tool: raw-json
+    profiles: [fast, standard, release]
+    file: inputs/report.json

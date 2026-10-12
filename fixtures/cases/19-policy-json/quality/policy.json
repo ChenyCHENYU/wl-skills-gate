@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "project": "fixture-policy-json",
+  "checks": [
+    { "id": "RAW-DEMO", "dimension": "编码规范", "tool": "raw-json", "profiles": ["standard"], "file": "inputs/report.json" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "toolVersion": "demo/1.0",
+  "decision": { "status": "passed", "reasons": [] },
+  "passed": true,
+  "findings": [
+    { "ruleId": "DEMO-E1", "severity": "error", "file": "src/b.ts", "line": 10, "message": "伪造通过：输入声称 passed 但存在 error" }
+  ]
+}

@@ -1,0 +1,7 @@
+# 合并到项目现有 .gitignore，只排除生成的报告/回执，保留规则和配置跟踪。
+/quality-reports/
+/.wl-skills/runs/
+/.wl-skills-cache/validate-v1.json
+/.wl-skills-ui/runs/
+/.wl-skills-bd/runs/
+/.wl-skills-bd/.state/source-index-cache-v1.json

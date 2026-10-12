@@ -1,0 +1,270 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agile-team.internal/schemas/quality-summary-v1.json",
+  "title": "quality-summary（schemaVersion=1 最小必填集，字段分级见正文 4.2 与附录 B.2）",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "run",
+    "checks",
+    "findings",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "project",
+        "profile",
+        "startedAt",
+        "durationMs",
+        "commitSha",
+        "tool"
+      ],
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "profile": {
+          "enum": [
+            "fast",
+            "standard",
+            "release"
+          ]
+        },
+        "startedAt": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "number"
+        },
+        "commitSha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tool": {
+          "type": "string"
+        },
+        "root": {
+          "type": "string"
+        },
+        "sourceBound": {
+          "type": "boolean"
+        },
+        "sourceDigest": {
+          "type": "string"
+        },
+        "targetEnv": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "checkId",
+          "status"
+        ],
+        "properties": {
+          "checkId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "invalid",
+              "degraded"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "toolVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toolVersionVerified": {
+            "type": "boolean"
+          },
+          "parserMetadata": {
+            "type": ["object", "null"],
+            "required": ["parser", "policyVersion", "producer", "engine", "reportedVersionVerified"],
+            "properties": {
+              "parser": { "type": "string" },
+              "policyVersion": { "type": "string" },
+              "producer": { "enum": ["CHECKSTYLE", "PMD", "P3C", "SPOTBUGS"] },
+              "engine": { "enum": ["CHECKSTYLE", "PMD", "SPOTBUGS"] },
+              "engineVersion": { "type": ["string", "null"] },
+              "ruleProvider": { "type": ["string", "null"] },
+              "ruleProviderVersion": { "type": ["string", "null"] },
+              "reportedVersionVerified": { "const": false },
+              "sourceRoots": { "type": ["array", "null"], "items": { "type": "string" } }
+            }
+          },
+          "coverage": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "mode",
+              "complete",
+              "requestedFiles",
+              "scannedFiles",
+              "scannedFileCount"
+            ],
+            "properties": {
+              "mode": {
+                "enum": [
+                  "full",
+                  "staged",
+                  "range"
+                ]
+              },
+              "complete": {
+                "type": "boolean"
+              },
+              "noApplicableFiles": {
+                "type": "boolean"
+              },
+              "targets": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "requestedFiles": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "scannedFiles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "scannedFileCount": {
+                "type": "number"
+              },
+              "ignoredFiles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "fingerprint",
+          "ruleId",
+          "severity",
+          "file",
+          "status"
+        ],
+        "properties": {
+          "fingerprint": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "blocker",
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "file": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "new",
+              "existing",
+              "waived",
+              "expired"
+            ]
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "suggestion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "waiverRejected": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "baselineAllowed": {
+            "type": "boolean"
+          },
+          "autoFixable": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "status",
+        "reasons"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "blocked",
+            "invalid"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

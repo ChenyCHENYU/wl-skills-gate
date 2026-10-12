@@ -1,0 +1,8 @@
+schemaVersion: 1
+project: fixture-missing-tool
+checks:
+  - id: TS-MISSING
+    dimension: 编码规范
+    tool: typecheck
+    bin: node_modules/.bin/vue-tsc-not-exist
+    profiles: [fast, standard, release]

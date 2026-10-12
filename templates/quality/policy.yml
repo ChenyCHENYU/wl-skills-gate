@@ -1,0 +1,20 @@
+schemaVersion: 1
+project: wl-ui-produce
+enforceWarnings: false
+blockerWaivers: reject
+commitTypes: [feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert]
+releaseRequires: [TS-TYPECHECK, FE-ESLINT]
+checks:
+  - id: TS-TYPECHECK
+    dimension: 编码规范
+    tool: typecheck
+    bin: node_modules/.bin/vue-tsc
+    args: --noEmit
+    versionCommand: node_modules/.bin/vue-tsc --version
+    profiles: [standard, release]
+  - id: FE-ESLINT
+    dimension: 编码规范
+    tool: eslint
+    targets: [src]  # 全量目标；增量使用 Git 文件清单。按实际配置验收 .vue/.ts 覆盖。
+    versionCommand: node_modules/.bin/eslint --version
+    profiles: [fast, standard, release]   # fast 档至少一个检查，配合钩子 --scope staged 只查暂存区

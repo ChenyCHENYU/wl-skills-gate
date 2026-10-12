@@ -1,0 +1,8 @@
+- id: WAIVER-2026-EXAMPLE
+  ruleId: ESLINT/no-console
+  path: src/utils/logger.ts
+  reason: 统一日志出口文件，允许 console
+  owner: "409322"
+  approver: "409321"
+  expiresAt: "2026-12-31"
+  reference: "QG-2026-0001"

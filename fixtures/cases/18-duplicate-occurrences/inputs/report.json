@@ -1,0 +1,7 @@
+{
+  "toolVersion": "demo/1.0",
+  "findings": [
+    { "ruleId": "DEMO-E1", "severity": "error", "file": "src/b.ts", "line": 10, "message": "相同消息的多处命中" },
+    { "ruleId": "DEMO-E1", "severity": "error", "file": "src/b.ts", "line": 20, "message": "相同消息的多处命中" }
+  ]
+}

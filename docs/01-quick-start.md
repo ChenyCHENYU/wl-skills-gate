@@ -1,0 +1,42 @@
+# 01 快速开始
+
+对应 3.1/4.1、A1/A3。需要 Node ≥20，业务检查器与项目依赖需另行准备。
+
+## 包仓库自测
+
+```bash
+npm test
+node bin/wl-skills-gate.js self-test
+```
+
+自测使用临时项目/临时 Git 仓库，退出后清理，fixture 源目录不写报告。self-test 只覆盖 fixture；完整回归用 npm test。
+
+## 业务项目接入
+
+```bash
+# 先配置目标 registry 和访问权限；离线验收可安装已核验的本地 tgz。
+pnpm add -D --save-exact @agile-team/wl-skills-gate@0.6.0
+mkdir -p quality
+# 从安装包 templates/quality 取模板，按真实检查器和工具版本修改。
+pnpm exec wl-skills-gate run --profile standard
+```
+
+首次只读试运行先确认真实工具被调用、发现一条预设错误、报告定位正确、退出码非零；随后集成现有 Hook，禁止覆盖原有检查。
+
+## 三档
+
+| 档位 | 位置 | 约束 |
+|---|---|---|
+| fast | 本地提交反馈 | staged 与 worktree 有差异时拒绝；暂存文件列表不代表所有适配器都支持增量 |
+| standard | 推送前、个人分支 CI、候选检查 | 完整适用检查；受控作业显式提供真实 --sha |
+| release | 构建发布验证 | Git HEAD 确定且源码干净、合法 --env、releaseRequires、实际 tools 版本锁；完整范围 |
+
+`--base/--head` 必须成对、非空；head 必须是 checkout 的完整 HEAD SHA。当前只有 ESLint 根据范围选文件，其他适配器按各自政策执行，不能宣称统一增量。增量基线未知时采用批准的全量策略或判 invalid。
+
+可选中央摘要参数：`--expect-policy-hash`、`--expect-rules-hash`、`--expect-baseline-hash`、`--expect-waivers-hash`。这些值由批准登记表提供，不能对候选内的任意文件临时算一个值就称“已批准”。
+
+`--sha` 不能用来替报告贴标签；它必须与真实 HEAD 相同。release 的 `--env` 支持 dev/sit/uat/pre/prd，源代码不能在检查期间变化。
+
+0=passed，1=blocked，2=invalid；1/2 都阻断。归档整个 quality-reports，失败也归档。
+
+受控 --sha / release 的全部必需检查还须实际查询工具版本并匹配 rules.lock.tools；仅 JSON 自报版本不能签发正式证明。ESLint/typecheck 可查询对应 bin --version，其他 adapter 需登记受控 versionCommand。

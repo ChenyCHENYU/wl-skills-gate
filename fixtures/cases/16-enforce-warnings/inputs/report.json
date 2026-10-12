@@ -1,0 +1,6 @@
+{
+  "toolVersion": "demo/1.0",
+  "findings": [
+    { "ruleId": "DEMO-W1", "severity": "warning", "file": "src/a.ts", "line": 5, "message": "演示告警，enforceWarnings 升级为阻断" }
+  ]
+}

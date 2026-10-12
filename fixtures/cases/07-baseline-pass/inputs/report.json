@@ -1,0 +1,6 @@
+{
+  "toolVersion": "demo/1.0",
+  "findings": [
+    { "ruleId": "DEMO-E1", "severity": "error", "file": "src/b.ts", "line": 10, "message": "演示错误一，已在存量基线" }
+  ]
+}

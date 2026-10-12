@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="e2e-round1" tests="2" failures="1" errors="0" skipped="0">
+  <testcase name="加载停机列表" classname="spec.downtime.list" time="0.31"/>
+  <testcase name="重复提交校验" classname="spec.downtime.submit" time="0.42">
+    <failure type="AssertionError" message="预期 1 条记录，实际写入 2 条"><![CDATA[AssertionError: expected 1, got 2]]></failure>
+  </testcase>
+</testsuite>

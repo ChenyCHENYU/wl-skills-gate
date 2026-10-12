@@ -1,0 +1,9 @@
+schemaVersion: 1
+project: fixture-enforce-warnings
+enforceWarnings: true
+checks:
+  - id: RAW-DEMO
+    dimension: 编码规范
+    tool: raw-json
+    profiles: [fast, standard, release]
+    file: inputs/report.json

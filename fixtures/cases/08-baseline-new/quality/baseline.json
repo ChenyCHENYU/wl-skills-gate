@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "fingerprint": "4e382a772b1a101cd72897a0930b958b3a0f80d81eebf058661959f23ae506bc",
+      "ruleId": "DEMO-E1",
+      "file": "src/b.ts",
+      "firstSeenSha": "none",
+      "owner": "409322",
+      "severity": "error",
+      "occurrenceCount": 1
+    }
+  ]
+}

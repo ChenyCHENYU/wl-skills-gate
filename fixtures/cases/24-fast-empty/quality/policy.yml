@@ -1,0 +1,8 @@
+schemaVersion: 1
+project: fixture-fast-empty
+checks:
+  - id: TS-TYPECHECK
+    dimension: 编码规范
+    tool: typecheck
+    bin: node_modules/.bin/vue-tsc
+    profiles: [standard, release]   # 流式数组后的行内注释必须被正确剥离（回归用例）

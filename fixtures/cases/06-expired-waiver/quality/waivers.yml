@@ -1,0 +1,8 @@
+- id: WAIVER-2025-001
+  ruleId: DEMO-E1
+  path: src/b.ts
+  reason: 演示到期豁免
+  owner: "409322"
+  approver: "409321"
+  expiresAt: "2020-01-01"
+  reference: "QG-2025-0001"

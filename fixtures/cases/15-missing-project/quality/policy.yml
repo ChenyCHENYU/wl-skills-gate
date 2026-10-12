@@ -1,0 +1,6 @@
+schemaVersion: 1
+checks:
+  - id: RAW-DEMO
+    tool: raw-json
+    profiles: [standard]
+    file: inputs/report.json

@@ -1,0 +1,15 @@
+#!/bin/sh
+if ! command -v node >/dev/null 2>&1; then
+  echo "[quality] node 不可用：无法执行质量检查。请先安装 Node >= 20（失败关闭，不跳过）"
+  exit 2
+fi
+if [ ! -f "scripts/quality/run.mjs" ]; then
+  echo "[quality] 缺少 scripts/quality/run.mjs：请复制 wl-skills-gate/templates/scripts-quality/run.mjs（失败关闭，不跳过）"
+  exit 2
+fi
+start=$(node -e "console.log(Date.now())")
+node scripts/quality/run.mjs --profile fast --scope staged
+code=$?
+end=$(node -e "console.log(Date.now())")
+echo "[quality] fast 档耗时 $((end-start))ms（预算 10000ms，超出请反馈平台优化规则与缓存）"
+exit $code

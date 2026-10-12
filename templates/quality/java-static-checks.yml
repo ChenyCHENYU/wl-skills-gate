@@ -1,0 +1,31 @@
+# 检查片段：合并至已批准 policy.checks，不是完整 policy/release。
+# 配套 BD wl-quality-audit profile；按实际模块调整路径/命令。
+# 同组 producer 的 command/timeoutMs 必须完全一致；一轮 Gate 只生产一次。
+checks:
+  - id: BE-CHECKSTYLE
+    tool: java-xml
+    format: checkstyle
+    producer: JAVA-STATIC
+    command: mvn -B -ntp -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
+    timeoutMs: 600000
+    file: target/checkstyle-result.xml
+    versionCommand: mvn -version
+    profiles: [standard, release]
+  - id: BE-PMD
+    tool: java-xml
+    format: pmd
+    producer: JAVA-STATIC
+    command: mvn -B -ntp -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
+    timeoutMs: 600000
+    file: target/pmd.xml
+    versionCommand: mvn -version
+    profiles: [standard, release]
+  - id: BE-SPOTBUGS
+    tool: java-xml
+    format: spotbugs
+    producer: JAVA-STATIC
+    command: mvn -B -ntp -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
+    timeoutMs: 600000
+    file: target/spotbugsXml.xml
+    versionCommand: mvn -version
+    profiles: [standard, release]

@@ -1,0 +1,11 @@
+schemaVersion: 1
+project: fixture-dup-check-id
+checks:
+  - id: RAW-DEMO
+    tool: raw-json
+    profiles: [standard]
+    file: inputs/report.json
+  - id: RAW-DEMO
+    tool: raw-json
+    profiles: [standard]
+    file: inputs/report.json

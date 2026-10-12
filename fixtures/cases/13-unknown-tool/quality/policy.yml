@@ -1,0 +1,6 @@
+schemaVersion: 1
+project: fixture-unknown-tool
+checks:
+  - id: BAD-TOOL
+    tool: no-such-tool
+    profiles: [standard]

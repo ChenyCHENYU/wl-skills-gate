@@ -1,0 +1,8 @@
+schemaVersion: 1
+project: fixture-cmd-json
+checks:
+  - id: CMD-DEMO
+    dimension: 扫描与门禁
+    tool: cmd-json
+    profiles: [standard, release]
+    command: printf '{"findings":[{"ruleId":"CMD/E1","severity":"error","file":"src/c.ts","line":3,"message":"cmd-json 统一入口演示"}]}'
