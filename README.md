@@ -1,114 +1,126 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ChenyCHENYU/wl-skills-gate/v0.9.0/assets/wl-gate-logo-dark.svg" />
-    <img src="https://raw.githubusercontent.com/ChenyCHENYU/wl-skills-gate/v0.9.0/assets/wl-gate-logo.svg" width="920" alt="WL Gate — Automated quality workflow" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ChenyCHENYU/wl-skills-gate/main/assets/wl-gate-logo-dark.svg" />
+    <img src="https://raw.githubusercontent.com/ChenyCHENYU/wl-skills-gate/main/assets/wl-gate-logo.svg" width="100%" alt="WL skills-gate · World Leading · Quality Automation" />
   </picture>
 </p>
 
+<p align="center"><strong>让项目检查、修复复扫、九维 Review 与构建发布接成一条可验证的质量流程。</strong></p>
+
 <p align="center">
-  <strong>从提交检查到复验关闭的质量工程执行包</strong><br />
-  自动接入 · 脚本修复与复扫 · 九维 Review · 构建发布门禁
+  <a href="https://www.npmjs.com/package/@agile-team/wl-skills-gate"><img src="https://img.shields.io/npm/v/@agile-team/wl-skills-gate?color=087A7D&label=npm" alt="npm version" /></a>
+  <img src="https://img.shields.io/badge/Node.js-%E2%89%A522.12-172634" alt="Node.js 22.12 or later" />
+  <img src="https://img.shields.io/badge/runtime_dependencies-0-087A7D" alt="Zero runtime dependencies" />
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@agile-team/wl-skills-gate"><img src="https://img.shields.io/npm/v/@agile-team/wl-skills-gate?color=0D9488&label=npm" alt="npm version" /></a>
-  <img src="https://img.shields.io/badge/Node.js-%E2%89%A522.12-172B43" alt="Node.js 22.12 or later" />
-  <img src="https://img.shields.io/badge/runtime_dependencies-0-0D9488" alt="Zero runtime dependencies" />
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-authorization_required-64748B" alt="Authorization required" /></a>
+  <a href="#快速接入">快速接入</a> · <a href="#日常怎么用">日常流程</a> · <a href="#流水线怎么接">流水线接线</a> · <a href="./docs/README.md">技术手册</a>
 </p>
 
-<p align="center">
-  <a href="#三步接入"><strong>快速接入</strong></a> ·
-  <a href="#接入后怎么运行">运行流程</a> ·
-  <a href="#wl-系列怎么配合">包与目录</a> ·
-  <a href="./templates/ci">CI 模板</a> ·
-  <a href="./docs/README.md">完整文档</a> ·
-  <a href="./CHANGELOG.md">更新记录</a>
-</p>
+## 解决什么
 
----
+Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL 规则包。检查、报告、机械修复、复扫和通知由脚本执行，不调用大模型 API。
 
-## Gate 做什么
-
-Gate 把项目检查器、Git Hook、CI、Review 与处置记录接成同一条流程。开发者正常提交代码即可触发检查，技术经理和运维统一维护规则、必测、权限与通知。
-
-| 需要解决的事 | Gate 的处理方式 |
-| --- | --- |
-| 问题到构建时才暴露 | 提交、推送阶段自动检查；CI 再做完整核验 |
-| 修复依赖反复问 AI | 先展示问题和修复计划，确认后执行批准脚本，自动复扫 |
-| Review 只有一张扫描结果 | 汇总九维证据、代码差异和修前修后变化，由非作者逐维确认 |
-| 构建成功就被当作闭环 | 分别记录检查、Review、构建、部署和复验；满足关闭条件才结项 |
+| 场景 | Gate 提供什么 | 能看到什么 |
+| --- | --- | --- |
+| 日常提交 | Hook 自动运行分档检查 | 问题位置、规则、修复建议与阻断原因 |
+| 问题整改 | 预览方案 → 本人确认 → 白名单脚本 → 复扫 | 修前修后变化、剩余问题与回归项 |
+| Code Review | 汇总九维证据，生成待确认草稿 | 非作者逐维确认后的正式 Review |
+| 合并与发布 | 核验候选 SHA、必需检查、Review、制品和目标环境 | 绑定本次代码与制品的放行或拒绝结果 |
+| 问题跟进 | 分类通知、认领、超时对账、独立复验 | 可追溯的处理与关闭记录 |
 
 **九维范围：** 提交 · 分支 · 编码 · UI 与交互 · Code Review · 测试 · 扫描门禁 · CI/CD · 工程治理。
 
-## 三步接入
+## 快速接入
 
-准备 **Node.js ≥22.12**，并使用项目固定的包管理器、检查器及 Java 工具链。以下命令由接入维护者执行一次；安装源可替换为团队批准的镜像。
+由技术经理在**实际 Git 项目根目录**接入一次。准备 Node.js ≥22.12、项目固定的包管理器和原有构建工具；安装源使用团队批准的 HTTPS registry。
 
-**1. 预览。** 在实际 Git 项目上识别技术栈，查看文件差异、固定依赖、Hook、检查范围和阻断项。
-
-```bash
-npx --yes @agile-team/wl-skills-gate@0.9.0 onboard \
-  --root /path/to/project --complete --registry https://registry.npmjs.org
-```
-
-**2. 确认执行。** 审核预览后，使用本次返回的 `planHash` 应用同一计划。
+### 1. 预览项目接入计划
 
 ```bash
-npx --yes @agile-team/wl-skills-gate@0.9.0 onboard \
-  --root /path/to/project --complete --registry https://registry.npmjs.org \
-  --apply --plan-hash "<本次 planHash>" --confirm
+npx --yes @agile-team/wl-skills-gate@latest onboard \
+  --root . --complete --registry https://registry.npmjs.org
 ```
 
-接入任务按计划安装依赖、同步适用规则、配置 Hook，并验证真实检查和报告。失败保留阶段回执，修正后续跑。
+查看识别的项目类型、依赖版本、文件差异、Hook 和阻断项。脚本与模板随 Gate 包交付，无需从文档复制拼装。
 
-**3. 验证效果。** 查看首份报告及 Hook 正反例，再接入下表的 CI 与中央服务。日常提交、推送自动检查，开发者不用输入扫描命令。
-
-| 项目 | 工具装在哪里 | 业务构建 |
+| 项目 | 依赖装在哪里 | 业务构建 |
 | --- | --- | --- |
-| PC Vue 前端，如 `wl-ui-produce` | 现有 `package.json` / `node_modules` | 沿用原前端构建 |
-| Java/Maven 后端，如 `wl-produce` | 独立的 `quality-tools/` 目录 | 沿用 Maven，Node 工具不进入 jar |
+| PC Vue 管理端，如 `wl-ui-produce` | 项目 `package.json`：Gate / Kit / UI | 保留原前端构建 |
+| Java/Maven，如 `wl-produce` | `quality-tools/package.json`：Gate / BD | 保留 Maven，Node 工具不进入 jar |
 
-内置后端配套针对 `wl-produce` PL 模块；其他 Maven 项目先批准自己的模块与必测配套。移动端、UniApp 不套用 PC 配套。完整步骤见 [项目接入](./docs/17-onboarding.md)。
+`quality-tools/` 只是 Java 仓库里的 Node 工具依赖目录。内置后端配套针对 `wl-produce` PL 模块；其他 Maven 项目先由负责人配置模块与必测。移动端、UniApp 不套用 PC 配套。
 
-## 接入后怎么运行
+### 2. 确认并应用这份计划
 
-| 环节 | 自动执行 | 人员操作与结果 |
+```bash
+npx --yes @agile-team/wl-skills-gate@latest onboard \
+  --root . --complete --registry https://registry.npmjs.org \
+  --apply --plan-hash "<本次返回的 planHash>" --confirm
+```
+
+程序按计划安装固定依赖、同步规则、配置 Hook、执行首扫与提交说明正反验证。首次安装后如出现原生规则或 POM 新差异，会返回新的待确认阶段；用同一入口重新预览、确认后续跑。
+
+### 3. 验证本地与远端效果
+
+| 验收点 | 成功依据 |
+| --- | --- |
+| 本地接入 | 返回 `local-validated-awaiting-remote-acceptance`；首扫通过、合规提交说明通过、违规说明被拦截 |
+| 首份质量报告 | 打开 `quality-reports/quality-report.html`；结构化结果在 `quality-summary.json` |
+| 接入执行记录 | `quality-reports/onboarding/execution.json` 显示本次实际阶段与结果 |
+| 远端强制检查 | 按下节接线，在真实 MR / 构建中验证失败拒绝、通过放行与消息送达 |
+
+本地接入通过后，再完成 CI、Review、通知和部署验收。完整步骤与状态说明见 [接入指南](./docs/17-onboarding.md)。
+
+## 日常怎么用
+
+开发者正常提交、推送；Hook 自动检查。以 `wl-ui-produce` 修改订单列表为例：
+
+| 步骤 | 开发者 / 负责人做什么 | 系统给出什么 |
 | --- | --- | --- |
-| 提交 / 推送 | Hook 执行快速或标准检查，生成报告 | 有阻断先处理，保留项目已有提交约定 |
-| 修复 / 复扫 | 按批准计划执行脚本，核对变更范围并复扫 | 确认后修复；查看新问题、剩余项与真实差异 |
-| 九维 Review | 收集 Git、CI、测试及责任证据，生成待确认记录 | 非作者补充实际 UI / 影响 / 外部测试材料，再逐维确认 |
-| 合并 / 发布 | 核验候选 SHA、正式 Review、制品、环境和发布组合 | 合并、部署和恢复分别授权；冒烟由独立验证人确认 |
-| 通知 / 关闭 | 分类推送，漏跑与超时对账，失败重试并留证 | 主备认领，按必要环境复验后关闭；复发重新打开 |
+| 提交前 | 按原流程暂存、提交代码 | 快速检查；有阻断显示具体位置和建议 |
+| 推送前 | 正常推送 | 标准检查、HTML 报告；已配置 Review 策略时自动生成九维草稿 |
+| 处理问题 | 在已生成的编辑器任务中选择“预览脚本修复”，核对并确认 | 执行批准的机械脚本、自动复扫，展示差异；语义问题保留人工处理 |
+| 发起 Review | 非作者查看代码、补齐实际交互与业务证据、逐维确认 | 绑定当前候选与证据的正式 Review |
+| 构建发布 | 通过受控流水线推进 | 核验本次候选、检查和制品；部署后独立复验再关闭问题 |
 
-**项目接入与远端接线分别验收。** 运维配置受保护分支、必需作业、固定 Runner 和独立凭据；中央服务连接真实 CI、SSO、证据存储与飞书群。可直接使用包内 [CI 模板](./templates/ci) 和 [中央配置](./templates/platform/README.md)。
+同口径的修前修后报告才展示质量变化。扫描通过、Review 确认、发布授权和问题关闭分别核验；一项通过不会代替其余步骤。
 
-检查退出码：`0` 通过、`1` 阻断、`2` 执行或证据无效。扫描通过、消息送达和人工补证都不会自动清除必需测试失败或批准发布。
+## 流水线怎么接
 
-## wl 系列怎么配合
+由 GitLab / Jenkins 维护者接线，项目负责人确认规则与必测，通知负责人配置群与分类。执行模板都在本包中。
 
-| 名称 | 职责 |
+| 接线内容 | 入口 | 验证方式 |
+| --- | --- | --- |
+| GitLab MR、候选与受保护分支 | [CI 模板](./templates/ci) · [GitLab 指南](./docs/06-gitlab.md) | 违规候选不能合并，真实必需作业齐全 |
+| Jenkins 构建、制品与部署 | [Jenkins 指南](./docs/07-jenkins.md) | SHA、制品摘要、目标环境一致，缺证据拒绝推进 |
+| 真实 CI 证据、身份与 Review | [可信 CI 采集](./docs/18-ci-source.md) · [九维 Review](./docs/19-nine-dimension-review.md) | 旧报告、缺证据、自审与过期批准被拒绝 |
+| 飞书通知、认领、超时与复验 | [中央执行接线](./templates/platform/README.md) | 实际送达、失败重试、认领和独立关闭均留记录 |
+
+项目检查作业与受控签发、部署、通知作业隔离。Hook 提供早反馈；服务端强制检查负责防绕过。
+
+## 按需深入
+
+| 要做什么 | 文档 |
 | --- | --- |
-| **Gate** | 统一接入、执行检查、裁决、修复复扫、证据与处置流程 |
-| **Kit** | PC Vue 管理端编码与工程约定 |
-| **UI** | PC 管理端 UI、样式与交互检查 |
-| **BD** | Java 后端规范、规则资产及检查能力 |
-| `quality-tools/` | Java 仓库的 Node 工具目录，里面安装 Gate / BD；不是另一个包 |
+| 调整检查器、范围、等级与例外 | [策略配置](./docs/02-config.md) · [适配器](./docs/05-adapters.md) |
+| 维护修复白名单、漂移检查与回滚 | [修复闭环](./docs/04-fix-loop.md) |
+| 只读定位问题，减少重复扫描与上下文 | [低 token 执行](./docs/14-low-token-execution.md) · [Java 报告分级](./docs/15-java-report-triage.md) |
+| 排查接入与环境问题 | [项目与运维集成](./docs/16-project-ci-integration.md) · [完整索引](./docs/README.md) |
 
-Gate 复用项目已有 ESLint、类型检查、Maven、JUnit 及适用规则包，统一报告与裁决。检查、修复、归档和通知由脚本执行，Gate 不调用大模型 API。按需查看报告可用 [`inspect`](./docs/14-low-token-execution.md)，无需重复扫描。
+检查退出码：`0` 通过，`1` 质量阻断，`2` 执行或证据无效。后两者都需要处理，不得以历史绿报告替代本轮结果。
 
-## 文档入口
+## WL 系列
 
-| 要做什么 | 从这里开始 |
+**WL = World Leading。** 按职责组合，未使用的包无需安装。
+
+| 包 | 职责 |
 | --- | --- |
-| 项目接入、Hook 与首扫 | [接入指南](./docs/17-onboarding.md) · [项目与运维集成](./docs/16-project-ci-integration.md) |
-| 配置检查器、范围与等级 | [配置](./docs/02-config.md) · [适配器](./docs/05-adapters.md) · [Java 报告](./docs/15-java-report-triage.md) |
-| CI、SSO、飞书与处置 | [可信 CI 来源](./docs/18-ci-source.md) · [中央接线](./templates/platform/README.md) |
-| 九维证据与正式 Review | [Review 契约](./docs/19-nine-dimension-review.md) |
-| 验证、升级与排障 | [完整索引](./docs/README.md) · [自测与环境验收](./docs/09-selftest-coverage.md) · [更新记录](./CHANGELOG.md) |
+| **Gate** | 统一接入、检查裁决、修复复扫、Review 与发布证据 |
+| [Kit](https://github.com/ChenyCHENYU/wl-skills-kit) | PC Vue 管理端需求、契约、代码生成与工程规范 |
+| [UI](https://github.com/ChenyCHENYU/wl-skills-ui) | PC 管理端设计令牌、样式与交互质量 |
+| [BD](https://github.com/ChenyCHENYU/wl-skills-bd) | Java 后端规范、契约与检查能力 |
+| [Test](https://github.com/ChenyCHENYU/wl-skills-test) | 测试设计、执行与结果验证 |
+| [Design](https://github.com/ChenyCHENYU/wl-skills-design) | 需求与设计模型、交付契约 |
 
-## 开发与授权
-
-仓库验证使用 `npm test`，包含单元、规则场景及本地 Git / 签名 / 制品集成测试。发布前对固定 tgz 独立安装并复验。
-
-[WL 系列标识](./assets/wl-mark.svg)与[品牌配色](./assets/brand-tokens.json)随包交付，后续 wl 包可复用同一字标并区分模块色。使用授权见 [LICENSE](./LICENSE)；npm 公开可下载不等于开源授权，授权申请通过[仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
+使用授权见 [LICENSE](./LICENSE)。问题反馈请附包版本、执行命令和脱敏报告，提交至 [Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。

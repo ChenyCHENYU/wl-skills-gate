@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// wl-produce 接入示例：基于 Gate 0.9.0 模板，显式使用华新 settings 并解除父 POM 跳测。
+// wl-produce 接入示例：基于 Gate 0.9.1 模板，显式使用华新 settings 并解除父 POM 跳测。
 // Copy to scripts/quality/java-unit.mjs. All paths are relative to the Java repo root.
 // The plan is approved configuration. Maven failures never become success.
 import path from "node:path";

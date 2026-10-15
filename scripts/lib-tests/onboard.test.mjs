@@ -16,7 +16,7 @@ function fixture(t, kind = "frontend", { adopted = true, hooks = null } = {}) {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   git(root, "init", "-q"); git(root, "config", "user.name", "fixture"); git(root, "config", "user.email", "fixture@example.invalid");
   if (hooks) git(root, "config", "core.hooksPath", hooks);
-  if (kind === "frontend") put(root, "package.json", { name: "fixture-console", dependencies: { vue: "3.5.0" }, devDependencies: adopted ? { "@agile-team/wl-skills-kit": "2.33.0" } : {}, scripts: { build: "business-build" } });
+  if (kind === "frontend") put(root, "package.json", { name: "fixture-console", dependencies: { vue: "3.5.0" }, devDependencies: adopted ? { "@agile-team/wl-skills-kit": "2.33.1" } : {}, scripts: { build: "business-build" } });
   else {
     put(root, "pom.xml", "<project><modelVersion>4.0.0</modelVersion><artifactId>fixture</artifactId></project>");
     put(root, "wl-produce-pl/wl-produce-pl-service/pom.xml", "<project><artifactId>wl-produce-pl-service</artifactId></project>");
@@ -66,7 +66,7 @@ test("Java 依赖放在 quality-tools；Maven/POM 原文保留", (t) => {
   const result = apply({ root }, plan);
   const pkg = JSON.parse(readFileSync(path.join(root, "quality-tools/package.json")));
   assert.equal(pkg.devDependencies["@agile-team/wl-skills-gate"], JSON.parse(readFileSync(path.join(PACKAGE_ROOT, "package.json"))).version);
-  assert.equal(pkg.devDependencies["@agile-team/wl-skills-bd"], "0.41.0");
+  assert.equal(pkg.devDependencies["@agile-team/wl-skills-bd"], "0.41.1");
   assert.equal(existsSync(path.join(root, "package.json")), false);
   assert.equal(readFileSync(path.join(root, "pom.xml"), "utf8"), pom);
   assert.ok(result.gaps.some((g) => g.id === "POM-PROFILE-REQUIRED"));
@@ -87,7 +87,7 @@ test("保护未知项目：新 Vue 需明确 PC 范围，移动/混合/未知 Ma
 test("没有授权、过期计划、冲突与符号链接目标均拒绝写入和激活", (t) => {
   const root = fixture(t); const plan = planOnboarding({ root });
   assert.throws(() => applyOnboarding({ root, planHash: plan.planHash }), /显式/);
-  put(root, "package.json", { name: "changed", dependencies: { vue: "3" }, devDependencies: { "@agile-team/wl-skills-kit": "2.33.0" } });
+  put(root, "package.json", { name: "changed", dependencies: { vue: "3" }, devDependencies: { "@agile-team/wl-skills-kit": "2.33.1" } });
   assert.throws(() => apply({ root }, plan), /零写入/);
   assert.equal(existsSync(path.join(root, ".githooks")), false);
   put(root, "quality/policy.json", "{}"); const conflict = planOnboarding({ root });
@@ -137,7 +137,7 @@ test("依赖升级必须明确批准，不挪动已有依赖类别", (t) => {
   const options = { root, allowDependencyUpdates: true }; const plan = planOnboarding(options);
   assert.equal(plan.status, "configuration-planned"); apply(options, plan);
   const pkg = JSON.parse(readFileSync(path.join(root, "package.json")));
-  assert.equal(pkg.dependencies["@agile-team/wl-skills-kit"], "2.33.0"); assert.equal(pkg.devDependencies["@agile-team/wl-skills-kit"], undefined);
+  assert.equal(pkg.dependencies["@agile-team/wl-skills-kit"], "2.33.1"); assert.equal(pkg.devDependencies["@agile-team/wl-skills-kit"], undefined);
 });
 
 test("已核对前端旧块自动进批准patch，保留只读Prettier/ESLint与Kit兼容marker", (t) => {

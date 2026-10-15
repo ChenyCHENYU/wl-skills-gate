@@ -19,7 +19,7 @@ const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { enco
 function fixture(t, kind = "frontend") {
   const root = mkdtempSync(path.join(realpathSync(os.tmpdir()), "wl-onboard-complete-")); t.after(() => rmSync(root, { recursive: true, force: true }));
   git(root, "init", "-q"); git(root, "config", "user.name", "fixture"); git(root, "config", "user.email", "fixture@example.invalid");
-  if (kind === "frontend") put(root, "package.json", { name: "fixture", dependencies: { vue: "3" }, devDependencies: { "@agile-team/wl-skills-kit": "2.33.0" } });
+  if (kind === "frontend") put(root, "package.json", { name: "fixture", dependencies: { vue: "3" }, devDependencies: { "@agile-team/wl-skills-kit": "2.33.1" } });
   else { put(root, "pom.xml", "<project><modelVersion>4.0.0</modelVersion><artifactId>fixture</artifactId><profiles><profile><id>business-existing</id></profile></profiles></project>\n"); put(root, "wl-produce-pl/wl-produce-pl-service/pom.xml", "<project><artifactId>fixture-module</artifactId></project>"); put(root, "wl-produce-pl/wl-produce-pl-service/src/main/java/Fixture.java", "class Fixture {}\n"); }
   git(root, "add", "."); git(root, "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fixture: seed"); return root;
 }
@@ -28,7 +28,7 @@ function installIsolatedTools(root, kind) {
   const modules = path.join(root, kind === "backend" ? "quality-tools/node_modules" : "node_modules", "@agile-team");
   const gate = path.join(modules, "wl-skills-gate"); mkdirSync(gate, { recursive: true });
   for (const file of ["package.json", "lib", "bin", "schemas", "templates"]) cpSync(path.join(PACKAGE, file), path.join(gate, file), { recursive: true });
-  for (const [name, version] of kind === "backend" ? [["bd", "0.41.0"]] : [["kit", "2.33.0"], ["ui", "1.22.0"]]) {
+  for (const [name, version] of kind === "backend" ? [["bd", "0.41.1"]] : [["kit", "2.33.1"], ["ui", "1.22.1"]]) {
     const directory = path.join(modules, `wl-skills-${name}`); put(directory, "package.json", { name: `@agile-team/wl-skills-${name}`, version });
     put(directory, `bin/${name === "kit" ? "wl-skills" : name === "ui" ? "wl-ui" : "wl-skills-bd"}.js`, `// isolated native version stub, not a business checker\nif (process.argv.includes("--version")) console.log("${version}");\n`);
   }
@@ -45,7 +45,7 @@ function fakeRunner(root, kind, calls, { failInstall = false, applyNative = fals
     if (args[0] === "install" && !failInstall) installIsolatedTools(root, kind);
     if (args[0] === "install") return { status: failInstall ? 17 : 0, stdout: "isolated installation result", stderr: failInstall ? "registry unavailable fixture" : "" };
     const script = args[0] || "";
-    if (args.includes("--version") || args.includes("-version")) return { status: 0, stdout: script.includes("wl-skills-bd") ? "0.41.0\n" : script.includes("wl-skills.js") ? "2.33.0\n" : script.includes("wl-ui.js") ? "1.22.0\n" : "fixture-tool-1.0\n", stderr: "" };
+    if (args.includes("--version") || args.includes("-version")) return { status: 0, stdout: script.includes("wl-skills-bd") ? "0.41.1\n" : script.includes("wl-skills.js") ? "2.33.1\n" : script.includes("wl-ui.js") ? "1.22.1\n" : "fixture-tool-1.0\n", stderr: "" };
     if (script.includes("wl-skills-bd.js") && args.includes("update")) {
       if (args.includes("--confirm") && applyNative) for (const name of ["audit", "unit"]) put(root, `.github/java-quality/maven-snippets/quality-${name}-profile.xml`, readFileSync(path.join(BD_FILES, `quality-${name}-profile.xml`), "utf8"));
       return { status: 0, stdout: JSON.stringify({ planHash: "a".repeat(64), note: drift ? "changed" : "isolated actual plan" }), stderr: "" };
@@ -167,7 +167,7 @@ test("隔离真实Git和Gate完成首扫及提交说明正反验证，远端仍�
     put(assets, "frontend/policy.yml", ["schemaVersion: 1", "project: fixture", "releaseRequires: [ISOLATED-REPORT]", "checks:", "  - id: ISOLATED-REPORT", "    dimension: 编码规范", "    tool: raw-json", "    command: node scripts/quality/isolated-producer.mjs", "    file: quality-reports/native/isolated.json", "    versionCommand: node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js --version", "    profiles: [standard, release]", ""].join("\n"));
     const pkgFile = path.join(root, "package.json"), pkg = JSON.parse(readFileSync(pkgFile)); pkg.packageManager = "pnpm@10.34.5"; pkg.devDependencies["vue-tsc"] = "3.0.0"; put(root, "package.json", pkg);
     put(root, "src/fixture.js", "export const fixture = true;\n");
-    put(root, "scripts/quality/isolated-producer.mjs", "import {mkdirSync,writeFileSync} from 'node:fs'; mkdirSync('quality-reports/native',{recursive:true});writeFileSync('quality-reports/native/isolated.json',JSON.stringify({toolVersion:'2.33.0',findings:[]}));\n");
+    put(root, "scripts/quality/isolated-producer.mjs", "import {mkdirSync,writeFileSync} from 'node:fs'; mkdirSync('quality-reports/native',{recursive:true});writeFileSync('quality-reports/native/isolated.json',JSON.stringify({toolVersion:'2.33.1',findings:[]}));\n");
     if (mode === "controlled-lifecycle") commonLifecycleFixture(root);
     apply({ root, assetRoot: assets }); installIsolatedTools(root, "frontend");
     if (mode === "hook-mutates-source") {

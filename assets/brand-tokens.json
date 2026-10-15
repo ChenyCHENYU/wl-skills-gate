@@ -1,45 +1,162 @@
 {
-  "schemaVersion": 1,
-  "series": "WL Engineering",
-  "product": "WL Gate",
+  "schemaVersion": 2,
+  "brand": "World Leading",
+  "acronym": "WL",
+  "series": "World Leading",
+  "product": "skills-gate",
   "tagline": "Automated quality workflow",
   "mark": {
     "file": "wl-mark.svg",
-    "viewBox": "0 0 128 128",
+    "viewBox": "0 0 256 168",
     "color": "currentColor",
-    "minimumSizePx": 32,
-    "clearSpaceViewBoxUnits": 16,
-    "construction": "Geometric W and L, open gate frame, check node. Keep the same paths across the WL series."
+    "minimumWidthPx": 48,
+    "smallVariant": {
+      "file": "wl-mark-small.svg",
+      "minimumWidthPx": 32,
+      "opticalAdjustment": "L moves 8 viewBox units to preserve a 2px gap at 32px width"
+    },
+    "clearSpace": "At least half the cap height",
+    "construction": {
+      "wPath": "M18 24H42L58 84L82 24H104L126 84L145 24H170L134 136H111L93 100L76 136H53Z",
+      "lPath": "M181 24H205L174 112H226L218 136H142Z",
+      "language": "Precision-cut W and forward-cut L; preserve geometry across products"
+    }
+  },
+  "wordmark": {
+    "light": "wl-wordmark.svg",
+    "dark": "wl-wordmark-dark.svg",
+    "viewBox": "0 0 760 160"
   },
   "banner": {
-    "viewBox": "0 0 920 220",
+    "viewBox": "0 0 1280 340",
     "light": "wl-gate-logo.svg",
     "dark": "wl-gate-logo-dark.svg",
-    "cornerRadius": 28
+    "cornerRadius": 16
   },
   "palette": {
-    "navy": "#102E46",
-    "navyDeep": "#0B2034",
-    "navySurface": "#173B59",
-    "mint": "#49D9BA",
-    "mintAccessibleOnLight": "#159D82",
-    "paper": "#F7FAFC",
-    "mist": "#EEF6F8",
-    "textLight": "#F2F8FC",
-    "textMutedLight": "#537083",
-    "textMutedDark": "#9EBDC9"
+    "obsidian": "#0B1119",
+    "graphite": "#111E2C",
+    "ink": "#172634",
+    "platinum": "#F0F4F6",
+    "silver": "#B8C3CE",
+    "paper": "#F7F8F8",
+    "gateLight": "#087A7D",
+    "gateDark": "#8DDEDC",
+    "textMutedLight": "#637686",
+    "textMutedDark": "#8E9FAF"
   },
   "typography": {
-    "family": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
-    "productSize": 66,
-    "productWeight": 750,
-    "seriesSize": 14,
-    "seriesTracking": 3.8,
+    "family": "Helvetica Neue, Inter, Helvetica, Arial, sans-serif",
+    "productSize": 90,
+    "productWeight": 550,
+    "productTracking": -4,
+    "brandSize": 16,
+    "brandTracking": 3.15,
     "taglineSize": 20
   },
   "extension": {
-    "shared": ["WL monogram paths", "banner geometry", "typographic hierarchy", "navy base"],
-    "perProduct": ["product name", "tagline", "accent color"],
-    "examples": ["WL Kit", "WL UI", "WL BD"]
+    "shared": [
+      "WL monogram",
+      "WORLD LEADING below the monogram",
+      "Fixed brand/product zones",
+      "Product title with skills- prefix",
+      "Metadata and glyph grid"
+    ],
+    "perProduct": [
+      "Package suffix",
+      "Module accent",
+      "Functional geometric symbol",
+      "Functional tagline",
+      "Exact npm package identifier"
+    ],
+    "accentSuggestions": {
+      "gate": "#8DDEDC",
+      "kit": "#9CC5FF",
+      "ui": "#CCB8FF",
+      "test": "#E7A7B8",
+      "design": "#EAAF8A",
+      "bd": "#DFC291"
+    },
+    "examples": [
+      "skills-gate",
+      "skills-kit",
+      "skills-ui",
+      "skills-test",
+      "skills-design",
+      "skills-bd"
+    ]
+  },
+  "production": {
+    "smallMarks": "Single flat color, no gradients",
+    "lightTheme": "Flat ink mark",
+    "darkTheme": "Subtle silver gradient is optional in banners",
+    "masterFiles": "All assets are native editable SVG"
+  },
+  "brandLockup": {
+    "light": "wl-brand-lockup.svg",
+    "dark": "wl-brand-lockup-dark.svg",
+    "arrangement": "WL above WORLD LEADING"
+  },
+  "packageFamily": {
+    "gate": {
+      "displayName": "skills-gate",
+      "npmName": "@agile-team/wl-skills-gate",
+      "category": "QUALITY AUTOMATION",
+      "tagline": "Checks · Review · Release",
+      "darkAccent": "#8DDEDC",
+      "lightAccent": "#087A7D",
+      "light": "wl-gate-logo.svg",
+      "dark": "wl-gate-logo-dark.svg"
+    },
+    "kit": {
+      "displayName": "skills-kit",
+      "npmName": "@agile-team/wl-skills-kit",
+      "category": "FRONTEND ENGINEERING",
+      "tagline": "Standards · Contracts · Workflows",
+      "darkAccent": "#9CC5FF",
+      "lightAccent": "#315E9F",
+      "light": "wl-kit-logo.svg",
+      "dark": "wl-kit-logo-dark.svg"
+    },
+    "ui": {
+      "displayName": "skills-ui",
+      "npmName": "@agile-team/wl-skills-ui",
+      "category": "INTERFACE QUALITY",
+      "tagline": "Tokens · Layouts · Interaction",
+      "darkAccent": "#CCB8FF",
+      "lightAccent": "#7053A7",
+      "light": "wl-ui-logo.svg",
+      "dark": "wl-ui-logo-dark.svg"
+    },
+    "test": {
+      "displayName": "skills-test",
+      "npmName": "@agile-team/wl-skills-test",
+      "category": "TEST ENGINEERING",
+      "tagline": "Cases · Automation · Evidence",
+      "darkAccent": "#E7A7B8",
+      "lightAccent": "#A34262",
+      "light": "wl-test-logo.svg",
+      "dark": "wl-test-logo-dark.svg"
+    },
+    "design": {
+      "displayName": "skills-design",
+      "npmName": "@agile-team/wl-skills-design",
+      "category": "PRODUCT DESIGN",
+      "tagline": "Requirements · Flows · Prototypes",
+      "darkAccent": "#EAAF8A",
+      "lightAccent": "#A45C2B",
+      "light": "wl-design-logo.svg",
+      "dark": "wl-design-logo-dark.svg"
+    },
+    "bd": {
+      "displayName": "skills-bd",
+      "npmName": "@agile-team/wl-skills-bd",
+      "category": "BACKEND ENGINEERING",
+      "tagline": "Java · Contracts · Quality",
+      "darkAccent": "#DFC291",
+      "lightAccent": "#886331",
+      "light": "wl-bd-logo.svg",
+      "dark": "wl-bd-logo-dark.svg"
+    }
   }
 }
