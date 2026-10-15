@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "series": "WL Engineering",
+  "product": "WL Gate",
+  "tagline": "Automated quality workflow",
+  "mark": {
+    "file": "wl-mark.svg",
+    "viewBox": "0 0 128 128",
+    "color": "currentColor",
+    "minimumSizePx": 32,
+    "clearSpaceViewBoxUnits": 16,
+    "construction": "Geometric W and L, open gate frame, check node. Keep the same paths across the WL series."
+  },
+  "banner": {
+    "viewBox": "0 0 920 220",
+    "light": "wl-gate-logo.svg",
+    "dark": "wl-gate-logo-dark.svg",
+    "cornerRadius": 28
+  },
+  "palette": {
+    "navy": "#102E46",
+    "navyDeep": "#0B2034",
+    "navySurface": "#173B59",
+    "mint": "#49D9BA",
+    "mintAccessibleOnLight": "#159D82",
+    "paper": "#F7FAFC",
+    "mist": "#EEF6F8",
+    "textLight": "#F2F8FC",
+    "textMutedLight": "#537083",
+    "textMutedDark": "#9EBDC9"
+  },
+  "typography": {
+    "family": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+    "productSize": 66,
+    "productWeight": 750,
+    "seriesSize": 14,
+    "seriesTracking": 3.8,
+    "taglineSize": 20
+  },
+  "extension": {
+    "shared": ["WL monogram paths", "banner geometry", "typographic hierarchy", "navy base"],
+    "perProduct": ["product name", "tagline", "accent color"],
+    "examples": ["WL Kit", "WL UI", "WL BD"]
+  }
+}

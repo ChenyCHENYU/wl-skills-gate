@@ -1,0 +1,58 @@
+// Check/build job only. No signing/reviewer/deployment credentials in this workspace.
+// Approve the exact checkout, shared library/image, prepare/build commands, and expectations centrally.
+pipeline {
+  agent { label 'wl-quality-isolated' }
+  options { disableConcurrentBuilds() }
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        script { env.WL_CHECKED_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim() }
+      }
+    }
+    stage('Prepare approved dependencies') {
+      steps { sh 'set -eu; test -n "$WL_APPROVED_PREPARE_SCRIPT"; "$WL_APPROVED_PREPARE_SCRIPT"' }
+    }
+    stage('Release quality') {
+      steps {
+        sh '''
+          set -eu
+          test -n "$WL_APPROVED_GATE_CLI"
+          set +e
+          node "$WL_APPROVED_GATE_CLI" run --profile release --sha "$WL_CHECKED_SHA" --env "$WL_TARGET_ENV" \
+            --expect-policy-hash "$WL_APPROVED_POLICY_HASH" --expect-rules-hash "$WL_APPROVED_RULES_HASH" \
+            --expect-baseline-hash "$WL_APPROVED_BASELINE_HASH" --expect-waivers-hash "$WL_APPROVED_WAIVERS_HASH"
+          gate_status=$?
+          set -e
+          set -- --root . --summary quality-reports/quality-summary.json --out-dir quality-reports/review
+          if [ -n "${WL_APPROVED_REVIEW_BASE_SHA:-}" ]; then set -- "$@" --base-sha "$WL_APPROVED_REVIEW_BASE_SHA"; fi
+          node "$WL_APPROVED_GATE_CLI" review-facts "$@" --plan quality/review-evidence.plan.json
+          exit "$gate_status"
+        '''
+      }
+    }
+    stage('Build approved artifact') {
+      steps { sh 'set -eu; "$WL_APPROVED_BUILD_SCRIPT"' }
+    }
+    stage('Artifact manifest') {
+      steps {
+        sh '''
+          set -eu
+          set -- --project "$WL_PROJECT" --env "$WL_TARGET_ENV" --artifacts "$WL_ARTIFACT_PATHS" --out quality-reports/artifact-manifest.json
+          if [ -n "${WL_CONFIG_PATHS:-}" ]; then set -- "$@" --configs "$WL_CONFIG_PATHS"; fi
+          node "$WL_APPROVED_GATE_CLI" manifest "$@"
+        '''
+      }
+    }
+  }
+  post {
+    always {
+      archiveArtifacts artifacts: 'quality-reports/**,**/target/surefire-reports/*.xml,**/target/site/jacoco/**,**/target/checkstyle-result.xml,**/target/pmd.xml,**/target/p3c.xml,**/target/spotbugsXml.xml', allowEmptyArchive: true
+      // Platform collector queries this completed job and immutable artifacts before signing events/proofs.
+      // It must also reconcile jobs that never started; do not hold its secrets here.
+    }
+    success {
+      archiveArtifacts artifacts: 'REPLACE_WITH_APPROVED_ARTIFACT_GLOB', allowEmptyArchive: false
+    }
+  }
+}

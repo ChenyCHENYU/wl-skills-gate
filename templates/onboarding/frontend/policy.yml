@@ -1,0 +1,40 @@
+# wl-ui-produce 接入起点；既有依赖/契约/业务/E2E 作业另纳入整体准入。
+schemaVersion: 1
+project: wl-ui-produce
+enforceWarnings: false
+blockerWaivers: reject
+releaseRequires: [FE-ESLINT, FE-TYPECHECK, FE-KIT, FE-UI]
+checks:
+  - id: FE-ESLINT
+    dimension: 编码规范
+    tool: eslint
+    targets: [src]
+    versionCommand: node_modules/.bin/eslint --version
+    profiles: [fast, standard, release]
+  - id: FE-TYPECHECK
+    dimension: 编码规范
+    tool: typecheck
+    bin: node_modules/.bin/vue-tsc
+    args: --noEmit
+    versionCommand: node_modules/.bin/vue-tsc --version
+    profiles: [standard, release]
+  - id: FE-KIT
+    dimension: 编码规范
+    tool: cmd-json
+    format: wl-kit
+    command: node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js validate src/views --json
+    captureStdout: true
+    file: quality-reports/native/kit.json
+    okExitCodes: [0, 1]
+    versionCommand: node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js --version
+    profiles: [standard, release]
+  - id: FE-UI
+    dimension: UI与交互
+    tool: cmd-json
+    format: wl-ui
+    command: node node_modules/@agile-team/wl-skills-ui/bin/wl-ui.js all --project . --target src --profile legacy-jh-ag --output json --fail-on-error
+    captureStdout: true
+    file: quality-reports/native/ui.json
+    okExitCodes: [0, 1]
+    versionCommand: node node_modules/@agile-team/wl-skills-ui/bin/wl-ui.js --version
+    profiles: [standard, release]

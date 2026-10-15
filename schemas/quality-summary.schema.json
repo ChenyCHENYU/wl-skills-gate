@@ -101,6 +101,28 @@
           "toolVersionVerified": {
             "type": "boolean"
           },
+          "testEvidence": {
+            "type": ["object", "null"],
+            "required": ["parser", "complete", "reportDirs", "files", "counts", "requiredTests", "requiredSuites"],
+            "properties": {
+              "parser": { "const": "junit-xml@2" },
+              "complete": { "type": "boolean" },
+              "reportDirs": { "type": "array", "items": { "type": "string" } },
+              "files": {
+                "type": "array", "items": {
+                  "type": "object", "required": ["file", "sha256", "counts", "suites"],
+                  "properties": {
+                    "file": { "type": "string" }, "sha256": { "type": "string" },
+                    "counts": { "type": "object", "required": ["tests", "passed", "failures", "errors", "skipped"] },
+                    "suites": { "type": "array", "items": { "type": "object", "required": ["name", "tests", "passed", "failures", "errors", "skipped"] } }
+                  }
+                }
+              },
+              "counts": { "type": "object", "required": ["tests", "passed", "failures", "errors", "skipped"] },
+              "requiredTests": { "type": "array", "items": { "type": "object", "required": ["id", "passed", "reportFile"] } },
+              "requiredSuites": { "type": "array", "items": { "type": "object", "required": ["name", "passed"] } }
+            }
+          },
           "parserMetadata": {
             "type": ["object", "null"],
             "required": ["parser", "policyVersion", "producer", "engine", "reportedVersionVerified"],

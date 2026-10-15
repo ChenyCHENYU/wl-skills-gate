@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "project": "wl-ui-produce",
+  "ciConfigFile": "./ci-source.frontend.json",
+  "reviewPolicyHash": "REPLACE_APPROVED_REVIEW_POLICY_SHA256",
+  "allowedAuthorIds": [
+    "REPLACE_FRONTEND_OWNER",
+    "REPLACE_FRONTEND_BACKUP",
+    "REPLACE_FRONTEND_DEVELOPER"
+  ],
+  "evidence": [
+    {
+      "id": "submission",
+      "type": "commit-check",
+      "path": "quality-reports/review/submission.json",
+      "dimensionIds": [
+        "submission"
+      ]
+    },
+    {
+      "id": "branch",
+      "type": "branch-check",
+      "path": "quality-reports/review/branch.json",
+      "dimensionIds": [
+        "branch"
+      ]
+    },
+    {
+      "id": "tests",
+      "type": "test-verification",
+      "path": "quality-reports/review/tests.json",
+      "dimensionIds": [
+        "tests"
+      ]
+    },
+    {
+      "id": "diff",
+      "type": "diff",
+      "path": "quality-reports/review/diff.patch",
+      "dimensionIds": [
+        "coding",
+        "review"
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "ui-verification",
+      "path": "quality-reports/review/ui.json",
+      "dimensionIds": [
+        "ui"
+      ]
+    },
+    {
+      "id": "impact-review",
+      "type": "impact-review",
+      "path": "quality-reports/review/impact-review.json",
+      "dimensionIds": [
+        "review"
+      ]
+    }
+  ],
+  "supplement": {
+    "governanceConfigFile": "./governance-config.json",
+    "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+    "authorizationIssuer": "wl-quality-identity"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "collectorConfigFile": "./review-collector.backend.json",
+  "reviewPolicyFile": "./review-policy.backend.json",
+  "controlConfigFile": "./control-config.json"
+}

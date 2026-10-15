@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-labelledby="wl-mark-title wl-mark-desc">
+  <title id="wl-mark-title">WL</title>
+  <desc id="wl-mark-desc">The WL Engineering monogram: geometric W and L inside an open gate, completed by a check node.</desc>
+  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 106V22h92v19" stroke-width="9"/>
+    <path d="m31 50 10 37 13-25 13 25 10-37M90 50v37h18" stroke-width="8"/>
+    <path d="M18 106h60" stroke-width="9"/>
+    <circle cx="105" cy="105" r="17" stroke-width="7"/>
+    <path d="m97 105 5 5 11-12" stroke-width="6"/>
+  </g>
+</svg>

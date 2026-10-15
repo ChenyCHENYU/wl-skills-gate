@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "governanceConfigFile": "./governance-config.json",
+  "stateFile": "/srv/wl-quality/state/governance.json",
+  "dataDir": "/srv/wl-quality/automation",
+  "receiptPrivateKeyFile": "/srv/wl-quality/secrets/events-private.pem",
+  "intervalSeconds": 60,
+  "deployments": {
+    "deliveryDir": "/srv/wl-quality/control/deployment-deliveries",
+    "configs": {
+      "uat": {
+        "configFile": "./deployment-config.json",
+        "executorPublicKeyFile": "/srv/wl-quality/config/deployment-executor-public.pem",
+        "executionRoot": "/srv/wl-quality/control/deployment-executions"
+      }
+    }
+  },
+  "sources": [
+    {
+      "id": "frontend-standard",
+      "configFile": "./ci-source.frontend.json",
+      "actors": {
+        "REPLACE_ACTUAL_GITLAB_USER_ID": "REPLACE_FRONTEND_OWNER",
+        "REPLACE_ACTUAL_GITLAB_USER_ID_DEVELOPER": "REPLACE_FRONTEND_DEVELOPER"
+      },
+      "since": "REPLACE_APPROVED_INITIAL_ISO_TIME",
+      "environment": "uat",
+      "review": {
+        "configFile": "./review-ci.frontend.json",
+        "outRoot": "/srv/wl-quality/evidence/frontend",
+        "publication": {
+          "manifestDir": "/srv/wl-quality/review-delivery",
+          "publicKeyFile": "/srv/wl-quality/config/review-public.pem",
+          "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+          "expectAuthorizationIssuer": "wl-quality-identity",
+          "expectReviewPolicyHash": "REPLACE_APPROVED_REVIEW_POLICY_SHA256",
+          "evidenceRoot": "/srv/wl-quality/evidence/frontend",
+          "profile": "standard"
+        }
+      }
+    },
+    {
+      "id": "backend-standard",
+      "configFile": "./ci-source.backend.json",
+      "actors": {
+        "REPLACE_ACTUAL_GITLAB_USER_ID": "REPLACE_BACKEND_OWNER",
+        "REPLACE_ACTUAL_GITLAB_USER_ID_DEVELOPER": "REPLACE_BACKEND_DEVELOPER"
+      },
+      "since": "REPLACE_APPROVED_INITIAL_ISO_TIME",
+      "environment": "uat",
+      "review": {
+        "configFile": "./review-ci.backend.json",
+        "outRoot": "/srv/wl-quality/evidence/backend",
+        "publication": {
+          "manifestDir": "/srv/wl-quality/review-delivery",
+          "publicKeyFile": "/srv/wl-quality/config/review-public.pem",
+          "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+          "expectAuthorizationIssuer": "wl-quality-identity",
+          "expectReviewPolicyHash": "REPLACE_APPROVED_REVIEW_POLICY_SHA256",
+          "evidenceRoot": "/srv/wl-quality/evidence/backend",
+          "profile": "standard"
+        }
+      }
+    }
+  ]
+}

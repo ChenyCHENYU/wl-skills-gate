@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 220" role="img" aria-labelledby="wl-gate-title wl-gate-desc">
+  <title id="wl-gate-title">WL Gate — WL Engineering</title>
+  <desc id="wl-gate-desc">WL Gate. Automated quality workflow. An open gate frames a geometric WL monogram and a mint check node.</desc>
+  <defs>
+    <linearGradient id="wl-gate-background" x1="0" y1="0" x2="920" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7FAFC"/>
+      <stop offset="1" stop-color="#EEF6F8"/>
+    </linearGradient>
+    <linearGradient id="wl-gate-tile" x1="34" y1="30" x2="194" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#173B59"/>
+      <stop offset="1" stop-color="#0C233A"/>
+    </linearGradient>
+  </defs>
+  <rect width="920" height="220" rx="28" fill="url(#wl-gate-background)"/>
+  <rect x=".75" y=".75" width="918.5" height="218.5" rx="27.25" fill="none" stroke="#173B59" stroke-opacity=".08" stroke-width="1.5"/>
+  <rect x="34" y="30" width="160" height="160" rx="36" fill="url(#wl-gate-tile)"/>
+  <g transform="translate(50 46)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#F2F8FC">
+      <path d="M18 106V22h92v19M18 106h60" stroke-width="9"/>
+      <path d="m31 50 10 37 13-25 13 25 10-37M90 50v37h18" stroke-width="8"/>
+    </g>
+    <circle cx="105" cy="105" r="17" stroke="#49D9BA" stroke-width="7"/>
+    <path d="m97 105 5 5 11-12" stroke="#49D9BA" stroke-width="6"/>
+  </g>
+  <g font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="246" y="63" fill="#3B6A80" font-size="14" font-weight="700" letter-spacing="3.8">WL ENGINEERING</text>
+    <text x="242" y="132" fill="#102E46" font-size="66" font-weight="750" letter-spacing="-2.4">WL Gate</text>
+    <text x="246" y="174" fill="#537083" font-size="20" font-weight="450" letter-spacing=".2">Automated quality workflow</text>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M739 110h95" stroke="#B9CFD6" stroke-width="2"/>
+    <circle cx="739" cy="110" r="6" fill="#F2F8FA" stroke="#7296A5" stroke-width="2"/>
+    <circle cx="786" cy="110" r="6" fill="#F2F8FA" stroke="#7296A5" stroke-width="2"/>
+    <circle cx="841" cy="110" r="17" fill="#E0F5EE" stroke="#159D82" stroke-width="2"/>
+    <path d="m834 110 5 5 9-10" stroke="#159D82" stroke-width="2.5"/>
+  </g>
+</svg>

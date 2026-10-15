@@ -1,6 +1,6 @@
 # 13 质量分级、执行成本与测试隔离
 
-适用版本：Gate 0.6.1、BD 0.40.0；2026-10-11，低 token 阅读方式于 2026-10-12 补充。本文是当前接入建议，11/12 手册及既有 test-qa 报告保留为当时的验证记录。本轮只修改共享包与体系文档，未向业务项目安装或升级资产。
+适用源码：Gate 0.7.0、BD 0.41.0；2026-10-11 原稿，2026-10-12/13 补充执行与证据能力，实际 registry 发布另验。11/12 手册及既有 test-qa 报告保留为当时记录。本轮只修改共享包与体系文档，未向业务项目安装或升级资产。正式逐步接入统一见 [16 操作入口](16-project-ci-integration.md)。
 
 ## 目标和执行边界
 
@@ -40,11 +40,11 @@ Gate 复用 `cmd-json`，增加 `format: wl-kit/wl-ui/wl-bd`。读取实际 issu
   tool: cmd-json
   format: wl-bd
   profiles: [standard, release]
-  command: node_modules/.bin/wl-skills-bd validate --target . --json
+  command: node quality-tools/node_modules/@agile-team/wl-skills-bd/bin/wl-skills-bd.js validate --target . --json
   captureStdout: true
   file: quality-reports/native/bd.json
   okExitCodes: [0, 1]
-  versionCommand: node_modules/.bin/wl-skills-bd --version
+  versionCommand: node quality-tools/node_modules/@agile-team/wl-skills-bd/bin/wl-skills-bd.js --version
 ```
 
 Kit 使用 `wl-skills validate --json`，UI 使用 `wl-ui scan --project . --target src --output json --fail-on-error`，各自登记 format、完整目标、真实版本及项目适用性。CLI 路径按实际安装包确认，未使用的兄弟包无需安装。
@@ -79,13 +79,13 @@ Maven 模板由独立的 `@agile-team/wl-skills-bd` 包维护，位置为其 `fi
 
 Checkstyle 使用 format=checkstyle、目标 checkstyle:checkstyle、文件 target/checkstyle-result.xml；SpotBugs 使用 format=spotbugs、目标 spotbugs:spotbugs、文件 target/spotbugsXml.xml。子模块使用实际 `-pl`/`-am` 和 `<module>/target/...` 路径，逐个验收，不能只拿根模块的一份报告代表全仓。
 
-SpotBugs的包内sourcepath须配合同一检查的实际 `sourceRoots: [pl/src/main/java, pl/src/test/java]`。数组只声明存在的项目内相对目录，不能绝对路径、`..`、符号链接或模糊全仓搜索；同名存在多处应按报告所属模块/源集拆开检查，定位不唯一或不存在返回invalid。默认仅 `src/main/java`，不推测模块前缀。P3C报告使用format=p3c保留P3C规则提供者身份；其PMD6引擎版本与P3C插件版本分别归档，缺少版本不编造。各Java finding验证真实普通源文件，空Checkstyle/PMD结果仍不能证明完整覆盖。
+SpotBugs 的包内 sourcepath 须配合同一检查的真实 sourceRoots，例如 wl-produce 的 PL service 是 `wl-produce-pl/wl-produce-pl-service/src/main/java`，不是简写 pl/src。数组只声明实际存在的项目内相对目录，test 根存在才加入；不能绝对路径、`..`、符号链接或模糊全仓搜索。同名存在多处按报告所属模块/源集拆开，定位不唯一或不存在返回 invalid。默认仅 src/main/java，不推测模块前缀。P3C 用 format=p3c，PMD 6 引擎与 P3C 插件版本分开归档；与 PMD 7 不同调用/输出，防默认 target/pmd.xml 互相覆盖。Java finding 验证真实普通源文件，空 Checkstyle/PMD 仍不证明完整覆盖。
 
 静态生产命令必须 exit 0；出现编译失败、分析异常或缺失依赖时返回 invalid，即使残留报告有 findings 也不放行。原报告与 policy、插件 POM/配置、源码摘要一起归档。`versionCommand: mvn -version` 只证明 Maven 版本；插件版本仍由受控 POM/配置和运行日志核验，不能称为逐一动态核实插件版本。
 
 Checkstyle/PMD 的正常报告可能只列违规文件，空 findings 不表示所有源文件都已扫描。必须对账适用子模块、编译源码范围与实际日志，不能仅凭 XML 推断完整覆盖；SpotBugs 则核验实际分析类数与缺陷汇总，不接受零类空扫。插件配置排除、上游非底线豁免也须进入批准的适用表，不能绕过范围治理。
 
-当前 junit adapter 接一份完整 XML。多个模块/套件应各自登记 required 检查和原 XML；共享 CI 层可枚举报告，但不得用手填计数替代 testcase，也不能遗漏失败套件。本轮没有实现通用 Surefire 聚合或独立集成环境服务，不能把上面两段静态 policy 示例直接当作完整 release policy。
+JUnit 已支持 files/reportDirs 的全部明确原始 XML、必需 suite/用例和同轮共享 producer；逐份解析真实 testcase，不用手填计数。缺/多报告、重复身份、坏结构/摘要、零用例与 skipped 均不能放行，签发独立核验；具体见 [05 适配契约](05-adapters.md)。单元模板依赖准备与测试模块分开，不对全部 -am 依赖模块启用 unit 后全局关闭零测试失败。独立集成环境、跨作业/双仓组合仍由平台接入，静态示例不等于完整 release policy。
 
 ## 测试选择与隔离
 
@@ -99,7 +99,7 @@ Checkstyle/PMD 的正常报告可能只列违规文件，空 findings 不表示�
 
 预警按 project + rule + fingerprint 关联问题台账，eventId 记录每次运行。群消息只推新增阻断、工具失效、复发、无人认领/逾期及复验结果；普通风格警告默认汇总成日报，避免每次扫描重复轰炸。消息包含等级、主备责任人、截止时间和认证的“查看证据/认领/申请复验”链接。
 
-警告按项目批准时限治理；认领不等于修复，扫描消失仅进入待复验。核验目标 SHA、必测、部署/观察证据及非作者复核后关闭；增量扫描不能关闭未扫描范围中的问题。无人处理、无事件、通知失败由定时对账独立发现。飞书/企业微信群推送、持久台账和认证跳转仍待内网接线，本包不会发送实际消息。
+警告按项目批准时限治理；认领不等于修复，扫描消失仅进入待复验。核验目标 SHA、必测、部署/观察证据及非作者复核后关闭；增量扫描不能关闭未扫描范围中的问题。0.7.0 已提供签名平台 receipt、串行持久台账/outbox、动作与自然分钟 SLA/预期运行对账，dispatch 默认预览、不联网，显式 --send 支持飞书/企业微信群实际投递。平台 API/SSO、认证网页、群权限、长期存储/调度仍须实接；当前不自带应用卡片回调、@个人或工作日历。见 [中央治理模板](../templates/platform/README.md)。本轮仅 mock/预览，没有真实发送。
 
 记录各档 P50/P95 用时、误报/争议率、重复告警、每次人工维护时间及逃逸缺陷；先积累样板数据，再由团队批准预算和升档条件。慢检查移到 CI 或夜间治理，不靠跳过必需检查提速。团队日常只保留现有开发命令和一条质量入口，报告转换、分类、规则升级和台账路由由平台维护。基线需审批，禁止首次接入时自动把全部错误写入基线。
 

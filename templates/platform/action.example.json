@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kind": "issue-action",
+  "eventId": "REPLACE_WITH_UNIQUE_ACTION_ID",
+  "action": "close",
+  "actorId": "REPLACE_WITH_SSO_AUTHENTICATED_REVIEWER",
+  "issueId": "REPLACE_WITH_LEDGER_ISSUE_ID",
+  "expectedRevision": 1,
+  "sha": "REPLACE_WITH_CURRENT_REPAIR_SHA",
+  "reportHash": "REPLACE_WITH_CURRENT_PASSED_REPORT_HASH",
+  "environment": "sit",
+  "result": "passed",
+  "reason": "REPLACE_WITH_INDEPENDENT_VERIFICATION_RESULT",
+  "verificationUrl": "https://quality.example.internal/verifications/REPLACE_VERIFICATION_ID"
+}

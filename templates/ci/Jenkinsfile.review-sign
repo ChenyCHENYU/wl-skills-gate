@@ -1,0 +1,30 @@
+// Centrally pinned job, isolated from project code and identity/event private keys.
+pipeline {
+  agent { label 'wl-review-signer-isolated' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true) }
+  triggers { cron('H/2 * * * *') }
+  stages {
+    stage('Publish explicitly authorized nine-dimension Reviews') {
+      steps {
+        withCredentials([
+          file(credentialsId: 'wl-review-signing-key', variable: 'WL_REVIEW_PRIVATE_KEY_FILE'),
+          string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN')
+        ]) {
+          sh '''
+            set -eu
+            test -n "$WL_APPROVED_GATE_CLI"
+            test -n "$WL_REVIEW_PUBLISH_CONFIG"
+            node "$WL_APPROVED_GATE_CLI" review-publish --config "$WL_REVIEW_PUBLISH_CONFIG"
+          '''
+        }
+      }
+    }
+  }
+  post {
+    always {
+      // Archive a fixed approved output directory; it contains signed records'
+      // manifests and audit checks. Private keys are never copied into it.
+      archiveArtifacts artifacts: 'review-delivery/**', allowEmptyArchive: true
+    }
+  }
+}

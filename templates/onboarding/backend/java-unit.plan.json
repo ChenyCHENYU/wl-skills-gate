@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "prepareDependencies": true,
+  "offline": false,
+  "modules": [
+    {
+      "path": "wl-produce-pl/wl-produce-pl-service",
+      "reportFiles": [
+        "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-com.jhict.produce.pl.common.ProductFormCodeTest.xml",
+        "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-com.jhict.produce.pl.common.support.StableBusinessIdTest.xml",
+        "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-com.jhict.produce.pl.performance.ActualHeatNumberTest.xml"
+      ]
+    }
+  ]
+}

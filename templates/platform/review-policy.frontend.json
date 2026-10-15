@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "project": "wl-ui-produce",
+  "dimensions": [
+    {
+      "id": "submission",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "commit-check"
+      ]
+    },
+    {
+      "id": "branch",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "branch-check"
+      ]
+    },
+    {
+      "id": "coding",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "gate-summary",
+        "diff"
+      ]
+    },
+    {
+      "id": "ui",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "ui-verification"
+      ]
+    },
+    {
+      "id": "review",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "diff",
+        "impact-review"
+      ]
+    },
+    {
+      "id": "tests",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "test-verification"
+      ]
+    },
+    {
+      "id": "scan",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "gate-summary"
+      ]
+    },
+    {
+      "id": "cicd",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "pipeline-verification"
+      ]
+    },
+    {
+      "id": "governance",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "ownership-verification"
+      ]
+    }
+  ]
+}

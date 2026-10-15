@@ -20,12 +20,12 @@
 ```yaml
 wl-quality-check:
   stage: test
-  image: node:20
+  image: node:22
   script:
     - corepack enable
-    - pnpm install --frozen-lockfile
+    - pnpm install --frozen-lockfile --prod=false
     - >-
-      npx -y @agile-team/wl-skills-gate@0.6.1 run
+      pnpm exec wl-skills-gate run
       --profile standard --sha "$CI_COMMIT_SHA"
       --expect-policy-hash "$WL_APPROVED_POLICY_HASH"
       --expect-rules-hash "$WL_APPROVED_RULES_HASH"
@@ -37,7 +37,7 @@ wl-quality-check:
       # junit: quality-reports/junit/*.xml  # 真实测试生产者已接入后启用
 ```
 
-这个 job 不持有签发/晋级/部署/通知凭据。后端使用受控 Node+JDK+Maven 镜像，先真实接线 wl-quality profile/检查器；npx 只免除业务仓库安装 Gate 依赖，不能免除扫描环境。
+这个 job 假定项目已固定安装 Gate 0.9.0 并提交锁文件，不持有签发/晋级/部署/通知凭据。`node:22` 仅为版本系列示意，正式接线固定实际 Node 22.12+ 镜像版本/摘要与项目 pnpm 版本。Kit/UI/BD 当前要求 Node ≥22，不能沿用组合检查的 Node 20 示例。后端使用受控 Node+项目 JDK+Maven 镜像，先真实接线 wl-quality profile/检查器；若 Gate 由中央镜像提供，使用其固定 CLI，不与项目本地解析路径混用。详细接入见 [16 项目与 CI](16-project-ci-integration.md)。
 
 上述采用全量 standard，不依赖 MR。若增加增量，分别处理 push/MR/候选/定时场景、首次 push 全零 SHA 与浅克隆缺历史，head 与 checkout 相同。MR 专属变量只在实际 MR pipeline 使用。[GitLab 变量说明](https://docs.gitlab.com/ci/variables/predefined_variables/#predefined-variables-for-merge-request-pipelines)。
 
@@ -57,7 +57,7 @@ wl-skills-gate promote --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" \
 ## 独立 Review、签发和更新
 
 1. 平台保存候选 SHA、源/目标 HEAD 与作业 ID；授权非作者 Reviewer 检查候选，逐项处理阻断问题。
-2. Reviewer 受控作业生成 review-record（包含 source/target/sourceSha/targetBeforeSha/candidateSha/reviewerId/authorId/unresolvedBlocking），review-sign 使用独立 Reviewer 私钥签发，身份来自平台认证而非提交者参数。
+2. 自动生成九维草稿，补齐适用证据，非作者逐维确认；独立身份服务签发绑定正文/证据/候选的授权receipt。Review作业用固定身份公钥/issuer校验后review-sign，使用与身份服务分离的Review密钥；见[19 九维Review](19-nine-dimension-review.md)。
 3. 签发作业权威查询检查来源和成功状态，再 attest：standard 档、固定期望、源 job ID，使用 --promotion-record 绑定该候选记录。
 4. 受控更新作业执行：
 
@@ -70,6 +70,8 @@ wl-skills-gate promote-apply signed-proof.json \
   --expect-pipeline-id "$WL_VERIFIED_PIPELINE_ID" --expect-job-id "$WL_VERIFIED_JOB_ID" \
   --expect-policy-hash "$WL_APPROVED_POLICY_HASH" --expect-rules-hash "$WL_APPROVED_RULES_HASH" \
   --review review-record.json --review-public-key "$WL_REVIEW_PUBLIC_KEY" \
+  --review-evidence-root "$WL_REVIEW_EVIDENCE_ROOT" --expect-review-policy-hash "$WL_APPROVED_REVIEW_POLICY_HASH" \
+  --authorization-public-key "$WL_IDENTITY_PUBLIC_KEY" --expect-authorization-issuer "$WL_IDENTITY_ISSUER" \
   --out controller-audit
 ```
 

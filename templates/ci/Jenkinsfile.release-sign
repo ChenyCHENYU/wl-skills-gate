@@ -1,0 +1,26 @@
+// This job runs a centrally pinned Jenkinsfile. It never checks out or executes
+// project code. WL_* paths/expectations come from the approved job configuration.
+pipeline {
+  agent { label 'wl-release-signer-isolated' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true) }
+  stages {
+    stage('Verify every component and sign the exact release set') {
+      steps {
+        withCredentials([file(credentialsId: 'wl-release-set-signing-key', variable: 'WL_RELEASE_KEY')]) {
+          sh '''
+            set -eu
+            # create verifies every component's signed proof, original full
+            # release summary, current manifest, actual artifact/config bytes,
+            # approved CI IDs and policy hashes before using the signing key.
+            test -n "$WL_APPROVED_GATE_CLI"
+            node "$WL_APPROVED_GATE_CLI" release-set create \
+              --input "$WL_APPROVED_RELEASE_INPUT" --evidence-root "$WL_CENTRAL_EVIDENCE_ROOT" \
+              --expect-input-hash "$WL_APPROVED_RELEASE_INPUT_HASH" --private-key "$WL_RELEASE_KEY" \
+              --issuer "$WL_RELEASE_ISSUER" --out "$WL_NEW_RELEASE_SET_FILE"
+          '''
+        }
+      }
+    }
+  }
+  post { always { archiveArtifacts artifacts: 'release-delivery/**', allowEmptyArchive: true } }
+}

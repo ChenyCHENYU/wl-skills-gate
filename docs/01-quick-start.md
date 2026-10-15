@@ -1,6 +1,6 @@
 # 01 快速开始
 
-对应 3.1/4.1、A1/A3。需要 Node ≥20，业务检查器与项目依赖需另行准备。
+对应 3.1/4.1、A1/A3。需要 Node ≥22.12，业务检查器与项目依赖需另行准备。
 
 ## 包仓库自测
 
@@ -17,7 +17,7 @@ node bin/wl-skills-gate.js self-test
 
 ```bash
 # 取得书面授权后，从公共 npm registry 安装固定版本。
-pnpm add -D --save-exact @agile-team/wl-skills-gate@0.6.1
+pnpm add -D --save-exact @agile-team/wl-skills-gate@0.7.0
 mkdir -p quality
 # 从安装包 templates/quality 取模板，按真实检查器和工具版本修改。
 pnpm exec wl-skills-gate run --profile standard

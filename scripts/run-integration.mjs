@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { generateKeyPairSync } from "node:crypto";
 import { promote, applyPromotion } from "../lib/promote.js";
 import { signGateProof, signReviewRecord, signRecord } from "../lib/evidence.js";
+import { supplementReviewDraft, REVIEW_DIMENSIONS } from "../lib/review.js";
 import { git } from "../lib/source-state.js";
 import { loadConfig } from "../lib/config.js";
 import { readJson } from "../lib/util.js";
@@ -39,9 +40,15 @@ export async function runIntegration() {
     writeFileSync(path.join(repo, "quality/policy.json"), JSON.stringify({ schemaVersion: 1, project: "integration",
       releaseRequires: ["SCAN"], checks: [{ id: "SCAN", tool: "cmd-json", command: "node scan.mjs", versionCommand: "node --version", profiles: ["standard", "release"] }] }));
     writeFileSync(path.join(repo, "quality/rules.lock.json"), JSON.stringify({ lockVersion: 1, "wl-skills-gate": gateVersion, tools: { SCAN: process.version } }));
+    const reviewEvidenceTypes = { submission: "git-commits", branch: "promotion-record", coding: "gate-summary", ui: "ui-scope-review",
+      review: "review-checklist", tests: "test-results", scan: "gate-summary", cicd: "candidate-check", governance: "locked-rules" };
+    const reviewPolicy = { schemaVersion: 1, project: "integration", dimensions: REVIEW_DIMENSIONS.map((d) => ({
+      id: d.id, applicable: true, requiredEvidenceTypes: [reviewEvidenceTypes[d.id]] })) };
+    writeFileSync(path.join(repo, "quality/review-policy.json"), JSON.stringify(reviewPolicy));
+    writeFileSync(path.join(repo, "test.mjs"), "import {test} from 'node:test';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';test('candidate scanner returns validated finding schema',()=>{const result=JSON.parse(execFileSync(process.execPath,['scan.mjs'],{encoding:'utf8'}));assert(Array.isArray(result.findings));for(const f of result.findings){assert.equal(f.ruleId,'DEMO/E');assert.equal(f.severity,'error');assert.equal(f.file,'source.txt');}});");
     git(["add", "-A"], repo); git(["commit", "-qm", "initial"], repo); git(["push", "-q", "-u", "origin", "main"], repo);
     git(["push", "-q", "origin", "main:dev", "main:sit"], repo);
-    const gateKeys = keyFiles(base, "gate"); const reviewKeys = keyFiles(base, "review");
+    const gateKeys = keyFiles(base, "gate"); const reviewKeys = keyFiles(base, "review"); const identityKeys = keyFiles(base, "identity");
     const config = loadConfig(repo);
     const pins = { project: "integration", expectPolicyHash: config.policyHash, expectRulesHash: config.ruleSetHash,
       expectPipelineId: "1", expectJobId: "2",
@@ -55,21 +62,56 @@ export async function runIntegration() {
     };
     const candidate = async (source, extra = {}) => {
       const candidatePins = { ...pins, ...extra };
-      const r = await promote({ root: repo, source, target: "dev", ...candidatePins });
+      const r = await promote({ root: repo, source, target: "dev", prepareCommand: "node --test test.mjs", ...candidatePins });
       if (r.exitCode !== 0) return { result: r };
       const record = readJson(r.recordFile);
       const summaryFile = path.join(r.outDir, "quality-summary.json");
       const attestationFile = path.join(r.outDir, "signed-proof.json");
       writeFileSync(attestationFile, JSON.stringify(signGateProof({ ...candidatePins, privateKeyFile: gateKeys.privateKeyFile,
         summaryFile, sha: record.candidateSha, profile: "standard", issuer: "quality-signer", pipelineId: "1", jobId: "2", promotionRecordFile: r.recordFile })));
+      // Continue the exact automatic draft produced by this candidate, after
+      // its worktree has been deleted. Supplement real local Git/test/lock facts;
+      // reviewer/UI applicability and identity remain explicitly isolated facts.
+      const auto = record.review, evidenceRoot = path.join(r.outDir, auto.evidenceRoot);
+      const automaticRecordFile = path.join(r.outDir, auto.recordFile), inputFile = path.join(r.outDir, auto.inputFile);
+      const automaticRecord = readJson(automaticRecordFile);
+      check("automatic-candidate-review-context-and-archive-resolve", automaticRecord.source === record.source && automaticRecord.target === record.target &&
+        automaticRecord.sourceSha === record.sourceSha && automaticRecord.targetBeforeSha === record.targetBeforeSha && existsSync(path.join(r.outDir, auto.bodyFile)));
+      const candidateFile = path.join(evidenceRoot, "candidate-facts.json");
+      const testRun = readJson(record.preparation.logFile);
+      if (testRun.exitCode !== 0 || testRun.timedOut || testRun.truncated) throw new Error("候选工作树实际测试未通过");
+      writeFileSync(path.join(evidenceRoot, "test-results.tap"), testRun.stdout);
+      writeFileSync(path.join(evidenceRoot, "git-commits.json"), JSON.stringify({ candidateSha: record.candidateSha,
+        log: git(["log", "--format=%H %ae %s", `${record.targetBeforeSha}..${record.candidateSha}`], repo) }));
+      writeFileSync(candidateFile, JSON.stringify(record));
+      writeFileSync(path.join(evidenceRoot, "locked-rules.json"), git(["show", `${record.candidateSha}:quality/rules.lock.json`], repo));
+      writeFileSync(path.join(evidenceRoot, "review-checklist.json"), JSON.stringify({ candidateSha: record.candidateSha,
+        facts: "Independent identity and reviewer decisions below are isolated contract fixtures, not production approvals", requiredDimensions: REVIEW_DIMENSIONS.map((d) => d.id) }));
+      writeFileSync(path.join(evidenceRoot, "ui-scope-review.json"), JSON.stringify({ candidateSha: record.candidateSha,
+        changedFiles: git(["diff", "--name-only", record.targetBeforeSha, record.candidateSha], repo), conclusion: "Isolated non-UI fixture; no browser/UI coverage claimed; independent review still required" }));
+      const files = { submission: "git-commits.json", branch: "candidate-facts.json", ui: "ui-scope-review.json", review: "review-checklist.json",
+        tests: "test-results.tap", cicd: "candidate-facts.json", governance: "locked-rules.json" };
+      const draft = supplementReviewDraft({ inputFile, recordFile: automaticRecordFile, evidenceRoot, authorId: "author",
+        evidence: Object.entries(files).map(([id, file]) => ({ id: `candidate-${id}`, type: reviewEvidenceTypes[id],
+          source: ["ui", "review"].includes(id) ? "isolated/explicit-reviewer-facts" : "isolated/actual-local-git-tests-and-lock",
+          project: "integration", candidateSha: record.candidateSha, file, dimensionIds: [id] })), outDir: path.join(evidenceRoot, "supplemented-draft") });
+      const supplemented = readJson(draft.recordFile);
+      check("supplement-preserves-auto-review-and-machine-evidence", supplemented.content.reviewId === automaticRecord.content.reviewId &&
+        supplemented.content.derivedFrom.reviewDigest === automaticRecord.reviewDigest && automaticRecord.content.evidence.every((e) => supplemented.content.evidence.some((n) => n.id === e.id && n.sha256 === e.sha256)));
+      const reviewAuthorizationFile = path.join(r.outDir, "review-authorization.json"), at = new Date();
+      writeFileSync(reviewAuthorizationFile, JSON.stringify(signRecord({ schemaVersion: 1, kind: "review-authorization", authorizationId: "isolated-approval", issuer: "isolated-identity-authority",
+        identitySource: "explicitly simulated independent reviewer", scope: "review-publish", decision: "approved", actorId: "reviewer", authorId: "author",
+        project: "integration", candidateSha: record.candidateSha, reviewDigest: draft.reviewDigest, bodyDigest: draft.bodyDigest, evidenceDigest: draft.evidenceDigest,
+        createdAt: at.toISOString(), expiresAt: new Date(at.getTime() + 3600000).toISOString(), reason: "Isolated contract acceptance, not production approval",
+        dimensionDecisions: REVIEW_DIMENSIONS.map((d) => ({ id: d.id, decision: "approved", reason: "Simulated independent review for this fixture" })) }, identityKeys.privateKeyFile)));
       const reviewFile = path.join(r.outDir, "review.json");
-      writeFileSync(reviewFile, JSON.stringify({ project: "integration", candidateSha: record.candidateSha,
-        source: record.source, target: record.target, sourceSha: record.sourceSha, targetBeforeSha: record.targetBeforeSha,
-        reviewerId: "reviewer", authorId: "author", decision: "approved", unresolvedBlocking: [] }));
-      writeFileSync(reviewFile, JSON.stringify(signReviewRecord({ recordFile: reviewFile, privateKeyFile: reviewKeys.privateKeyFile,
+      writeFileSync(reviewFile, JSON.stringify(signReviewRecord({ ...candidatePins, recordFile: draft.recordFile, privateKeyFile: reviewKeys.privateKeyFile,
+        authorizationFile: reviewAuthorizationFile, authorizationPublicKeyFile: identityKeys.publicKeyFile, expectAuthorizationIssuer: "isolated-identity-authority",
+        evidenceRoot, expectReviewPolicyHash: draft.policyHash,
         project: "integration", sha: record.candidateSha, reviewerId: "reviewer", authorId: "author" })));
       return { result: r, record, apply: { ...candidatePins, recordFile: r.recordFile, remoteUrl: bare, attestationFile, summaryFile,
-        reviewFile, reviewPublicKeyFile: reviewKeys.publicKeyFile } };
+        reviewFile, reviewEvidenceRoot: evidenceRoot, authorizationPublicKeyFile: identityKeys.publicKeyFile,
+        expectAuthorizationIssuer: "isolated-identity-authority", expectReviewPolicyHash: draft.policyHash, reviewPublicKeyFile: reviewKeys.publicKeyFile } };
     };
 
     branch("dev-409322-good", "feature.txt", "feature");

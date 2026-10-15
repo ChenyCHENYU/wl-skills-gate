@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "apiBaseUrl": "https://deployment.example.internal",
+  "tokenEnv": "WL_DEPLOYMENT_API_TOKEN",
+  "recordBaseUrl": "https://quality.example.internal/deployments",
+  "requestTimeoutMs": 10000,
+  "pollTimeoutMs": 600000,
+  "pollIntervalMs": 1000,
+  "checks": [
+    {"id": "version", "url": "https://uat.example.internal/version", "expectedStatus": 200, "releaseSetField": "releaseSetHash"},
+    {"id": "health", "url": "https://uat.example.internal/health", "expectedStatus": 200, "expectedText": "UP"},
+    {"id": "critical-flow", "url": "https://uat.example.internal/quality/smoke-critical-flow", "expectedStatus": 200, "expectedText": "passed"}
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kind": "review-input",
+  "project": "REPLACE_WITH_PROJECT_ID",
+  "scope": "full",
+  "authorId": "REPLACE_WITH_AUTHENTICATED_AUTHOR_ID",
+  "candidateSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "source": "REPLACE_WITH_SOURCE_BRANCH",
+  "target": "REPLACE_WITH_TARGET_BRANCH",
+  "sourceSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "targetBeforeSha": "cccccccccccccccccccccccccccccccccccccccc",
+  "policyFile": "review-policy.json",
+  "evidence": [
+    {
+      "id": "gate-current",
+      "type": "gate-summary",
+      "source": "REPLACE_WITH_ACTUAL_JOB_REFERENCE",
+      "project": "REPLACE_WITH_PROJECT_ID",
+      "candidateSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "file": "quality-summary.json",
+      "dimensionIds": ["coding", "scan"]
+    }
+  ],
+  "unresolvedBlocking": []
+}

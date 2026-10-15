@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "issuer": "wl-quality-central",
+  "publicKeyFile": "/srv/wl-quality/config/events-public.pem",
+  "allowedLinkOrigins": [
+    "https://gitlab.example.internal",
+    "https://quality.example.internal",
+    "https://jenkins.example.internal"
+  ],
+  "operators": [
+    "REPLACE_CHANNEL_OPERATOR"
+  ],
+  "projects": {
+    "wl-ui-produce": {
+      "owner": "REPLACE_FRONTEND_OWNER",
+      "backup": "REPLACE_FRONTEND_BACKUP",
+      "escalationOwner": "REPLACE_TEAM_LEAD",
+      "reviewers": [
+        "REPLACE_FRONTEND_REVIEWER",
+        "REPLACE_INDEPENDENT_VERIFIER"
+      ],
+      "channel": "frontend",
+      "issueBaseUrl": "https://quality.example.internal/issues",
+      "scopes": {
+        "standard": {
+          "requiredChecks": [
+            "FE-ESLINT",
+            "FE-TYPECHECK",
+            "FE-KIT",
+            "FE-UI"
+          ],
+          "policyHash": "REPLACE_WITH_APPROVED_SHA256",
+          "rulesHash": "REPLACE_WITH_APPROVED_SHA256",
+          "baselineHash": "REPLACE_WITH_APPROVED_SHA256_OR_ABSENT_HASH",
+          "waiversHash": "REPLACE_WITH_APPROVED_SHA256_OR_ABSENT_HASH",
+          "closurePolicy": {
+            "requiredEnvironments": [
+              "uat"
+            ],
+            "deploymentLane": "release",
+            "requireDeployment": true
+          }
+        }
+      },
+      "members": [
+        "REPLACE_FRONTEND_DEVELOPER",
+        "REPLACE_AUTHENTICATED_RELEASE_OPERATOR"
+      ]
+    },
+    "wl-produce": {
+      "owner": "REPLACE_BACKEND_OWNER",
+      "backup": "REPLACE_BACKEND_BACKUP",
+      "escalationOwner": "REPLACE_TEAM_LEAD",
+      "reviewers": [
+        "REPLACE_BACKEND_REVIEWER",
+        "REPLACE_INDEPENDENT_VERIFIER"
+      ],
+      "channel": "backend",
+      "issueBaseUrl": "https://quality.example.internal/issues",
+      "scopes": {
+        "standard": {
+          "requiredChecks": [
+            "REPLACE_WITH_ALL_APPROVED_MODULE_CHECKS"
+          ],
+          "policyHash": "REPLACE_WITH_APPROVED_SHA256",
+          "rulesHash": "REPLACE_WITH_APPROVED_SHA256",
+          "baselineHash": "REPLACE_WITH_APPROVED_SHA256_OR_ABSENT_HASH",
+          "waiversHash": "REPLACE_WITH_APPROVED_SHA256_OR_ABSENT_HASH",
+          "closurePolicy": {
+            "requiredEnvironments": [
+              "uat"
+            ],
+            "deploymentLane": "release",
+            "requireDeployment": true
+          }
+        }
+      },
+      "members": [
+        "REPLACE_BACKEND_DEVELOPER",
+        "REPLACE_AUTHENTICATED_RELEASE_OPERATOR"
+      ]
+    }
+  },
+  "channels": {
+    "frontend": {
+      "type": "feishu",
+      "webhookEnv": "WL_FEISHU_FRONTEND_WEBHOOK",
+      "signingSecretEnv": "WL_FEISHU_FRONTEND_SECRET"
+    },
+    "backend": {
+      "type": "feishu",
+      "webhookEnv": "WL_FEISHU_BACKEND_WEBHOOK",
+      "signingSecretEnv": "WL_FEISHU_BACKEND_SECRET"
+    }
+  },
+  "sla": {
+    "ackMinutes": 30,
+    "resolveMinutes": 1440,
+    "escalationMinutes": 60
+  },
+  "delivery": {
+    "maxAttempts": 3,
+    "retrySeconds": 60,
+    "timeoutMs": 10000
+  }
+}

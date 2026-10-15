@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "pipeline-expectations",
+  "eventId": "REPLACE_WITH_UNIQUE_RECONCILE_ID",
+  "expectedRuns": [
+    {
+      "project": "wl-ui-produce",
+      "scope": "standard",
+      "sha": "REPLACE_WITH_EXPECTED_SHA",
+      "sequence": 1,
+      "pipelineId": "REPLACE_WITH_PLATFORM_PIPELINE_ID",
+      "pipelineUrl": "https://gitlab.example.internal/project/pipelines/REPLACE_PIPELINE_ID",
+      "dueAt": "REPLACE_WITH_PLATFORM_DEADLINE_ISO_TIME"
+    }
+  ]
+}

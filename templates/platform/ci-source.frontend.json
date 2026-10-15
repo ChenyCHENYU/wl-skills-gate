@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "system": "gitlab",
+  "project": "wl-ui-produce",
+  "scope": "standard",
+  "baseUrl": "https://gitlab.example.internal",
+  "projectId": 1,
+  "trustedRunnerIds": [
+    1
+  ],
+  "tokenEnv": "WL_GITLAB_READ_TOKEN",
+  "ref": "REPLACE_WITH_ACTUAL_APPROVED_REF",
+  "requiredJobs": [
+    "wl-quality-frontend",
+    "REPLACE_WITH_EXISTING_REQUIRED_TEST_JOB"
+  ],
+  "artifacts": {
+    "job": "wl-quality-frontend",
+    "paths": [
+      "quality-reports/quality-summary.json",
+      "quality-reports/quality-report.html",
+      "quality-reports/review/submission.json",
+      "quality-reports/review/branch.json",
+      "quality-reports/review/ui.json",
+      "quality-reports/review/impact-review.json",
+      "quality-reports/review/tests.json",
+      "quality-reports/review/cicd.json",
+      "quality-reports/review/governance.json",
+      "quality-reports/review/diff.patch"
+    ],
+    "optionalPaths": [
+      "quality-reports/review/ui.json",
+      "quality-reports/review/impact-review.json",
+      "quality-reports/review/tests.json",
+      "quality-reports/review/cicd.json",
+      "quality-reports/review/governance.json",
+      "quality-reports/review/diff.patch"
+    ]
+  },
+  "qualitySummary": "quality-reports/quality-summary.json",
+  "maxArtifactBytes": 67108864
+}

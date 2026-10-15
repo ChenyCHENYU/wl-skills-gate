@@ -1,0 +1,18 @@
+[Unit]
+Description=WL quality discovery and reconciliation loop
+After=network-online.target
+
+[Service]
+Type=simple
+User=wl-quality
+Group=wl-quality
+UMask=0077
+EnvironmentFile=/etc/wl-quality/automation.env
+ExecStart=/opt/node/bin/node /opt/wl-skills-gate/bin/wl-skills-gate.js automation --config /srv/wl-quality/config/automation-config.json --watch --send
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

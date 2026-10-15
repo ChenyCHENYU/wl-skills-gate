@@ -1,0 +1,32 @@
+// One fixed, independently isolated signing job per approved component. It has
+// read-only CI credentials and a proof key, and never executes project scripts.
+pipeline {
+  agent { label 'wl-proof-signer-isolated' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true) }
+  stages {
+    stage('Query actual CI status and download immutable raw artifacts') {
+      steps {
+        sh '''
+          set -eu
+          node "$WL_APPROVED_GATE_CLI" collect-ci --config "$WL_FIXED_CI_SOURCE_CONFIG" \
+            --request "$WL_CENTRAL_CI_REQUEST" --out "$WL_NEW_COLLECTED_DIRECTORY"
+        '''
+      }
+    }
+    stage('Verify and sign the actual candidate report and artifact manifest') {
+      steps {
+        // The fixed request includes source/config/manifest paths, expected
+        // candidate/environment and all four approved policy hashes. The
+        // helper re-verifies the source snapshot and every binary/config byte.
+        withCredentials([file(credentialsId: 'wl-component-proof-signing-key', variable: 'WL_COMPONENT_KEY')]) {
+          sh '''
+            set -eu
+            node "$WL_APPROVED_GATE_ROOT/templates/ci/sign-collected-release.mjs" \
+              "$WL_FIXED_COMPONENT_SIGN_REQUEST"
+          '''
+        }
+      }
+    }
+  }
+  post { always { archiveArtifacts artifacts: 'component-proof-delivery/**', allowEmptyArchive: true } }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "kind": "quality-event",
+  "eventId": "REPLACE_WITH_GATE_RUN_EVENT_ID",
+  "project": "wl-ui-produce",
+  "scope": "standard",
+  "sha": "REPLACE_WITH_ACTUAL_CHECKED_SHA",
+  "authorId": "REPLACE_WITH_PLATFORM_AUTHOR_ID",
+  "sequence": 1,
+  "pipelineId": "REPLACE_WITH_VERIFIED_PIPELINE_ID",
+  "jobId": "REPLACE_WITH_VERIFIED_JOB_ID",
+  "jobStatus": "failed",
+  "reportHash": "REPLACE_WITH_ACTUAL_REPORT_FILE_SHA256",
+  "reportUrl": "https://quality.example.internal/reports/REPLACE_RUN_ID",
+  "pipelineUrl": "https://gitlab.example.internal/project/pipelines/REPLACE_PIPELINE_ID",
+  "occurredAt": "2026-10-13T00:00:00Z"
+}

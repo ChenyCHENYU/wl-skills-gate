@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "kind": "deployment-config",
+  "issuer": "wl-deployment-executor",
+  "environment": "uat",
+  "lane": "release",
+  "projects": [
+    "wl-ui-produce",
+    "wl-produce"
+  ],
+  "operators": [
+    "REPLACE_AUTHENTICATED_RELEASE_OPERATOR"
+  ],
+  "verifiers": [
+    "REPLACE_INDEPENDENT_VERIFIER"
+  ],
+  "requiredSmokeChecks": [
+    "version",
+    "health",
+    "critical-flow"
+  ],
+  "releaseMaxAgeMinutes": 1440,
+  "recoveryMaxAgeMinutes": 43200,
+  "allowedLinkOrigins": [
+    "https://jenkins.example.internal",
+    "https://quality.example.internal"
+  ],
+  "authorizationIssuer": "wl-quality-identity",
+  "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+  "releaseIssuer": "wl-release-signer",
+  "releasePublicKeyFile": "/controlled/keys/release-public.pem",
+  "commandsRoot": "/controlled/deployment-scripts",
+  "artifactRoot": "/controlled/staged-release",
+  "stateFile": "/controlled/deployment-state/uat.json",
+  "ci": {"system": "jenkins", "baseUrl": "https://jenkins.example.internal", "jobPath": "wl-quality/deploy-uat", "jobId": "deploy-uat"},
+  "commands": {
+    "deploy": {
+      "program": "/controlled/runtime/bin/node",
+      "programHash": "REPLACE_WITH_APPROVED_BINARY_SHA256",
+      "script": "controlled-deployment-http.mjs",
+      "scriptHash": "REPLACE_WITH_APPROVED_SCRIPT_SHA256",
+      "args": [],
+      "configFiles": [
+        {
+          "path": "deployment-http.json",
+          "sha256": "REPLACE_WITH_APPROVED_CONFIG_SHA256"
+        }
+      ],
+      "timeoutMs": 900000,
+      "environment": {},
+      "secretEnv": [
+        "WL_DEPLOYMENT_API_TOKEN"
+      ]
+    },
+    "smoke": {
+      "program": "/controlled/runtime/bin/node",
+      "programHash": "REPLACE_WITH_APPROVED_BINARY_SHA256",
+      "script": "controlled-deployment-http.mjs",
+      "scriptHash": "REPLACE_WITH_APPROVED_SCRIPT_SHA256",
+      "args": [],
+      "configFiles": [
+        {
+          "path": "deployment-http.json",
+          "sha256": "REPLACE_WITH_APPROVED_CONFIG_SHA256"
+        }
+      ],
+      "timeoutMs": 120000,
+      "environment": {},
+      "secretEnv": [
+        "WL_DEPLOYMENT_API_TOKEN"
+      ]
+    },
+    "recover": {
+      "program": "/controlled/runtime/bin/node",
+      "programHash": "REPLACE_WITH_APPROVED_BINARY_SHA256",
+      "script": "controlled-deployment-http.mjs",
+      "scriptHash": "REPLACE_WITH_APPROVED_SCRIPT_SHA256",
+      "args": [],
+      "configFiles": [
+        {
+          "path": "deployment-http.json",
+          "sha256": "REPLACE_WITH_APPROVED_CONFIG_SHA256"
+        }
+      ],
+      "timeoutMs": 900000,
+      "environment": {},
+      "secretEnv": [
+        "WL_DEPLOYMENT_API_TOKEN"
+      ]
+    }
+  }
+}

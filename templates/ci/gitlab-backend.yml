@@ -1,0 +1,40 @@
+# Install approved profiles and quality-tools lock before enabling this required job.
+# Gate owns same-run Java-static/JUnit producers. No production/shared-system credentials.
+wl-quality-backend:
+  stage: quality
+  variables:
+    GIT_DEPTH: "0"
+  image: "$WL_APPROVED_JAVA_QUALITY_IMAGE"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - node --version
+    - mvn -version
+    - npm ci --prefix quality-tools --include=dev
+    - |
+      set +e
+      node quality-tools/node_modules/@agile-team/wl-skills-gate/bin/wl-skills-gate.js run --profile standard --sha "$CI_COMMIT_SHA" \
+        --expect-policy-hash "$WL_APPROVED_POLICY_HASH" --expect-rules-hash "$WL_APPROVED_RULES_HASH" \
+        --expect-baseline-hash "$WL_APPROVED_BASELINE_HASH" --expect-waivers-hash "$WL_APPROVED_WAIVERS_HASH"
+      gate_status=$?
+      set -e
+      if [ -f quality-reports/quality-summary.json ]; then
+        # Source facts preserve the Gate result; missing human evidence stays pending.
+        node quality-tools/node_modules/@agile-team/wl-skills-gate/templates/ci/produce-review-facts.mjs --out-dir quality-reports/review || exit 2
+      fi
+      exit "$gate_status"
+  artifacts:
+    when: always
+    paths:
+      - quality-reports/
+      - "**/target/surefire-reports/"
+      - "**/target/site/jacoco/"
+      - "**/target/checkstyle-result.xml"
+      - "**/target/pmd.xml"
+      - "**/target/p3c.xml"
+      - "**/target/spotbugsXml.xml"
+    reports:
+      codequality: quality-reports/code-quality/gl-code-quality-report.json
+      junit: "**/target/surefire-reports/TEST-*.xml"

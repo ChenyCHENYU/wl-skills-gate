@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "kind": "lifecycle-event",
+  "eventId": "REPLACE_UNIQUE_BUILD_EVENT_ID",
+  "project": "wl-produce",
+  "scope": "standard",
+  "category": "build",
+  "lane": "main",
+  "environment": "uat",
+  "status": "success",
+  "sha": "REPLACE_ACTUAL_CHECKOUT_SHA",
+  "authorId": "REPLACE_VERIFIED_AUTHOR_ID",
+  "sequence": 1,
+  "pipelineId": "REPLACE_ACTUAL_PIPELINE_ID",
+  "jobId": "REPLACE_ACTUAL_JOB_ID",
+  "occurredAt": "REPLACE_SOURCE_FINISHED_AT",
+  "reportUrl": "https://quality.example.internal/reports/REPLACE_BUILD_ID",
+  "pipelineUrl": "https://gitlab.example.internal/REPLACE_PROJECT/pipelines/REPLACE_ID",
+  "artifactHash": "REPLACE_DOWNLOADED_ARTIFACT_SHA256",
+  "manifestHash": "REPLACE_DOWNLOADED_MANIFEST_SHA256",
+  "artifactUrl": "https://gitlab.example.internal/REPLACE_PROJECT/jobs/REPLACE_ID/artifacts",
+  "source": {
+    "system": "gitlab",
+    "recordId": "REPLACE_ACTUAL_JOB_ID",
+    "recordHash": "REPLACE_SAVED_API_RESPONSE_SHA256",
+    "observedAt": "REPLACE_API_QUERY_TIME",
+    "url": "https://gitlab.example.internal/api/v4/projects/REPLACE_PROJECT_ID/jobs/REPLACE_ID"
+  }
+}

@@ -1,0 +1,78 @@
+// Separate from check/build and signing. ACTION is deploy, smoke or recover;
+// each invocation needs its own authenticated, exact-plan authorization.
+pipeline {
+  agent { label 'wl-controlled-deployment' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true) }
+  parameters { choice(name: 'ACTION', choices: ['deploy', 'smoke', 'recover'], description: '独立授权动作；失败不自动回退') }
+  stages {
+    stage('Verify fixed release and preview current environment') {
+      steps {
+        script {
+          env.WL_CURRENT_PLAN_ID = sh(returnStdout: true, script: '''node -e 'process.stdout.write("deployment-"+require("node:crypto").createHash("sha256").update(process.env.BUILD_URL).digest("hex").slice(0,24))' ''').trim()
+          env.WL_NEW_DEPLOYMENT_PLAN = "${env.WL_CONTROL_DATA_DIR}/deployment-plans/${env.WL_CURRENT_PLAN_ID}.json"
+          env.WL_NEW_EXECUTION_DIRECTORY = "${env.WL_CONTROL_DATA_DIR}/deployment-executions/${env.WL_CURRENT_PLAN_ID}"
+        }
+        sh '''
+          set -eu
+          # plan independently verifies the signed combination and uses the
+          # approved action-specific freshness budget (including recovery).
+          node "$WL_APPROVED_GATE_CLI" deployment plan --config "$WL_DEPLOYMENT_CONFIG" \
+            --release-set "$WL_SELECTED_RELEASE_SET" --expect-release-set-hash "$WL_SELECTED_RELEASE_SET_HASH" \
+            --state "$WL_FIXED_ENVIRONMENT_STATE" --action "$ACTION" --out "$WL_NEW_DEPLOYMENT_PLAN"
+        '''
+      }
+    }
+    stage('Queue the exact plan for authenticated approval') {
+      steps {
+        sh '''
+          set -eu
+          node "$WL_APPROVED_GATE_CLI" deployment queue \
+            --requests-dir "$WL_CONTROL_DATA_DIR/deployment-requests" --plan-id "$WL_CURRENT_PLAN_ID" \
+            --config-id "$WL_DEPLOYMENT_CONFIG_ID" --plan "$WL_NEW_DEPLOYMENT_PLAN" \
+            --release-set "$WL_SELECTED_RELEASE_SET"
+          echo "本次授权入口：$WL_CONTROL_ORIGIN/deployments/$WL_CURRENT_PLAN_ID"
+        '''
+      }
+    }
+    stage('Execute fixed approved adapter') {
+      steps {
+        withCredentials([file(credentialsId: 'wl-deployment-execution-key', variable: 'WL_EXECUTOR_KEY')]) {
+          sh '''
+            set -eu
+            # The job waits at most 15 minutes for the actual authenticated
+            # signature. It has neither the IdP nor event-signing private key.
+            node "$WL_APPROVED_GATE_CLI" deployment run-authorized --config "$WL_DEPLOYMENT_CONFIG" \
+              --release-set "$WL_SELECTED_RELEASE_SET" --expect-release-set-hash "$WL_SELECTED_RELEASE_SET_HASH" \
+              --state "$WL_FIXED_ENVIRONMENT_STATE" --plan "$WL_NEW_DEPLOYMENT_PLAN" \
+              --authorization-dir "$WL_CONTROL_DATA_DIR/authorizations" --timeout-ms 900000 \
+              --private-key "$WL_EXECUTOR_KEY" \
+              --out-dir "$WL_NEW_EXECUTION_DIRECTORY" --send
+          '''
+        }
+      }
+    }
+  }
+  post {
+    always {
+      script {
+        // The execution contains signed JOB_NAME/BUILD_NUMBER/BUILD_URL facts.
+        // Only the central consumer owns the event key and writes the ledger.
+        def deliveryStatus = sh(returnStatus: true, script: '''
+          set -eu
+          if [ -n "${WL_NEW_EXECUTION_DIRECTORY:-}" ] && [ -f "$WL_NEW_EXECUTION_DIRECTORY/execution.json" ]; then
+            delivery_result=0
+            node "$WL_APPROVED_GATE_CLI" deployment deliver \
+              --delivery-dir "$WL_CONTROL_DATA_DIR/deployment-deliveries" --config-id "$WL_DEPLOYMENT_CONFIG_ID" \
+              --execution "$WL_NEW_EXECUTION_DIRECTORY/execution.json" --release-set "$WL_SELECTED_RELEASE_SET" \
+              --expect-release-set-hash "$WL_SELECTED_RELEASE_SET_HASH" || delivery_result=$?
+            mkdir -p "deployment-delivery/$WL_CURRENT_PLAN_ID"
+            cp -R "$WL_NEW_EXECUTION_DIRECTORY/." "deployment-delivery/$WL_CURRENT_PLAN_ID/"
+            exit "$delivery_result"
+          fi
+        ''')
+        archiveArtifacts artifacts: "deployment-delivery/${env.WL_CURRENT_PLAN_ID}/**", allowEmptyArchive: true
+        if (deliveryStatus != 0) error('部署原始记录已归档；中央交付失败，禁止记成功或关闭')
+      }
+    }
+  }
+}

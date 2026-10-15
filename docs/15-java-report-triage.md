@@ -1,6 +1,6 @@
 # 15 Java 原生报告身份、定位与复核
 
-适用 Gate 0.6.1；业务项目不会自动安装或升级。BD 提供团队约束和安全修复建议，扫描器负责引擎执行与原 XML；组织风险、基线和门禁分类只由 Gate [java-risk-policy.js](../lib/java-risk-policy.js) 维护。业务项目无需复制该表，BD 单包不依赖 Gate 运行时。
+适用 Gate 0.7.0；业务项目不会自动安装或升级。BD 提供团队约束和安全修复建议，扫描器负责引擎执行与原 XML；组织风险、基线和门禁分类只由 Gate [java-risk-policy.js](../lib/java-risk-policy.js) 维护。业务项目无需复制该表，BD 单包不依赖 Gate 运行时。
 
 ## 来源与版本
 

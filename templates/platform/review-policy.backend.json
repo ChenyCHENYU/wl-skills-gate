@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "project": "wl-produce",
+  "dimensions": [
+    {
+      "id": "submission",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "commit-check"
+      ]
+    },
+    {
+      "id": "branch",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "branch-check"
+      ]
+    },
+    {
+      "id": "coding",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "gate-summary",
+        "diff"
+      ]
+    },
+    {
+      "id": "ui",
+      "applicable": false,
+      "requiredEvidenceTypes": [
+        "ui-verification"
+      ],
+      "reason": "本接线范围为Java服务且无界面；需负责人和非作者复核确认，本次若涉及界面则重新批准适用策略"
+    },
+    {
+      "id": "review",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "diff",
+        "impact-review"
+      ]
+    },
+    {
+      "id": "tests",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "test-verification"
+      ]
+    },
+    {
+      "id": "scan",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "gate-summary"
+      ]
+    },
+    {
+      "id": "cicd",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "pipeline-verification"
+      ]
+    },
+    {
+      "id": "governance",
+      "applicable": true,
+      "requiredEvidenceTypes": [
+        "ownership-verification"
+      ]
+    }
+  ]
+}

@@ -1,17 +1,19 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.6.1",
-  "description": "统一质量门禁共享包 — 三档执行、原生报告归一（含 P3C/PMD/Checkstyle/SpotBugs）、单源 Java 风险分级与多模块源码定位、修复闭环、受控晋级、签名制品验证、失败关闭和完整自测",
+  "version": "0.9.0",
+  "description": "质量工程执行包 — 统一接入、九维Review证据授权、自动门禁、可信CI采集与分类治理通知",
   "type": "module",
   "main": "./lib/run.js",
   "bin": {
-    "wl-skills-gate": "bin/wl-skills-gate.js"
+    "wl-skills-gate": "bin/wl-skills-gate.js",
+    "wl-gate": "bin/wl-skills-gate.js"
   },
   "scripts": {
     "test": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs",
     "verify": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs"
   },
   "files": [
+    "assets/",
     "bin/",
     "lib/",
     "schemas/",
@@ -37,7 +39,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.12.0"
   },
   "repository": {
     "type": "git",

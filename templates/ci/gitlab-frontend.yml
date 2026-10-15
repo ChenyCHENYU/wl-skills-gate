@@ -1,0 +1,32 @@
+# Merge into the existing complete stages/workflow. This is a central job fragment.
+# Approved image/expectations are controlled by platform; plain include is not enforcement.
+wl-quality-frontend:
+  stage: quality
+  variables:
+    GIT_DEPTH: "0"
+  image: "$WL_APPROVED_QUALITY_IMAGE"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - node --version
+    - corepack enable
+    - pnpm install --frozen-lockfile --prod=false
+    - |
+      set +e
+      pnpm exec wl-skills-gate run --profile standard --sha "$CI_COMMIT_SHA" \
+        --expect-policy-hash "$WL_APPROVED_POLICY_HASH" --expect-rules-hash "$WL_APPROVED_RULES_HASH" \
+        --expect-baseline-hash "$WL_APPROVED_BASELINE_HASH" --expect-waivers-hash "$WL_APPROVED_WAIVERS_HASH"
+      gate_status=$?
+      set -e
+      if [ -f quality-reports/quality-summary.json ]; then
+        # Source facts preserve the Gate result; missing human evidence stays pending.
+        node node_modules/@agile-team/wl-skills-gate/templates/ci/produce-review-facts.mjs --out-dir quality-reports/review || exit 2
+      fi
+      exit "$gate_status"
+  artifacts:
+    when: always
+    paths: [quality-reports/]
+    reports:
+      codequality: quality-reports/code-quality/gl-code-quality-report.json

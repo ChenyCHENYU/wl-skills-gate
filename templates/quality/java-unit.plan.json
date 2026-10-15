@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "prepareDependencies": true,
+  "offline": false,
+  "modules": [
+    {
+      "path": "wl-produce-pl/wl-produce-pl-service",
+      "reportFiles": [
+        "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-REPLACE_WITH_ACTUAL_UNIT_TEST_CLASS.xml"
+      ]
+    }
+  ]
+}

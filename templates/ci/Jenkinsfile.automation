@@ -1,0 +1,20 @@
+// Install as a centrally pinned job. Do not check out or evaluate project code.
+// Use this job OR the systemd automation loop; never schedule both.
+pipeline {
+  agent { label 'wl-quality-central' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true) }
+  triggers { cron('* * * * *') }
+  stages {
+    stage('Discover, collect, review, reconcile and deliver') {
+      steps {
+        // WL_* environment/secret bindings are configured in the controlled job.
+        // Signing keys live on its protected volume, unavailable to check Runners.
+        sh '''
+          set -eu
+          node "$WL_APPROVED_GATE_CLI" automation --config "$WL_CENTRAL_AUTOMATION_CONFIG" --send
+        '''
+      }
+    }
+  }
+  post { unsuccessful { echo '查看中央执行器 result.json 和认证入口中的投递恢复；失败不会阻断其他项目对账。' } }
+}

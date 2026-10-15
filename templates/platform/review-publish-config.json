@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "controlCatalogFile": "/srv/wl-quality/control/reviews.json",
+  "authorizationDir": "/srv/wl-quality/control/authorizations",
+  "stateFile": "/srv/wl-quality/review-signing/state.json",
+  "manifestDir": "/srv/wl-quality/review-delivery",
+  "reviewPrivateKeyEnv": "WL_REVIEW_PRIVATE_KEY_FILE",
+  "reviewPublicKeyFile": "/srv/wl-quality/config/review-public.pem",
+  "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+  "authorizationIssuer": "wl-quality-identity",
+  "projects": {
+    "wl-ui-produce": {
+      "evidenceRoots": [
+        "/srv/wl-quality/evidence/frontend"
+      ],
+      "reviewers": [
+        "REPLACE_FRONTEND_REVIEWER"
+      ],
+      "collectorConfigFile": "./review-collector.frontend.json",
+      "reviewPolicyFile": "./review-policy.frontend.json",
+      "reviewPolicyHash": "REPLACE_APPROVED_REVIEW_POLICY_SHA256",
+      "policyHash": "REPLACE_APPROVED_GATE_POLICY_SHA256",
+      "rulesHash": "REPLACE_APPROVED_RULES_SHA256",
+      "baselineHash": "REPLACE_APPROVED_BASELINE_SHA256",
+      "waiversHash": "REPLACE_APPROVED_WAIVERS_SHA256",
+      "profile": "standard"
+    },
+    "wl-produce": {
+      "evidenceRoots": [
+        "/srv/wl-quality/evidence/backend"
+      ],
+      "reviewers": [
+        "REPLACE_BACKEND_REVIEWER"
+      ],
+      "collectorConfigFile": "./review-collector.backend.json",
+      "reviewPolicyFile": "./review-policy.backend.json",
+      "reviewPolicyHash": "REPLACE_APPROVED_REVIEW_POLICY_SHA256",
+      "policyHash": "REPLACE_APPROVED_GATE_POLICY_SHA256",
+      "rulesHash": "REPLACE_APPROVED_RULES_SHA256",
+      "baselineHash": "REPLACE_APPROVED_BASELINE_SHA256",
+      "waiversHash": "REPLACE_APPROVED_WAIVERS_SHA256",
+      "profile": "standard"
+    }
+  }
+}

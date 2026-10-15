@@ -21,7 +21,7 @@
 
 run 的 unsigned 结果不允许部署。Ed25519 私钥仅在固定版本的受控签发作业，公钥/issuer/期望作业 ID 固定在更新/发布控制配置。Review 使用单独 Reviewer 授权及签名密钥，非作者、候选绑定。
 
-签发前的权威查询确认真实项目、source SHA、job/pipeline、成功状态、模板/Runner、approved policy/rules/baseline/waivers、真实工具与覆盖。包负责离线签名与内容核验，尚未实现内网平台查询连接。不能把“报告来自某 CI job”或“字段填了 issuer”直接当来源可信。
+签发前的权威查询确认真实项目、source SHA、job/pipeline、成功状态、模板/Runner、approved policy/rules/baseline/waivers、真实工具与覆盖。包内 collect-ci 已提供固定 GitLab/Jenkins 只读来源查询，详见18；实际受控模板/权限/身份和中央作业仍须配置与实测。不能把“报告来自某 CI job”或“字段填了 issuer”直接当来源可信。
 
 同一摘要需三处一致：批准登记表 → 实际检查 → 签名验证。批准摘要来自审批后的版本，不在候选中现算现批。署名签发只证明可信主体签了这些内容，该主体必须执行来源核验，不能提供任意上传报告的盲签接口。
 
@@ -43,4 +43,4 @@ promote-apply 在新 bare 仓库运行，不继承业务仓库的 Hook/配置；
 
 0.5.1 将全部 Git 跟踪内容纳入 sourceDigest/脏状态，报告排除项不能藏住 tracked 源码；报告目录不允许覆盖项目根、跟踪文件或经项目内符号链接写出。Git submodule、特殊文件等尚无独立来源绑定时失败关闭，需另行接线验收。
 
-proof 默认有效期 1440 分钟；平台另须提供撤销、当前批准版本核对和可信缓存过期策略。签名离线有效不能独自证明当前未撤销。旧版本恢复不能靠修改 createdAt 或延长时效复用过期证明，应重新取得批准证据或由独立紧急恢复授权链处理；当前包未提供专用恢复授权命令。
+proof 默认有效期 1440 分钟；平台另须提供撤销、当前批准版本核对和可信缓存过期策略。签名离线有效不能独自证明当前未撤销。旧版本恢复不能靠修改 createdAt 或延长时效复用过期证明，应重新取得批准证据或由独立紧急恢复授权链处理；当前包通过固定组合的 deployment plan/run-authorized recover 动作，另行认证授权并核对实际环境状态；见包内 Jenkinsfile.deployment。

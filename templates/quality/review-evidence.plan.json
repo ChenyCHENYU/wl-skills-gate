@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "project": "REPLACE_WITH_APPROVED_PROJECT_ID",
+  "requiredTestCheckIds": [],
+  "evidence": [
+    { "id": "ui", "type": "ui-verification", "dimensionIds": ["ui"], "file": "quality-reports/review-originals/ui.json" },
+    { "id": "impact-review", "type": "impact-review", "dimensionIds": ["review"], "file": "quality-reports/review-originals/impact-review.json" },
+    { "id": "cicd", "type": "pipeline-verification", "dimensionIds": ["cicd"], "file": "quality-reports/review-originals/cicd.json" },
+    { "id": "governance", "type": "ownership-verification", "dimensionIds": ["governance"], "file": "quality-reports/review-originals/governance.json" }
+  ]
+}

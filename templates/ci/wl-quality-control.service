@@ -1,0 +1,18 @@
+[Unit]
+Description=WL authenticated quality actions
+After=network-online.target
+
+[Service]
+Type=simple
+User=wl-quality
+Group=wl-quality
+UMask=0077
+EnvironmentFile=/etc/wl-quality/control.env
+ExecStart=/opt/node/bin/node /opt/wl-skills-gate/bin/wl-skills-gate.js control serve --config /srv/wl-quality/config/control-config.json --port 8787
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

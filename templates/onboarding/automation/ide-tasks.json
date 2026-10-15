@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "wl-quality:查看报告",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/quality/project-actions.mjs", "view-report"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "wl-quality:预览脚本修复",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/quality/project-actions.mjs", "preview-repair"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "wl-quality:确认应用机械计划并复扫",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/quality/project-actions.mjs", "confirm-repair"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": false },
+      "problemMatcher": []
+    }
+  ]
+}
