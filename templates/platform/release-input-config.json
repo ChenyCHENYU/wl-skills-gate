@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "kind": "release-input-config",
+  "releaseSetId": "REPLACE_WITH_UNIQUE_RELEASE_ID",
+  "environment": "uat",
+  "evidenceRoot": "release-evidence",
+  "outputFile": "generated/release-set-input.json",
+  "components": [
+    {
+      "project": "wl-ui-produce",
+      "scope": "standard",
+      "role": "frontend",
+      "authorId": "REPLACE_WITH_APPROVED_AUTHENTICATED_AUTHOR",
+      "sourceConfigFile": "sources/frontend.json",
+      "sourceConfigHash": "REPLACE_WITH_APPROVED_SOURCE_CONFIG_SHA256",
+      "sourceFile": "collected/frontend/source.json",
+      "proofFile": "proofs/frontend.json",
+      "publicKeyFile": "keys/frontend-public.pem",
+      "publicKeyHash": "REPLACE_WITH_APPROVED_PUBLIC_KEY_SHA256",
+      "manifestFile": "collected/frontend/artifacts/quality-reports/artifact-manifest.json",
+      "summaryFile": "collected/frontend/artifacts/quality-reports/quality-summary.json",
+      "artifactRoot": "collected/frontend/artifacts",
+      "expectIssuer": "REPLACE_WITH_APPROVED_FRONTEND_PROOF_ISSUER",
+      "expectPolicyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
+      "expectRulesHash": "REPLACE_WITH_APPROVED_RULES_SHA256",
+      "expectBaselineHash": "REPLACE_WITH_APPROVED_BASELINE_SHA256",
+      "expectWaiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256"
+    },
+    {
+      "project": "wl-produce",
+      "scope": "standard",
+      "role": "backend",
+      "authorId": "REPLACE_WITH_APPROVED_AUTHENTICATED_AUTHOR",
+      "sourceConfigFile": "sources/backend.json",
+      "sourceConfigHash": "REPLACE_WITH_APPROVED_SOURCE_CONFIG_SHA256",
+      "sourceFile": "collected/backend/source.json",
+      "proofFile": "proofs/backend.json",
+      "publicKeyFile": "keys/backend-public.pem",
+      "publicKeyHash": "REPLACE_WITH_APPROVED_PUBLIC_KEY_SHA256",
+      "manifestFile": "collected/backend/artifacts/quality-reports/artifact-manifest.json",
+      "summaryFile": "collected/backend/artifacts/quality-reports/quality-summary.json",
+      "artifactRoot": "collected/backend/artifacts",
+      "expectIssuer": "REPLACE_WITH_APPROVED_BACKEND_PROOF_ISSUER",
+      "expectPolicyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
+      "expectRulesHash": "REPLACE_WITH_APPROVED_RULES_SHA256",
+      "expectBaselineHash": "REPLACE_WITH_APPROVED_BASELINE_SHA256",
+      "expectWaiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256"
+    }
+  ],
+  "compatibilityFile": "compatibility/declaration.json"
+}

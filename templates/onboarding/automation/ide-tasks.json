@@ -2,29 +2,91 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "wl-quality:打开项目检查接入状态",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/quality/workspace-setup.mjs",
+        "check"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "wl-quality:初始化本机质量环境",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/quality/workspace-setup.mjs",
+        "init"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "wl-quality:查看报告",
       "type": "process",
       "command": "node",
-      "args": ["${workspaceFolder}/scripts/quality/project-actions.mjs", "view-report"],
-      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "${workspaceFolder}/scripts/quality/project-actions.mjs",
+        "view-report"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": []
     },
     {
       "label": "wl-quality:预览脚本修复",
       "type": "process",
       "command": "node",
-      "args": ["${workspaceFolder}/scripts/quality/project-actions.mjs", "preview-repair"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "args": [
+        "${workspaceFolder}/scripts/quality/project-actions.mjs",
+        "preview-repair"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
       "problemMatcher": []
     },
     {
       "label": "wl-quality:确认应用机械计划并复扫",
       "type": "process",
       "command": "node",
-      "args": ["${workspaceFolder}/scripts/quality/project-actions.mjs", "confirm-repair"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": false },
+      "args": [
+        "${workspaceFolder}/scripts/quality/project-actions.mjs",
+        "confirm-repair"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
       "problemMatcher": []
     }
   ]

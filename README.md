@@ -33,44 +33,33 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 
 ## 快速接入
 
-由技术经理在**实际 Git 项目根目录**接入一次。准备 Node.js ≥22.12、项目固定的包管理器和原有构建工具；安装源使用团队批准的 HTTPS registry。
+技术经理拿到批准的 Gate 完整包后，打开 `templates/launchers/setup.command`（macOS）、`setup.cmd`（Windows）或 `setup.sh`（Linux），按菜单选择任务。先提供 Node.js ≥22.12、项目固定的包管理器及原有构建工具。
 
-### 1. 预览项目接入计划
+| 任务 | 人只需做什么 | 脚本完成什么 |
+| --- | --- | --- |
+| 首次接入项目 | 选择 Git 项目根、批准安装源，确认各阶段差异 | 识别范围、安装固定依赖、同步规则、Hook、POM/锁、首扫及提交说明正反验证 |
+| 新成员初始化 | 选择已接项目，在安装与激活计划上确认 | 按仓库已提交清单恢复本机环境，保留项目策略，再验真实 Hook |
+| 运维接线 | 选择批准配置目录，预检后选择启动 | 核对配置/身份/凭据存在性/旧状态，启动中央采集与操作入口；消息默认预览 |
+| 组合发布输入 | 选择批准配置，确认组件与输出 | 从真实采集原件生成输入，核验来源、SHA、制品与兼容证据 |
+
+也可用一个命令启动相同交互流程；进入后无需复制计划摘要或拼接后续命令：
 
 ```bash
-npx --yes @agile-team/wl-skills-gate@latest onboard \
-  --root . --complete --registry https://registry.npmjs.org
+npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
+  --@agile-team:registry=https://registry.npmjs.org/ \
+  @agile-team/wl-skills-gate@0.10.0 setup project
 ```
-
-查看识别的项目类型、依赖版本、文件差异、Hook 和阻断项。脚本与模板随 Gate 包交付，无需从文档复制拼装。
 
 | 项目 | 依赖装在哪里 | 业务构建 |
 | --- | --- | --- |
-| PC Vue 管理端，如 `wl-ui-produce` | 项目 `package.json`：Gate / Kit / UI | 保留原前端构建 |
-| Java/Maven，如 `wl-produce` | `quality-tools/package.json`：Gate / BD | 保留 Maven，Node 工具不进入 jar |
+| PC Vue 管理端，如 `wl-ui-produce` | 根 `package.json`：Gate / Kit / UI | 保留原前端构建 |
+| Java/Maven，如 `wl-produce` | `quality-tools/package.json`：Gate / BD | Maven；Node 工具不进入 jar |
 
-`quality-tools/` 只是 Java 仓库里的 Node 工具依赖目录。内置后端配套针对 `wl-produce` PL 模块；其他 Maven 项目先由负责人配置模块与必测。移动端、UniApp 不套用 PC 配套。
+`quality-tools/` 是 Java 仓库内的 Node 工具依赖目录。内置后端配套针对 `wl-produce` PL；其他 Maven 项目先由负责人配置模块与必测。移动端、UniApp 不套用 PC 配套。
 
-### 2. 确认并应用这份计划
+首次接入反馈在 `quality-reports/setup/<sessionId>/result.html`，质量报告在 `quality-reports/quality-report.html`。只有真实首扫及 Hook 正反验证通过，才返回 `local-validated-awaiting-remote-acceptance`。GitLab/Jenkins 强制检查、独立 Review、真实到群及部署另做现场验收。
 
-```bash
-npx --yes @agile-team/wl-skills-gate@latest onboard \
-  --root . --complete --registry https://registry.npmjs.org \
-  --apply --plan-hash "<本次返回的 planHash>" --confirm
-```
-
-程序按计划安装固定依赖、同步规则、配置 Hook、执行首扫与提交说明正反验证。首次安装后如出现原生规则或 POM 新差异，会返回新的待确认阶段；用同一入口重新预览、确认后续跑。
-
-### 3. 验证本地与远端效果
-
-| 验收点 | 成功依据 |
-| --- | --- |
-| 本地接入 | 返回 `local-validated-awaiting-remote-acceptance`；首扫通过、合规提交说明通过、违规说明被拦截 |
-| 首份质量报告 | 打开 `quality-reports/quality-report.html`；结构化结果在 `quality-summary.json` |
-| 接入执行记录 | `quality-reports/onboarding/execution.json` 显示本次实际阶段与结果 |
-| 远端强制检查 | 按下节接线，在真实 MR / 构建中验证失败拒绝、通过放行与消息送达 |
-
-本地接入通过后，再完成 CI、Review、通知和部署验收。完整步骤与状态说明见 [接入指南](./docs/17-onboarding.md)。
+接线配置、非交互任务参数与失败处理见 [接入指南](./docs/17-onboarding.md)。
 
 ## 日常怎么用
 

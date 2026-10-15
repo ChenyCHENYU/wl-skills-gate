@@ -13,17 +13,18 @@ import { nodeRangeSatisfied, onboardingEnvironment } from "../../lib/onboard-env
 const PACKAGE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const BD_FILES = path.resolve(PACKAGE, "fixtures/onboarding");
 const REGISTRY = "https://registry.example.invalid/";
+const PNPM_VERSION = execFileSync("pnpm", ["--version", "--config.manage-package-manager-versions=false"], { encoding: "utf8" }).trim();
 const GATE_VERSION = JSON.parse(readFileSync(path.join(PACKAGE, "package.json"))).version;
 const put = (root, relative, content) => { mkdirSync(path.dirname(path.join(root, relative)), { recursive: true }); writeFileSync(path.join(root, relative), typeof content === "string" ? content : JSON.stringify(content, null, 2) + "\n"); };
 const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 function fixture(t, kind = "frontend") {
   const root = mkdtempSync(path.join(realpathSync(os.tmpdir()), "wl-onboard-complete-")); t.after(() => rmSync(root, { recursive: true, force: true }));
   git(root, "init", "-q"); git(root, "config", "user.name", "fixture"); git(root, "config", "user.email", "fixture@example.invalid");
-  if (kind === "frontend") put(root, "package.json", { name: "fixture", dependencies: { vue: "3" }, devDependencies: { "@agile-team/wl-skills-kit": "2.33.1" } });
+  if (kind === "frontend") put(root, "package.json", { name: "fixture", packageManager: `pnpm@${PNPM_VERSION}`, dependencies: { vue: "3" }, devDependencies: { "@agile-team/wl-skills-kit": "2.33.1" } });
   else { put(root, "pom.xml", "<project><modelVersion>4.0.0</modelVersion><artifactId>fixture</artifactId><profiles><profile><id>business-existing</id></profile></profiles></project>\n"); put(root, "wl-produce-pl/wl-produce-pl-service/pom.xml", "<project><artifactId>fixture-module</artifactId></project>"); put(root, "wl-produce-pl/wl-produce-pl-service/src/main/java/Fixture.java", "class Fixture {}\n"); }
   git(root, "add", "."); git(root, "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fixture: seed"); return root;
 }
-function apply(options, plan = planOnboarding(options)) { return applyOnboarding({ ...options, planHash: plan.planHash, confirm: true }); }
+function apply(options, plan) { options = { registry: REGISTRY, ...options }; plan ||= planOnboarding(options); return applyOnboarding({ ...options, planHash: plan.planHash, confirm: true }); }
 function installIsolatedTools(root, kind) {
   const modules = path.join(root, kind === "backend" ? "quality-tools/node_modules" : "node_modules", "@agile-team");
   const gate = path.join(modules, "wl-skills-gate"); mkdirSync(gate, { recursive: true });
@@ -173,6 +174,7 @@ test("隔离真实Git和Gate完成首扫及提交说明正反验证，远端仍�
     if (mode === "hook-mutates-source") {
       const hook = path.join(root, ".githooks/pre-push"); writeFileSync(hook, readFileSync(hook, "utf8") + "printf '\\n// unexpected hook write\\n' >> src/fixture.js\n");
     }
+    if (mode === "hook-mutates-source") { const manifestFile = path.join(root, "quality/workspace.json"), manifest = JSON.parse(readFileSync(manifestFile)); const { createHash } = globalThis.process.getBuiltinModule("node:crypto"); for (const entry of manifest.hookFiles) entry.sha256 = createHash("sha256").update(readFileSync(path.join(root, entry.path))).digest("hex"); put(root, "quality/workspace.json", manifest); }
     const calls = [], native = fakeRunner(root, "frontend", calls);
     const runner = (executable, args, opts) => {
       if (args[0] !== "hook") return native(executable, args, opts);

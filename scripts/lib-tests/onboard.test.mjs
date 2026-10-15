@@ -62,6 +62,7 @@ test("真实 Git Hook 在 Gate 缺失时拒绝提交，不会假成功", (t) => 
 test("Java 依赖放在 quality-tools；Maven/POM 原文保留", (t) => {
   const root = fixture(t, "backend"); const pom = readFileSync(path.join(root, "pom.xml"), "utf8");
   const plan = planOnboarding({ root }); assert.equal(plan.projectKind, "backend");
+  assert.equal(plan.dependencyChanges.length, 2, "新建后端工具清单须展示Gate/BD两项新增声明");
   assert.match(plan.dependencyLayout.role, /不是另一个 npm 包/);
   const result = apply({ root }, plan);
   const pkg = JSON.parse(readFileSync(path.join(root, "quality-tools/package.json")));

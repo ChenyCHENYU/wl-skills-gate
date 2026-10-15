@@ -13,19 +13,28 @@
 
 ## 技术经理一次接入，开发者由 Hook 自动检查
 
-完整接入使用 `--complete`，从已批准的固定 Gate 产物运行预览。下例 `$GATE_ROOT` 指该完整包目录，`$PROJECT_ROOT` 指实际 Git 仓库根；前后端使用同一入口。
+负责人从批准的完整包打开 `templates/launchers/setup.command` / `setup.cmd` / `setup.sh`，选择任务即可。首次项目接入使用 `setup project` 交互向导：选择真实 Git 根和批准 HTTPS 安装源，查看文件、依赖、Hook 与固定安装 argv，确认当前阶段。脚本管理本阶段计划摘要，出现安装后的新差异再展示确认。
 
-```bash
-node "$GATE_ROOT/bin/wl-skills-gate.js" onboard --root "$PROJECT_ROOT" --complete --registry "$APPROVED_NPM_REGISTRY"
-```
+| 入口 | 自动执行 | 成功反馈 |
+|---|---|---|
+| `setup project` | 预检→批准配置/依赖安装→原生规则/POM/锁→doctor→真实Hook首扫和提交说明正反验证 | `quality-reports/setup/<sessionId>/result.html`；阶段原件与执行回执可追溯 |
+| `setup workspace` | 按已提交 `quality/workspace.json` 与依赖锁安装，恢复本机 Hook，实际验收 | `quality-reports/onboarding/workspace-execution.json`；不覆盖项目策略 |
+| `setup central` | 中央配置、来源、身份、凭据存在性、旧状态及部署回流预检 | 逐项状态、责任人和下一步；预检不联网、不启动、不发送 |
+| `setup release-input` | 核验固定来源原件、签名、摘要、兼容证据，确认后生成组合输入 | `configHash` / `inputHash` 与实际输入文件；不代替授权或签发 |
 
-接入界面可直接消费此 JSON，展示项目判定、每个文件的修改前后内容、依赖版本变化、Hook 激活、冲突与剩余验收。技术经理确认**这份具体计划**后，界面传回其实际摘要：
+非交互入口默认只读。`setup project --root PATH --registry URL --preview --json` 可用于预检；项目首次写入由交互逐阶段批准，自动任务可继续使用下文底层 `onboard` 契约。
 
-```bash
-node "$GATE_ROOT/bin/wl-skills-gate.js" onboard --root "$PROJECT_ROOT" --complete --registry "$APPROVED_NPM_REGISTRY" --apply --plan-hash "$ONBOARD_PLAN_HASH" --confirm
-```
+### 已接项目的新克隆
 
-安装源必须是明确批准的 HTTPS URL；URL 不含凭据，认证由受控环境注入。完整接入计划依次展示固定 argv 安装（关闭生命周期脚本）、原生规则实际预览与同步、后端 POM 精确补丁、实际版本锁、doctor、真实 Git Hook 首扫、提交说明正反演练。两个入口命令只给接入负责人或接入界面使用。开发者正常提交/推送时，Hook 自动检查；IDE 提供“查看报告 / 预览机械修复 / 确认应用并复扫”操作，不要求输入质量命令。修复需要本人预览和确认。
+首次接入完成后，将生成的工作副本清单、依赖锁、Hook、脚本与 IDE 任务一并审阅提交。新成员在 VS Code/Cursor 中选择 **wl-quality:初始化本机质量环境**。缺少本地 Gate 时入口先展示清单固定版本和批准源，确认后获取引导工具；随后展示项目初始化计划，确认后安装与验收。不得重跑首次接入来覆盖已经批准的项目策略。
+
+**wl-quality:打开项目检查接入状态** 在允许自动任务的受信工作区打开时执行，只读、不联网、不安装。IDE 的 Workspace Trust 与自动任务许可由用户环境控制；Git clone 自身不会执行仓库脚本。首次初始化成功后，日常仍由 Hook 自动检查。
+
+### 运维与发布输入
+
+中央交互先询问配置目录及独立Review签发是否分机，默认分机，不读取独立私钥。只预检时使用 `setup central`；经批准启动时使用 `setup central --start --watch`，消息仍只预览。真实发送另加 `--send`，启动确认会明确显示发送范围。非交互启动要求 `--config-dir DIR --start --watch --confirm --plan-hash HASH`；分机时加 `--separate-review-signer`。服务以前台受控任务运行，SIGINT/SIGTERM 清理本任务启动的服务，不安装系统服务、不改GitLab/Jenkins权限或密钥、不启动独立签发。
+
+发布负责人维护 `templates/platform/release-input-config.json` 的项目副本。`setup release-input --config FILE` 展示实际组件、SHA、作业和输出，确认后生成输入。非交互生成需 `--confirm --config-hash HASH --input-hash HASH`；原件变化会使旧确认失效。作者映射、兼容性结论、恢复方案仍由对应负责人批准。生成后的原件摘要在签发前再次复核。
 
 - 默认计划将尚未配置的本地 `core.hooksPath` 指向生成的 `.githooks`；应用后生效。已有仓库内 Hook 路径直接复用，`.husky/_` 映射到用户 `.husky` 文件。既有Husky9转发器通过计划中独立、固定资产的激活阶段生成，不执行整个自定义prepare脚本；未知版本或路径明确阻断。
 - 既有脚本与检查保留。发现旧 Hook 自动写源码或重复检查时列出迁移项；不会擅自删除或跳过。
@@ -33,7 +42,14 @@ node "$GATE_ROOT/bin/wl-skills-gate.js" onboard --root "$PROJECT_ROOT" --complet
 - 计划、项目 HEAD、文件、模板、接入实现或选择变化后，旧摘要失效。冲突、路径越界、符号链接均拒写；写入有备份、独占锁与失败回滚。
 - `--no-activate-hooks` 可显式只生成文件；此时不能登记自动检查已生效。预览与应用必须使用相同选项。
 
-## 实际差异出现时，再确认同一入口
+## 底层自动任务契约与阶段确认
+
+交互向导自动调用以下同一底层契约；脚本集成者才需要管理摘要。
+
+```bash
+node "$GATE_ROOT/bin/wl-skills-gate.js" onboard --root "$PROJECT_ROOT" --complete --registry "$APPROVED_NPM_REGISTRY"
+node "$GATE_ROOT/bin/wl-skills-gate.js" onboard --root "$PROJECT_ROOT" --complete --registry "$APPROVED_NPM_REGISTRY" --apply --plan-hash "$ONBOARD_PLAN_HASH" --confirm
+```
 
 首次尚未安装固定包时，无法提前知道它们的真实规则差异。确认首份计划后只完成本地配置与固定清单安装，结果为 `native-approval-required`；接入界面重新调用同一预览，显示实际 Kit/UI/BD 差异和新摘要，负责人确认后继续。BD 刚同步而 POM 模板首次出现时，以 `pom-approval-required` 展示完整 before/after，再确认同一入口。后续不需要技术经理拼装多个 update、Maven、版本查询或 Hook 命令。
 
@@ -67,7 +83,7 @@ GitLab/Jenkins 权限、可信中央模板、候选/独立 Review、构建/部�
 
 ## 维护单源
 
-- 唯一公共入口：`lib/onboard.js`；唯一配置引擎：`lib/onboard-config.js`；完整任务编排：`lib/onboard-complete.js`。
+- 交互入口：`lib/setup.js` / `lib/setup-modes.js`；底层首次接入：`lib/onboard.js` / `lib/onboard-config.js` / `lib/onboard-complete.js`；新克隆：`lib/workspace-init.js`；中央预检：`lib/setup-central.js`；发布输入：`lib/release-input.js`。
 - 包内交付源：`templates/onboarding/{frontend,backend,automation}`。`templates/scripts-quality/run.mjs` 与 schema 同包核验。
 - 文档目录旧 `automation/configure.mjs` 仅兼容转发；不得再次复制实现。文档配套文件是审阅用样例副本，维护时与包内交付源核对摘要。
 - 本模块测试覆盖真实 Git Hook 拒绝、前后端位置、旧 Hook 复用、幂等、漂移拒绝、完整包独立交付；不把隔离测试计为业务项目或远端验收。

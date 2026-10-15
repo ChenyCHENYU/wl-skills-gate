@@ -76,6 +76,9 @@ try {
   } else if (command === "onboard") {
     const { runOnboardCli } = await import("../lib/onboard.js");
     process.exitCode = await runOnboardCli(rest);
+  } else if (command === "setup") {
+    const { runSetupCli } = await import("../lib/setup.js");
+    process.exitCode = await runSetupCli(rest);
   } else if (command === "doctor") {
     const o = options(["--root", "--kind", "--out"]);
     if (o.positional.length) throw new Error("doctor 不接受位置参数");
@@ -293,5 +296,5 @@ try {
     if (rest.length) throw new Error("self-test 不接受额外参数");
     const { runAllFixtures } = await import("../scripts/run-fixtures.mjs");
     process.exitCode = await runAllFixtures();
-  } else throw new Error("用法: wl-skills-gate <onboard|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
+  } else throw new Error("用法: wl-skills-gate <setup|onboard|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
 } catch (e) { console.error(`[${command || "wl-skills-gate"}] ${e.message}`); process.exitCode = 2; }
