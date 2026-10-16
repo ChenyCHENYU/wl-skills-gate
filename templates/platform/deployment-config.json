@@ -32,7 +32,12 @@
   "commandsRoot": "/controlled/deployment-scripts",
   "artifactRoot": "/controlled/staged-release",
   "stateFile": "/controlled/deployment-state/uat.json",
-  "ci": {"system": "jenkins", "baseUrl": "https://jenkins.example.internal", "jobPath": "wl-quality/deploy-uat", "jobId": "deploy-uat"},
+  "ci": {
+    "system": "jenkins",
+    "baseUrl": "https://jenkins.example.internal",
+    "jobPath": "wl-quality/deploy-uat",
+    "jobId": "deploy-uat"
+  },
   "commands": {
     "deploy": {
       "program": "/controlled/runtime/bin/node",
@@ -88,5 +93,6 @@
         "WL_DEPLOYMENT_API_TOKEN"
       ]
     }
-  }
+  },
+  "reviewConfigFile": "/srv/wl-quality/config/release-review-trust.json"
 }

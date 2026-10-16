@@ -15,6 +15,7 @@ import { createControlHandler, loadControlConfig } from "../../lib/control-servi
 import { registerControlDeployment } from "../../lib/control-deployment.js";
 import { queueDeploymentPlan, queueDeploymentDelivery, selectDeploymentAuthorization, waitForDeploymentAuthorization } from "../../lib/deployment-queue.js";
 import { ingestDeploymentDeliveries } from "../../lib/deployment-delivery.js";
+import { createReleaseReviewFixture } from "../test-support/release-review-fixture.mjs";
 
 const hash = (v) => createHash("sha256").update(v).digest("hex"), jsonHash = (v) => hash(stableStringify(v));
 const write = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + "\n"); };
@@ -41,11 +42,12 @@ function fixture(t) {
       write(path.join(dir, manifestFile), manifest); write(path.join(dir, summaryFile), summary);
       const proof = signRecord({ schemaVersion: 1, kind: "gate-proof", project, candidateSha: sha, profile: "release", targetEnv: "uat", eventId: summary.run.eventId, policyHash: fixed, ruleSetHash: fixed, reportDigest: hash(JSON.stringify(summary)), issuer: "quality-signer", pipelineId: "pipeline", jobId: "job", decision: "passed", createdAt: now.toISOString(), artifactManifestDigest: jsonHash(manifest) }, gate.privateKeyFile);
       write(path.join(dir, proofFile), proof);
-      return { project, scope: "standard", role, sha, authorId: `author-${project}`, manifestFile, proofFile, summaryFile, publicKeyFile: path.basename(gate.publicKeyFile), artifactRoot: `stage/${project}`, expectIssuer: "quality-signer", expectPipelineId: "pipeline", expectJobId: "job", expectPolicyHash: fixed, expectRulesHash: fixed, expectBaselineHash: fixed, expectWaiversHash: fixed };
+      const review = createReleaseReviewFixture({ root: dir, project, sha, summary, now });
+      return { reviewFile: path.relative(dir, review.recordFile), reviewEvidenceRoot: path.relative(dir, review.evidenceRoot), project, scope: "standard", role, sha, authorId: `author-${project}`, manifestFile, proofFile, summaryFile, publicKeyFile: path.basename(gate.publicKeyFile), artifactRoot: `stage/${project}`, expectIssuer: "quality-signer", expectPipelineId: "pipeline", expectJobId: "job", expectPolicyHash: fixed, expectRulesHash: fixed, expectBaselineHash: fixed, expectWaiversHash: fixed };
     });
     const inputFile = path.join(dir, `release-${version}-input.json`), input = { schemaVersion: 1, kind: "release-set-input", releaseSetId: `set-${version}`, environment: "uat", components, compatibility }; mutate(input); write(inputFile, input);
-    const outFile = path.join(dir, `release-${version}.json`), options = { inputFile, evidenceRoot: dir, expectInputHash: hash(readFileSync(inputFile)), privateKeyFile: release.privateKeyFile, issuer: "release-signer", outFile, now };
-    const result = createReleaseSet(options); return { result, options, releaseSetFile: outFile, expectReleaseSetHash: result.releaseSetHash };
+    const outFile = path.join(dir, `release-${version}.json`), options = { inputFile, evidenceRoot: dir, reviewConfigFile: path.join(dir, "release-review-trust.json"), expectInputHash: hash(readFileSync(inputFile)), privateKeyFile: release.privateKeyFile, issuer: "release-signer", outFile, now };
+    const result = createReleaseSet(options); return { result, options, reviewConfigFile: options.reviewConfigFile, releaseSetFile: outFile, expectReleaseSetHash: result.releaseSetHash };
   }
   const commandsRoot = path.join(dir, "commands"); mkdirSync(commandsRoot);
   const scriptFile = path.join(commandsRoot, "apply.mjs");
@@ -58,7 +60,7 @@ const result={schemaVersion:1,kind:'deployment-command-result',action:context.ac
 fs.writeFileSync(context.resultFile,JSON.stringify(result));
 `);
   const command = { program: realpathSync(process.execPath), programHash: hash(readFileSync(process.execPath)), script: "apply.mjs", scriptHash: hash(readFileSync(scriptFile)), args: [], configFiles: [], timeoutMs: 10000, environment: {}, secretEnv: [] };
-  const config = { schemaVersion: 1, kind: "deployment-config", issuer: "deployment-executor", environment: "uat", lane: "release", authorizationIssuer: "identity", releaseIssuer: "release-signer", releasePublicKeyFile: release.publicKeyFile, authorizationPublicKeyFile: authorization.publicKeyFile, commandsRoot, artifactRoot, stateFile: path.join(dir, "deployment-state.json"), projects: ["ui", "api"], operators: ["operator"], verifiers: ["reviewer"], requiredSmokeChecks: ["health", "critical-flow"], allowedLinkOrigins: ["https://deploy.example.invalid"], commands: { deploy: structuredClone(command), smoke: structuredClone(command), recover: structuredClone(command) } };
+  const config = { schemaVersion: 1, kind: "deployment-config", reviewConfigFile: path.join(dir, "release-review-trust.json"), issuer: "deployment-executor", environment: "uat", lane: "release", authorizationIssuer: "identity", releaseIssuer: "release-signer", releasePublicKeyFile: release.publicKeyFile, authorizationPublicKeyFile: authorization.publicKeyFile, commandsRoot, artifactRoot, stateFile: path.join(dir, "deployment-state.json"), projects: ["ui", "api"], operators: ["operator"], verifiers: ["reviewer"], requiredSmokeChecks: ["health", "critical-flow"], allowedLinkOrigins: ["https://deploy.example.invalid"], commands: { deploy: structuredClone(command), smoke: structuredClone(command), recover: structuredClone(command) } };
   const configFile = path.join(dir, "deployment-config.json"), stateFile = path.join(dir, "deployment-state.json"); write(configFile, config); let sequence = 0;
   function planned(set, action = "deploy") {
     const planFile = path.join(dir, `plan-${++sequence}.json`), options = { configFile, ...set, stateFile, action, outFile: planFile, now }; const plan = planDeployment(options);

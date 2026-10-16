@@ -86,3 +86,17 @@ test("认证认领保护CSRF/旧revision/自报actor；实际复扫后按同SHA�
   assert.equal((await action(close, reviewer)).status, 303); assert.equal(Object.values(f.state().issues)[0].status, "closed");
   assert.ok(readdirSync(path.join(f.c.dataDir, "actions")).length >= 3); assert.equal(readdirSync(path.join(f.c.dataDir, "authorizations")).length, 0);
 });
+test("认证入口显示中央采集异常原件身份，关闭选择器只展示本轮修复后的环境验证", async (t) => {
+  const f = fixture(t); f.ingest(); f.ingest(true, 2);
+  const sourceFile = path.join(f.dir, "collector-health.json"); json(sourceFile, { kind: "automation-source-health", errorStages: ["source"], status: "attention" });
+  const health = { schemaVersion: 1, kind: "lifecycle-event", eventId: "health-1", category: "collection", status: "attention", project: "demo", scope: "full", lane: "demo-full", sourceId: "demo-full", executionId: "tick-health-1", sequence: 1, errorCount: 1, errorStages: ["source"], firstFailureAt: new Date(now).toISOString(), occurredAt: new Date(now).toISOString(), reportUrl: origin + "/issues", source: { system: "gitlab", recordId: "tick-health-1", recordHash: hash(readFileSync(sourceFile)), observedAt: new Date(now).toISOString(), url: origin } };
+  ingestLifecycleGovernance({ configFile: f.c.governanceConfigFile, stateFile: f.c.stateFile, eventFile: f.receipt(health), sourceFile, now });
+  const reviewer = await f.login("reviewer"), index = await f.http({ cookie: reviewer.cookie }); assert.match(index.text, /采集执行异常/); assert.match(index.text, /tick-health-1/); assert.match(index.text, /恢复不代表项目质量通过/);
+  const smoke = path.join(f.dir, "smoke-current-repair.json"); json(smoke, { result: "passed" });
+  const event = { schemaVersion: 1, kind: "lifecycle-event", eventId: "old-verification", category: "deploy", project: "demo", scope: "full", lane: "release", environment: "sit", status: "verified", sha, sequence: 1, authorId: "owner", actorId: "reviewer", deploymentId: "old-deploy", authorizationId: "deployment-authorization", artifactHash: pin, manifestHash: pin, releaseSetHash: pin, executionHash: pin, verificationHash: pin, verificationUrl: origin + "/verification", pipelineId: "deploy-1", jobId: "smoke", reportUrl: origin + "/report", pipelineUrl: origin + "/pipeline", occurredAt: new Date(now - 1000).toISOString(), source: { system: "deployment", recordId: "smoke", recordHash: hash(readFileSync(smoke)), observedAt: new Date(now).toISOString(), url: origin + "/executor" } };
+  const ingest = (fact) => ingestLifecycleGovernance({ configFile: f.c.governanceConfigFile, stateFile: f.c.stateFile, eventFile: f.receipt(fact), sourceFile: smoke, now });
+  ingest(event); const issue = Object.values(f.state().issues)[0];
+  const stale = await f.http({ url: `/issues/${issue.id}`, cookie: reviewer.cookie }); assert(!stale.text.includes('value="old-verification"'));
+  ingest({ ...event, eventId: "current-verification", sequence: 2, occurredAt: new Date(now).toISOString() });
+  const current = await f.http({ url: `/issues/${issue.id}`, cookie: reviewer.cookie }); assert(current.text.includes('value="current-verification"'));
+});

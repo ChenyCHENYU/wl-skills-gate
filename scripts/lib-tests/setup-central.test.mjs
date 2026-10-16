@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
-import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync, symlinkSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync, symlinkSync, rmSync } from 'node:fs';
 import { createControlReviewFixture } from '../test-support/control-review-fixture.mjs';
 import { planCentralSetup, runCentralSetup } from '../../lib/setup-central.js';
 import { automationTick, loadAutomationConfig, startAutomation } from '../../lib/automation.js';
@@ -18,6 +18,7 @@ async function fixture(t) {
   const reviewCiFile = path.join(f.root, 'review-ci.json'), automationConfigFile = path.join(f.root, 'automation.json'), reviewPublishConfigFile = path.join(f.root, 'publisher.json');
   write(reviewCiFile, { schemaVersion: 1, collectorConfigFile: f.configFile, controlConfigFile: f.controlConfigFile, reviewPolicyFile: path.join(f.root, 'quality/review-policy.json') });
   const publication = { manifestDir: path.join(f.root, 'review-delivery'), publicKeyFile: path.join(f.root, 'review-public.pem'), authorizationPublicKeyFile: path.join(f.root, 'authorization-public.pem'), expectAuthorizationIssuer: f.c.authorizationIssuer, expectReviewPolicyHash: f.collector.reviewPolicyHash, evidenceRoot: f.root };
+  mkdirSync(publication.manifestDir, { recursive: true });
   const a = { schemaVersion: 1, governanceConfigFile: f.c.governanceConfigFile, stateFile: f.c.stateFile, dataDir: path.join(f.root, 'automation'), receiptPrivateKeyFile: f.c.receiptPrivateKeyFile,
     sources: [{ id: 'demo-standard', configFile: f.ciConfigFile, actors: { '15': 'author' }, since: '2026-10-15T00:00:00Z', environment: 'dev', review: { configFile: reviewCiFile, outRoot: path.join(f.root, 'reviews'), publication } }] };
   write(automationConfigFile, a);
@@ -226,4 +227,13 @@ test('忙锁、失败周期与失败结果回调停止时均被收敛，不产�
   const busy = startAutomation({ configFile: f.automationConfigFile, onResult: (value) => delivered.push(value) });
   const busyResult = await busy.stop(); assert.equal(busyResult.status, 'attention'); assert.match(busyResult.reason, /活锁/);
   await new Promise(setImmediate); assert.deepEqual(unexpected, []); assert(existsSync(lock));
+});
+
+test('已登记输入队列目录丢失不能当作空队列通过中央预检', async (t) => {
+  const f = await fixture(t);
+  rmSync(f.a.sources[0].review.publication.manifestDir, { recursive: true });
+  const result = planCentralSetup(f.options);
+  assert.equal(result.status, 'blocked');
+  assert.match(result.steps.find((step) => step.id === 'automation').detail, /目录不存在/);
+  assert.equal(existsSync(f.a.sources[0].review.publication.manifestDir), false);
 });

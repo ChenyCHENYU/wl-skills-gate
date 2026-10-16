@@ -56,7 +56,7 @@ test("quality入账后中断：持久同份receipt续跑，不重新采集、不
   const progress = Object.values(f.progress().runs["demo-full:45"].revisions)[0], original = readFileSync(progress.qualityReceiptFile), source = readFileSync(progress.collection.sourceFile);
   const second = await f.tick(); assert.equal(second.status, "ok", JSON.stringify(second.errors)); assert.equal(second.sources[0].collected, 0);
   assert.deepEqual(readFileSync(progress.qualityReceiptFile), original); assert.deepEqual(readFileSync(progress.collection.sourceFile), source);
-  assert.equal(Object.values(f.state().events).filter((e) => e.kind === "quality-event").length, 1); assert.equal(Object.values(f.state().lifecycles)[0].status, "success");
+  assert.equal(Object.values(f.state().events).filter((e) => e.kind === "quality-event").length, 1); assert.equal(Object.values(f.state().lifecycles).find((fact) => fact.category === "build").status, "success");
 });
 test("build入账后中断，暂停25小时仍核对已入账相同摘要并恢复，不修改旧观察时间", async (t) => {
   const f = fixture(t); f.mode("success"); let injected = false;
@@ -123,4 +123,10 @@ test("来源ID包含冒号时按完整source归属隔离运行，不把前缀相
 test("治理台账被单独回退时稳定运行缓存显式报错，不默认为已处理", async (t) => {
   const f = fixture(t); f.mode("success"); await f.tick(); rmSync(f.config.stateFile);
   const result = await f.tick(); assert.equal(result.status, "attention"); assert.match(result.errors[0].reason, /台账与执行缓存不一致/);
+});
+test("合法原型同名来源正常发现、持久健康与去重，不把原型函数当执行缓存", async (t) => {
+  const f = fixture(t); f.config.sources[0].id = "toString"; write(f.configFile, f.config); f.mode("success");
+  const first = await f.tick(); assert.equal(first.status, "ok", JSON.stringify(first.errors));
+  assert.equal(f.progress().health.toString.status, "ok"); assert.equal(f.progress().discovery.toString.highWatermarkRunId, 45);
+  const second = await f.tick(); assert.equal(second.status, "ok", JSON.stringify(second.errors)); assert.equal(second.sources[0].collected, 0);
 });

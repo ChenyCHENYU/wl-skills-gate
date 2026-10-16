@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "releases": [
+    {
+      "gateVersion": "0.10.0",
+      "sourceCommit": "4337eaec0591772455bd4cc96c2f70d0beebb452",
+      "files": [
+        {
+          "path": "scripts/quality/project-actions.mjs",
+          "source": "templates/onboarding/automation/project-actions.mjs",
+          "sha256": "fce5f2301c9580aa45f43b8894aa97ebd76ac79c2d111ef2352d12eff5d6d921"
+        },
+        {
+          "path": "scripts/quality/workspace-setup.mjs",
+          "source": "templates/onboarding/automation/workspace-setup.mjs",
+          "sha256": "43b89917da4fa5b36b21d0a54034ca3f651bb869e880445cc421851186e89e1e"
+        },
+        {
+          "path": "frontend:scripts/quality/run.mjs",
+          "source": "templates/scripts-quality/run.mjs",
+          "sha256": "953891059029607b630d83d160462f1c28cd652b7bab4f36acad7e0f3c893226"
+        },
+        {
+          "path": "backend:scripts/quality/run.mjs",
+          "source": "templates/onboarding/backend/run.mjs",
+          "sha256": "96835682011922a4f71aed18a03a847119707f4424825a280e50fa89850edc96"
+        },
+        {
+          "path": "scripts/quality/java-unit.mjs",
+          "source": "templates/onboarding/backend/java-unit.mjs",
+          "sha256": "f8a954c8f3cb753ce1b8bb7804b0ce9c55cc39c2d188831e5d70f9dd244d6f45"
+        }
+      ]
+    }
+  ]
+}

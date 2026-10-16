@@ -2,7 +2,7 @@
 // 接入程序复制到 <项目>/scripts/quality；只调用项目内固定版本 Gate，不启动 AI。
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { existsSync, readFileSync, writeFileSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, realpathSync, rmSync, lstatSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
@@ -15,6 +15,44 @@ const receiptFile = path.join(reportDir, 'repair', 'preview-confirmation.json');
 const confirmToken = '确认已预览的机械修复';
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
+const stable = value => JSON.stringify(value, (_, item) => item && typeof item === 'object' && !Array.isArray(item)
+  ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item);
+
+function reviewPath(base, relative) {
+  if (base !== root && (lstatSync(base).isSymbolicLink() || !realpathSync(base).startsWith(realpathSync(root) + path.sep))) throw new Error('报告目录不能越出项目或指向符号链接');
+  if (typeof relative !== 'string' || !relative || path.isAbsolute(relative) || relative.includes('\\')
+    || relative.split('/').some(part => ['', '.', '..'].includes(part))) throw new Error('草稿索引路径失效');
+  let file = base;
+  for (const part of relative.split('/')) {
+    file = path.join(file, part);
+    if (lstatSync(file).isSymbolicLink()) throw new Error('草稿索引不接受符号链接');
+  }
+  if (!lstatSync(file).isFile() || !realpathSync(file).startsWith(realpathSync(base) + path.sep)) throw new Error('草稿必须是报告目录中的普通文件');
+  return file;
+}
+
+function currentReview(summary) {
+  const review = readJson(reviewPath(reportDir, 'review-latest.json'));
+  if (![1, 2].includes(review.schemaVersion) || review.approved !== false || review.eventId !== summary.run?.eventId
+    || review.project !== summary.run?.project || !/^[A-Za-z0-9-]{1,128}$/.test(review.eventId || '')) throw new Error('草稿与本轮报告不匹配');
+  const base = review.schemaVersion === 2 ? reportDir : root;
+  const destination = path.join(reportDir, 'reviews', review.eventId);
+  const body = reviewPath(base, review.bodyFile), recordFile = reviewPath(base, review.recordFile), copy = reviewPath(base, review.summaryFile);
+  if (body !== path.join(destination, 'draft/review.md') || recordFile !== path.join(destination, 'draft/review-draft.json')
+    || copy !== path.join(destination, 'quality-summary.json')) throw new Error('草稿索引未指向本轮独立记录');
+  if (review.summaryHash !== sha256(readFileSync(summaryFile)) || review.summaryHash !== sha256(readFileSync(copy))) throw new Error('草稿原始报告摘要不匹配');
+  const record = readJson(recordFile);
+  if (record.schemaVersion !== 2 || record.kind !== 'review-draft' || record.decision !== 'pending-confirmation'
+    || record.content?.project !== summary.run.project || record.content?.candidateSha !== summary.run.commitSha
+    || record.content?.reviewId !== review.eventId || record.bodyFile !== 'draft/review.md'
+    || record.bodyDigest !== sha256(readFileSync(body)) || record.reviewDigest !== sha256(stable(record.content))
+    || record.evidenceDigest !== sha256(stable(record.content.evidence))
+    || ['repairAuthorized', 'promotionAuthorized', 'deploymentAuthorized', 'closureAuthorized'].some(key => record[key] !== false)) throw new Error('草稿记录或正文已变化');
+  const evidence = record.content.evidence.filter(item => item.type === 'gate-summary' && item.role === 'current');
+  if (evidence.length !== 1 || evidence[0].sha256 !== review.summaryHash || evidence[0].file !== 'quality-summary.json') throw new Error('草稿缺少本轮原始报告证据');
+  if (!Array.isArray(record.content.dimensions) || record.content.dimensions.length !== 9) throw new Error('草稿九维记录无效');
+  return { review, body, pendingDimensions: record.content.dimensions.filter(item => item.status !== 'evidence-ready').length };
+}
 
 function summaryState() {
   if (!existsSync(summaryFile)) return { digest: null, eventId: null, summary: null };
@@ -46,12 +84,10 @@ function showReport({ failure = false, current = false } = {}) {
   console.log(`[quality] ${current ? '本轮' : '历史报告'}结论：${summary.decision?.status || '未知'}；版本：${summary.run?.commitSha || '未知'}`);
   const reviewIndex = path.join(reportDir, 'review-latest.json');
   if (existsSync(reviewIndex)) {
-    const review = readJson(reviewIndex);
-    const body = typeof review.bodyFile === 'string' ? path.resolve(root, review.bodyFile) : '';
-    if (review.eventId === summary.run?.eventId && review.project === summary.run?.project && body.startsWith(path.join(reportDir, 'reviews') + path.sep)
-      && existsSync(body) && realpathSync(body).startsWith(realpathSync(reportDir) + path.sep)) {
-      console.log(`[quality] 九维 Review（待确认）：${body}；待补 ${(review.pendingDimensions || []).length} 维。草稿不授予修复或发布权限。`);
-    } else console.log('[quality] 当前扫描没有可核验的九维草稿，请接入负责人检查本轮记录。');
+    try {
+      const { body, pendingDimensions } = currentReview(summary);
+      console.log(`[quality] 九维 Review（待确认）：${body}；待补 ${pendingDimensions} 维。草稿不授予修复或发布权限。`);
+    } catch { console.log('[quality] 当前扫描没有可核验的九维草稿，请接入负责人检查本轮记录。'); }
   }
   const findings = Array.isArray(summary.findings) ? summary.findings : [];
   const visible = failure ? findings.filter((f) => ['blocker', 'error'].includes(f.severity)) : findings;

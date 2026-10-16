@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "kind": "release-review-trust",
+  "projects": {
+    "wl-ui-produce": {
+      "publicKeyFile": "/controlled/keys/review-public.pem",
+      "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+      "authorizationIssuer": "wl-quality-identity",
+      "reviewers": [
+        "REPLACE_WITH_AUTHENTICATED_INDEPENDENT_REVIEWER"
+      ],
+      "reviewPolicyHash": "REPLACE_WITH_APPROVED_NINE_DIMENSION_POLICY_SHA256",
+      "policyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
+      "rulesHash": "REPLACE_WITH_APPROVED_RULES_SHA256",
+      "baselineHash": "REPLACE_WITH_APPROVED_BASELINE_SHA256",
+      "waiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256",
+      "profile": "standard",
+      "maxAgeMinutes": 1440,
+      "evidenceRoots": [
+        "/srv/wl-quality/evidence/wl-ui-produce"
+      ],
+      "collectorConfigFile": "/srv/wl-quality/config/review-collector.frontend.json",
+      "controlCatalogFile": "/srv/wl-quality/control/reviews.json"
+    },
+    "wl-produce": {
+      "publicKeyFile": "/controlled/keys/review-public.pem",
+      "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+      "authorizationIssuer": "wl-quality-identity",
+      "reviewers": [
+        "REPLACE_WITH_AUTHENTICATED_INDEPENDENT_REVIEWER"
+      ],
+      "reviewPolicyHash": "REPLACE_WITH_APPROVED_NINE_DIMENSION_POLICY_SHA256",
+      "policyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
+      "rulesHash": "REPLACE_WITH_APPROVED_RULES_SHA256",
+      "baselineHash": "REPLACE_WITH_APPROVED_BASELINE_SHA256",
+      "waiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256",
+      "profile": "standard",
+      "maxAgeMinutes": 1440,
+      "evidenceRoots": [
+        "/srv/wl-quality/evidence/wl-produce"
+      ],
+      "collectorConfigFile": "/srv/wl-quality/config/review-collector.backend.json",
+      "controlCatalogFile": "/srv/wl-quality/control/reviews.json"
+    }
+  }
+}

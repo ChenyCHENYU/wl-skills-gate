@@ -10,9 +10,14 @@ wl-quality-backend:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
+    - |
+      set -eu
+      test -n "$WL_APPROVED_BOOTSTRAP_GATE_CLI"
+      node "$WL_APPROVED_BOOTSTRAP_GATE_CLI" ci-prepare --root . --apply --confirm \
+        --expect-workspace-hash "$WL_APPROVED_WORKSPACE_HASH" \
+        --expect-lock-hash "$WL_APPROVED_DEPENDENCY_LOCK_HASH"
     - node --version
     - mvn -version
-    - npm ci --prefix quality-tools --include=dev
     - |
       set +e
       node quality-tools/node_modules/@agile-team/wl-skills-gate/bin/wl-skills-gate.js run --profile standard --sha "$CI_COMMIT_SHA" \

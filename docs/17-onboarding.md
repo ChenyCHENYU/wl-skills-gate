@@ -30,7 +30,19 @@
 
 **wl-quality:打开项目检查接入状态** 在允许自动任务的受信工作区打开时执行，只读、不联网、不安装。IDE 的 Workspace Trust 与自动任务许可由用户环境控制；Git clone 自身不会执行仓库脚本。首次初始化成功后，日常仍由 Hook 自动检查。
 
+### 已接项目升级
+
+先提交已批准的配置、清单和受管脚本。同一项目接入任务展示固定依赖和已登记受管资产的升级差异，确认后继续；0.10.0旧脚本通过包内固定摘要识别。自定义policy、九维适用范围、必测与POM原文保留；未提交策略、自改脚本或未登记旧版先审阅适配。升级后审阅提交供新clone使用，不删文件绕过冲突。
+
 ### 运维与发布输入
+
+GitLab/Jenkins模板用中央预装固定Gate调用`ci-prepare`，中央登记`quality/workspace.json`和依赖锁的真实字节摘要；按锁安装时关闭任意生命周期，必要准备仅用内置固定适配，不激活CI Hook。准备通过不等于质量检查通过。
+
+pnpm预检和安装同时禁用pnpmfile执行；发现项目或全局pnpmfile声明会停止，由工程工具维护者提供固定摘要、允许目录和幂等验证适配。`--ignore-scripts`本身不覆盖pnpmfile，[pnpm说明](https://pnpm.io/id/11.x/pnpmfile)可供维护者核对。
+
+Jenkins在准备和构建前调用`verify-release-review --publication-dir`，以checkout SHA自动选最新正式Review并重查当前CI，记录放本机quality-reports，不写只读中央原件。发布输入配置固定`reviewConfigFile`和组件`reviewPublicationDir`；组合及部署强制重验同候选Review签名、独立授权和原件。旧组合缺该证据需重新生成，不接受布尔批准。
+
+中央输入队列（正式Review交付、部署回流）首次由运维在受控持久卷创建；运行中缺失视为异常并提醒，不能自动造空目录。普通warning当周期汇总，首次/持续采集故障与恢复通过同一可靠待发箱反馈；配置或台账本身不可用由独立监控兜底。
 
 中央交互先询问配置目录及独立Review签发是否分机，默认分机，不读取独立私钥。只预检时使用 `setup central`；经批准启动时使用 `setup central --start --watch`，消息仍只预览。真实发送另加 `--send`，启动确认会明确显示发送范围。非交互启动要求 `--config-dir DIR --start --watch --confirm --plan-hash HASH`；分机时加 `--separate-review-signer`。服务以前台受控任务运行，SIGINT/SIGTERM 清理本任务启动的服务，不安装系统服务、不改GitLab/Jenkins权限或密钥、不启动独立签发。
 

@@ -18,7 +18,7 @@ function options(allowed) {
     const name = rest[i];
     if (!name.startsWith("--")) { out.positional.push(name); continue; }
     if (!allowed.includes(name) || Object.hasOwn(out, name)) throw new Error(`未知或重复参数: ${name}`);
-    if (FLAGS.has(name)) { out[name] = true; continue; }
+    if (FLAGS.has(name) || command === "ci-prepare" && name === "--apply") { out[name] = true; continue; }
     const value = rest[++i];
     if (!value || value.startsWith("--")) throw new Error(`参数 ${name} 缺少值`);
     out[name] = value;
@@ -79,6 +79,22 @@ try {
   } else if (command === "setup") {
     const { runSetupCli } = await import("../lib/setup.js");
     process.exitCode = await runSetupCli(rest);
+  } else if (command === "ci-prepare") {
+    const o = options(["--root", "--apply", "--confirm", "--expect-workspace-hash", "--expect-lock-hash"]);
+    if (o.positional.length || !o["--apply"] && o["--confirm"]) throw new Error("ci-prepare 默认只读；执行需 --apply --confirm 及中央批准清单/锁摘要");
+    const { planCiPreparation, prepareCiDependencies } = await import("../lib/ci-prepare.js");
+    const result = o["--apply"] ? prepareCiDependencies({ root: o["--root"], confirm: !!o["--confirm"], expectWorkspaceHash: o["--expect-workspace-hash"], expectLockHash: o["--expect-lock-hash"] }) : planCiPreparation({ root: o["--root"] });
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    process.exitCode = result.status === "blocked" ? 2 : 0;
+  } else if (command === "verify-release-review") {
+    const o = options(["--config", "--project", "--sha", "--record", "--evidence-root", "--publication-dir", "--out-dir"]);
+    if (o.positional.length) throw new Error("verify-release-review 不接受位置参数");
+    for (const key of ["--config", "--project", "--sha"]) if (!o[key]) throw new Error(`verify-release-review 缺少 ${key}`);
+    if (o["--publication-dir"] && (o["--record"] || o["--evidence-root"]) || !o["--publication-dir"] && (!o["--record"] || !o["--evidence-root"])) throw new Error("选择中央 --publication-dir 自动匹配本次SHA；或维护者明确提供 --record 与 --evidence-root，两种方式不能混用");
+    const review = await import("../lib/release-review.js");
+    if (o["--out-dir"] && !o["--publication-dir"]) throw new Error("--out-dir 仅用于自动选择后的本次CI重查证据");
+    const result = o["--publication-dir"] ? await review.selectReleaseReview({ configFile: o["--config"], project: o["--project"], sha: o["--sha"], publicationDir: o["--publication-dir"], outDir: o["--out-dir"] }) : review.verifyReleaseReview({ configFile: o["--config"], project: o["--project"], sha: o["--sha"], recordFile: o["--record"], evidenceRoot: o["--evidence-root"] });
+    process.stdout.write(JSON.stringify(Object.fromEntries(["status", "project", "sha", "reviewId", "reviewerId", "authorId", "recordHash", "reviewDigest", "bodyDigest", "evidenceDigest", "sourceDigest", "trustHash", "liveVerified", "liveCheckDirectory"].filter((key) => result[key] !== undefined).map((key) => [key, result[key]])), null, 2) + "\n");
   } else if (command === "doctor") {
     const o = options(["--root", "--kind", "--out"]);
     if (o.positional.length) throw new Error("doctor 不接受位置参数");
@@ -129,11 +145,11 @@ try {
     const result = collectReviewEvidence({ configFile: o["--config"], sourceFile: o["--source"], inputFile: o["--input"], recordFile: o["--record"], evidenceRoot: o["--evidence-root"], outDir: o["--out"] });
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } else if (command === "release-set") {
-    const operation = rest.shift(), o = options(["--input", "--evidence-root", "--expect-input-hash", "--private-key", "--issuer", "--out", "--release-set", "--public-key", "--expect-issuer", "--expect-release-set-hash", "--env"]);
+    const operation = rest.shift(), o = options(["--input", "--evidence-root", "--expect-input-hash", "--private-key", "--issuer", "--out", "--release-set", "--public-key", "--expect-issuer", "--expect-release-set-hash", "--env", "--review-config"]);
     if (o.positional.length) throw new Error("release-set 不接受位置参数");
     const { createReleaseSet, verifyReleaseSet } = await import("../lib/release-set.js"); let result;
-    if (operation === "create") { protectOutput(o["--out"], [o["--input"], o["--private-key"]]); result = createReleaseSet({ inputFile: o["--input"], evidenceRoot: o["--evidence-root"], expectInputHash: o["--expect-input-hash"], privateKeyFile: o["--private-key"], issuer: o["--issuer"], outFile: o["--out"] }); }
-    else if (operation === "verify") result = verifyReleaseSet({ releaseSetFile: o["--release-set"], publicKeyFile: o["--public-key"], expectIssuer: o["--expect-issuer"], expectReleaseSetHash: o["--expect-release-set-hash"], env: o["--env"] });
+    if (operation === "create") { protectOutput(o["--out"], [o["--input"], o["--private-key"], o["--review-config"]]); result = createReleaseSet({ inputFile: o["--input"], evidenceRoot: o["--evidence-root"], expectInputHash: o["--expect-input-hash"], privateKeyFile: o["--private-key"], issuer: o["--issuer"], outFile: o["--out"], reviewConfigFile: o["--review-config"] }); }
+    else if (operation === "verify") result = verifyReleaseSet({ releaseSetFile: o["--release-set"], publicKeyFile: o["--public-key"], expectIssuer: o["--expect-issuer"], expectReleaseSetHash: o["--expect-release-set-hash"], env: o["--env"], reviewConfigFile: o["--review-config"] });
     else throw new Error("release-set 子命令 create/verify");
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } else if (command === "deployment") {
@@ -296,5 +312,5 @@ try {
     if (rest.length) throw new Error("self-test 不接受额外参数");
     const { runAllFixtures } = await import("../scripts/run-fixtures.mjs");
     process.exitCode = await runAllFixtures();
-  } else throw new Error("用法: wl-skills-gate <setup|onboard|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
+  } else throw new Error("用法: wl-skills-gate <setup|onboard|ci-prepare|verify-release-review|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
 } catch (e) { console.error(`[${command || "wl-skills-gate"}] ${e.message}`); process.exitCode = 2; }

@@ -26,8 +26,14 @@ node "$GATE_BIN" automation --config "$AUTOMATION_CONFIG" --watch
 
 Review身份确认后，`Jenkinsfile.review-sign`独立自动消费授权并发布正式记录；中央`automation.review.publication`订阅其manifest，公钥复验后入账和通知。签发器不持有身份或事件私钥。
 
-发布采用已有检查/构建模板，再依次使用`Jenkinsfile.attest`、`Jenkinsfile.release-sign`、`Jenkinsfile.deployment`。组合必须固定前后端SHA/制品、实际API契约或兼容测试、数据库迁移/无变更依据、部署顺序和恢复约束。计划先登记到`/deployments/<id>`，实际操作人确认后执行；冒烟由独立验证人另行授权。模板`controlled-deployment-http.mjs`提供真实HTTP适配，也可配置经过摘要批准的现有现场脚本。执行系统须回传实际组合、API/schema与顺序，单纯success不被接受。
+发布采用已有检查/构建模板（构建前按实际SHA从固定中央目录自动匹配最新正式Review并重查CI，缺失/旧版/新失败均阻断），再依次使用`Jenkinsfile.attest`、`Jenkinsfile.release-sign`、`Jenkinsfile.deployment`。组合必须固定前后端SHA/制品、实际API契约或兼容测试、数据库迁移/无变更依据、部署顺序和恢复约束。计划先登记到`/deployments/<id>`，实际操作人确认后执行；冒烟由独立验证人另行授权。模板`controlled-deployment-http.mjs`提供真实HTTP适配，也可配置经过摘要批准的现有现场脚本。执行系统须回传实际组合、API/schema与顺序，单纯success不被接受。
 
-关闭要求当前修复SHA的完整通过报告，以及关闭策略逐环境要求的最新部署/独立验证事实。构建成功、扫描消失、消息已接收均不关闭问题；新失败使旧成功失效。复发重新打开。旧配置缺必要环境可读账但不能关闭，`governance migrate`只接受独立签名授权的精确策略收紧，不删除旧账绕过。
+CI依赖准备复用已提交工作副本清单/锁及中央批准摘要，关闭任意生命周期，仅运行固定Gate的必要适配；不在CI重复激活Hook或执行本机首扫。
+
+组合生成/消费和deployment配置须绑定中央`release-review-trust.json`，固定Review与授权公钥、issuer、九维与机器策略摘要、独立复核名单、证据根/collector/catalog；旧组合缺正式Review归档须重新生成。
+
+普通warning在当前周期汇总；来源首次失联、回流异常、输入队列缺失及恢复均有签名执行提醒。输入队列由运维在持久卷创建，运行时缺失不能伪装成空队列。
+
+关闭要求当前修复SHA的完整通过报告，以及关闭策略逐环境要求的当前修复后产生且观察到的最新部署/独立验证事实。构建成功、扫描消失、消息已接收均不关闭问题；新失败使旧成功失效。复发重新打开。旧配置缺必要环境可读账但不能关闭，`governance migrate`只接受独立签名授权的精确策略收紧，不删除旧账绕过。
 
 验收必须留下真实作业、认证用户、群投递、同候选/同制品、各必要环境复验和独立关闭记录。包内隔离测试不代替现场结果；统一操作仍以V3接入手册为准。

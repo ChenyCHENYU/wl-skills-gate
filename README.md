@@ -47,7 +47,7 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 ```bash
 npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
   --@agile-team:registry=https://registry.npmjs.org/ \
-  @agile-team/wl-skills-gate@0.10.0 setup project
+  @agile-team/wl-skills-gate@0.11.0 setup project
 ```
 
 | 项目 | 依赖装在哪里 | 业务构建 |
@@ -56,6 +56,8 @@ npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
 | Java/Maven，如 `wl-produce` | `quality-tools/package.json`：Gate / BD | Maven；Node 工具不进入 jar |
 
 `quality-tools/` 是 Java 仓库内的 Node 工具依赖目录。内置后端配套针对 `wl-produce` PL；其他 Maven 项目先由负责人配置模块与必测。移动端、UniApp 不套用 PC 配套。
+
+已接项目升级仍选同一接入任务：识别旧受管脚本并展示差异，保留项目自定义策略、必测和 POM。
 
 首次接入反馈在 `quality-reports/setup/<sessionId>/result.html`，质量报告在 `quality-reports/quality-report.html`。只有真实首扫及 Hook 正反验证通过，才返回 `local-validated-awaiting-remote-acceptance`。GitLab/Jenkins 强制检查、独立 Review、真实到群及部署另做现场验收。
 
@@ -85,6 +87,8 @@ npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
 | Jenkins 构建、制品与部署 | [Jenkins 指南](./docs/07-jenkins.md) | SHA、制品摘要、目标环境一致，缺证据拒绝推进 |
 | 真实 CI 证据、身份与 Review | [可信 CI 采集](./docs/18-ci-source.md) · [九维 Review](./docs/19-nine-dimension-review.md) | 旧报告、缺证据、自审与过期批准被拒绝 |
 | 飞书通知、认领、超时与复验 | [中央执行接线](./templates/platform/README.md) | 实际送达、失败重试、认领和独立关闭均留记录 |
+
+流水线按批准的工作副本清单和依赖锁准备环境，不运行任意生命周期脚本。构建前自动匹配本次 SHA 的正式 Review 并重查 CI；组合与部署再次核验签名及原件，缺失就阻断。普通警告按周期汇总，首次采集故障、持续异常和恢复也有提醒。
 
 项目检查作业与受控签发、部署、通知作业隔离。Hook 提供早反馈；服务端强制检查负责防绕过。
 

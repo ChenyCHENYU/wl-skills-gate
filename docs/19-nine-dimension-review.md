@@ -11,9 +11,15 @@
 | 汇总草稿 | `buildReviewInput` 自动取本轮原始 Gate 报告；其他采集器补提交、分支、diff、交互、测试、CI 和责任证据 | 固定九维 `review.md`、`review-draft.json`；永远 `pending-confirmation` |
 | 人工确认 | 受控身份服务核对实际登录身份、非作者、候选和九维结论，再签发 `review-authorization` receipt | 仅 `review-publish`，绑定当前正文/证据/候选；不是修复或发布权限 |
 | 正式签发 | `signReviewRecord` / `review-sign`：独立身份公钥、固定 issuer、受控规则摘要与 Review 私钥 | 严格 v2 `review-record`，签名覆盖正文和证据摘要、逐维确认及授权 receipt |
-| 使用前重验 | `verifyReview`；`promote-apply` 已实际调用此验证 | 重验原始文件、正文、九维完整性、当前 Gate 报告、授权签名/时效与候选，任一不符即拒绝 |
+| 候选使用前重验 | `verifyReview`；`promote-apply` 实际调用 | 重验原始文件、正文、九维完整性、Gate 报告、授权签名/时效与候选；源/目标 HEAD 另由晋级控制器核对 |
+| 构建与新发布 | `verify-release-review --publication-dir`；`release-set create/verify --review-config`；`deployment` | 固定信任核验当前正式版本；构建前另重查真实 CI；组合归档 Review 签名/正文/必要原件，部署再验 |
+| 历史组合复验/恢复 | `deployment` 的 smoke / recover | 按原组合签发时点核验历史 Review，仍验证原件、制品、环境和新的独立动作授权；不授予新发布或关闭权限 |
 
 草稿不能放行。只上传扫描报告只能覆盖部分编码/扫描事实，其余维度明确显示 `pending-evidence`。正式签发必须九维齐全；不适用项须已批准的策略写明事实，再由非作者逐项确认。Code Review 和扫描门禁不能标成 N/A。
+
+生产发布信任使用固定 [release-review-trust.json](../templates/platform/release-review-trust.json)，绑定公钥、授权 issuer、复核名单、九维/机器策略、证据根、collector 和 catalog。中央登记新 Review 时更新当前版本索引；旧入口重复登记不回滚索引。同 SHA 新增待确认补证后，旧正式记录也不能用于构建、组合签发或新部署；直接传旧 formal 文件同样被拒绝。旧目录没有当前版本索引时，触发批准质量流水线的新运行并登记新入口，不修改旧记录或伪造批准。
+
+构建任务从固定正式交付目录自动匹配本次 SHA，再用固定只读 CI 凭据重新查询必需作业和原件，重试/失败/变化即停止。中央原件可以只读；本轮复验与失败记录写入本机构建报告目录。实际接线、变量与凭据分工见 [Jenkins 指南](07-jenkins.md)，开发者无需抄报告路径或编写授权 JSON。
 
 ## 文件契约
 

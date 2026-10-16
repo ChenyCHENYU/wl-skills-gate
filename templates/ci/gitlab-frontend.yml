@@ -10,9 +10,13 @@ wl-quality-frontend:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
+    - |
+      set -eu
+      test -n "$WL_APPROVED_BOOTSTRAP_GATE_CLI"
+      node "$WL_APPROVED_BOOTSTRAP_GATE_CLI" ci-prepare --root . --apply --confirm \
+        --expect-workspace-hash "$WL_APPROVED_WORKSPACE_HASH" \
+        --expect-lock-hash "$WL_APPROVED_DEPENDENCY_LOCK_HASH"
     - node --version
-    - corepack enable
-    - pnpm install --frozen-lockfile --prod=false
     - |
       set +e
       pnpm exec wl-skills-gate run --profile standard --sha "$CI_COMMIT_SHA" \

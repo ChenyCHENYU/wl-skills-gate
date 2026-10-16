@@ -24,7 +24,8 @@
       "expectPolicyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
       "expectRulesHash": "REPLACE_WITH_APPROVED_RULES_SHA256",
       "expectBaselineHash": "REPLACE_WITH_APPROVED_BASELINE_SHA256",
-      "expectWaiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256"
+      "expectWaiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256",
+      "reviewPublicationDir": "review-delivery"
     },
     {
       "project": "wl-produce",
@@ -44,8 +45,10 @@
       "expectPolicyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
       "expectRulesHash": "REPLACE_WITH_APPROVED_RULES_SHA256",
       "expectBaselineHash": "REPLACE_WITH_APPROVED_BASELINE_SHA256",
-      "expectWaiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256"
+      "expectWaiversHash": "REPLACE_WITH_APPROVED_WAIVERS_SHA256",
+      "reviewPublicationDir": "review-delivery"
     }
   ],
-  "compatibilityFile": "compatibility/declaration.json"
+  "compatibilityFile": "compatibility/declaration.json",
+  "reviewConfigFile": "release-review-trust.json"
 }

@@ -10,8 +10,45 @@ pipeline {
         script { env.WL_CHECKED_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim() }
       }
     }
+    stage('Verify this checkout has an authorized nine-dimension Review') {
+      steps {
+        withCredentials([string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN')]) {
+        sh '''
+          set -eu
+          mkdir -p quality-reports
+          review_failed() {
+            result=$?
+            if [ "$result" -ne 0 ]; then
+              printf '%s\n' '{"status":"blocked","stage":"before-prepare-and-build","reason":"formal-review-verification-failed"}' > quality-reports/release-review-verification.json
+            fi
+          }
+          trap review_failed EXIT
+          : "${WL_APPROVED_GATE_CLI:?fixed approved Gate CLI}"
+          : "${WL_APPROVED_REVIEW_TRUST_CONFIG:?fixed central Review trust configuration}"
+          : "${WL_APPROVED_REVIEW_PUBLICATION_DIR:?fixed central formal Review delivery directory}"
+          mkdir -p quality-reports
+          set +e
+          node "$WL_APPROVED_GATE_CLI" verify-release-review \
+            --config "$WL_APPROVED_REVIEW_TRUST_CONFIG" --project "$WL_PROJECT" --sha "$WL_CHECKED_SHA" \
+            --publication-dir "$WL_APPROVED_REVIEW_PUBLICATION_DIR" --out-dir quality-reports/release-review-live \
+            > quality-reports/release-review-verification.json 2> quality-reports/release-review-verification.log
+          review_status=$?
+          set -e
+          if [ "$review_status" -ne 0 ]; then
+            printf '%s\n' '{"status":"blocked","stage":"before-prepare-and-build","reason":"formal-review-verification-failed"}' > quality-reports/release-review-verification.json
+          fi
+          exit "$review_status"
+        '''
+        }
+      }
+    }
     stage('Prepare approved dependencies') {
-      steps { sh 'set -eu; test -n "$WL_APPROVED_PREPARE_SCRIPT"; "$WL_APPROVED_PREPARE_SCRIPT"' }
+      steps { sh '''
+        set -eu
+        node "$WL_APPROVED_GATE_CLI" ci-prepare --root . --apply --confirm \
+          --expect-workspace-hash "$WL_APPROVED_WORKSPACE_HASH" \
+          --expect-lock-hash "$WL_APPROVED_DEPENDENCY_LOCK_HASH"
+      ''' }
     }
     stage('Release quality') {
       steps {

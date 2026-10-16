@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync, symlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync, symlinkSync, existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { registryInstallationEvidence, verifyLockOrigins } from "../../lib/onboard-registry.js";
@@ -12,10 +13,41 @@ test("只读pnpm配置禁止版本自动下载，只保留registry且安装强�
     argv = args; return { status: 0, stdout: JSON.stringify({ registry: approved, "@old:registry": "https://old.example.invalid/", "//registry.example.invalid/:_authToken": "SUPER_SECRET", userAgent: "pnpm/11.21.0 npm/?" }) };
   } });
   assert(argv.includes("--config.pm-on-fail=ignore")); assert(argv.includes("--config.manage-package-manager-versions=false"));
+  assert(argv.includes("--config.ignore-pnpmfile=true"));
   assert(evidence.scopedRegistryOverrides.includes(`--config.@old:registry=${approved}`));
   assert(evidence.scopedRegistryOverrides.includes(`--config.@demo:registry=${approved}`));
   assert(evidence.packageManagerFlags.includes("--config.pm-on-fail=error")); assert.equal(evidence.packageManager.observed, "pnpm@11.21.0");
+  assert(evidence.packageManagerFlags.includes("--config.ignore-pnpmfile=true"));
   assert(!JSON.stringify(evidence).includes("SUPER_SECRET"));
+});
+
+test("真实本机pnpm离线无依赖安装：ignore-scripts仍执行CJS/ESM钩子，明确ignore-pnpmfile后不执行，接入明确阻断待适配", async (t) => {
+  const version = spawnSync("pnpm", ["--version", "--config.manage-package-manager-versions=false", "--config.ignore-pnpmfile=true"], { encoding: "utf8" });
+  assert.equal(version.status, 0, version.stderr);
+  for (const extension of ["cjs", "mjs"]) await t.test(extension, (sub) => {
+    const root = fixture(sub), marker = path.join(root, "pnpmfile-executed.txt"), hook = `.pnpmfile.${extension}`;
+    writeFileSync(path.join(root, "package.json"), JSON.stringify({ private: true }));
+    writeFileSync(path.join(root, ".npmrc"), `pnpmfile=${hook}\n`);
+    writeFileSync(path.join(root, hook), extension === "cjs"
+      ? "require('node:fs').writeFileSync('pnpmfile-executed.txt','executed');module.exports={hooks:{}};\n"
+      : "import fs from 'node:fs';fs.writeFileSync('pnpmfile-executed.txt','executed');export const hooks={};\n");
+    const args = ["install", "--offline", "--ignore-scripts", "--config.manage-package-manager-versions=false", "--config.pm-on-fail=error", "--config.package-manager-strict-version=true"];
+    const unprotected = spawnSync("pnpm", args, { cwd: root, encoding: "utf8", timeout: 30000, env: { ...process.env, CI: "true" } });
+    assert.equal(unprotected.status, 0, unprotected.stdout + unprotected.stderr);
+    assert.equal(readFileSync(marker, "utf8"), "executed", "反例必须实际证明ignore-scripts并不禁pnpmfile");
+    rmSync(marker);
+    const protectedInstall = spawnSync("pnpm", [...args, "--config.ignore-pnpmfile=true"], { cwd: root, encoding: "utf8", timeout: 30000, env: { ...process.env, CI: "true" } });
+    assert.equal(protectedInstall.status, 0, protectedInstall.stdout + protectedInstall.stderr);
+    assert.equal(existsSync(marker), false);
+    assert.throws(() => registryInstallationEvidence({ root, kind: "frontend", manager: "pnpm", executable: "pnpm", approved }), /pnpmfile.*固定摘要/);
+    assert.equal(existsSync(marker), false, "真实配置预检也不执行钩子");
+  });
+});
+
+for (const key of ["pnpmfile", "globalPnpmfile", "global-pnpmfile"]) test(`自定义/全局 ${key} 声明须固定适配，不靠跳过钩子伪装接入成功`, (t) => {
+  const root = fixture(t);
+  assert.throws(() => registryInstallationEvidence({ root, kind: "frontend", manager: "pnpm", executable: process.execPath, approved,
+    manifestContent: "{}", runner: () => ({ status: 0, stdout: JSON.stringify({ registry: approved, [key]: "private-required-hook.cjs" }) }) }), /必要依赖转换/);
 });
 for (const value of ["https://user:SECRET@registry.example.invalid/", "https://registry.example.invalid/?token=SECRET", "https://registry.example.invalid/#SECRET"]) test("registry凭据和查询参数不进计划或错误消息", (t) => {
   const root = fixture(t); assert.throws(() => registryInstallationEvidence({ root, kind: "frontend", approved, executable: process.execPath, manager: "pnpm", manifestContent: "{}", runner: () => ({ status: 0, stdout: JSON.stringify({ registry: value }) }) }), (error) => !error.message.includes("SECRET"));

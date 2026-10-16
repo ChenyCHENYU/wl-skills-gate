@@ -15,6 +15,7 @@ pipeline {
             test -n "$WL_APPROVED_GATE_CLI"
             node "$WL_APPROVED_GATE_CLI" release-set create \
               --input "$WL_APPROVED_RELEASE_INPUT" --evidence-root "$WL_CENTRAL_EVIDENCE_ROOT" \
+              --review-config "$WL_APPROVED_REVIEW_TRUST_CONFIG" \
               --expect-input-hash "$WL_APPROVED_RELEASE_INPUT_HASH" --private-key "$WL_RELEASE_KEY" \
               --issuer "$WL_RELEASE_ISSUER" --out "$WL_NEW_RELEASE_SET_FILE"
           '''

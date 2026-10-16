@@ -1,6 +1,6 @@
 # wl-skills-gate 技术手册索引
 
-当前版本 0.10.0；对照团队落地执行 V3.4。技术宣贯基线仍为 V3.1；团队具体操作单源见 [16 项目与运维入口](16-project-ci-integration.md)，本索引提供工具契约与参数参考。
+当前版本 0.11.0；对照团队落地执行 V3.4。技术宣贯基线仍为 V3.1；团队具体操作单源见 [16 项目与运维入口](16-project-ci-integration.md)，本索引提供工具契约与参数参考。
 
 授权声明见 [LICENSE](../LICENSE)；公开获取不授予使用、复制、修改或再分发授权，申请入口为 [仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
 

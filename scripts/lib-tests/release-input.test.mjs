@@ -9,6 +9,7 @@ import { signCollectedReleaseProof } from "../../lib/lifecycle-source.js";
 import { signRecord } from "../../lib/evidence.js";
 import { buildReleaseInputPlan, applyReleaseInputPlan } from "../../lib/release-input.js";
 import { validateReleaseSetInput, createReleaseSet, verifyReleaseSet } from "../../lib/release-set.js";
+import { createReleaseReviewFixture } from "../test-support/release-review-fixture.mjs";
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const write = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + "\n"); };
 const read = (file) => JSON.parse(readFileSync(file));
@@ -20,7 +21,7 @@ async function fixture(t, system = "gitlab", emptyConfig = false) {
   mkdirSync(root);
   const pair = generateKeyPairSync("ed25519"), privateKeyFile = path.join(dir, "proof-private.pem"), publicKeyFile = path.join(root, "keys/proof-public.pem");
   writeFileSync(privateKeyFile, pair.privateKey.export({ type: "pkcs8", format: "pem" })); mkdirSync(path.dirname(publicKeyFile)); writeFileSync(publicKeyFile, pair.publicKey.export({ type: "spki", format: "pem" }));
-  const config = { schemaVersion: 1, kind: "release-input-config", releaseSetId: "produce-20261015", environment: "uat", evidenceRoot: "release-evidence", outputFile: "generated/release-set-input.json", components: [], compatibilityFile: "compatibility/declaration.json" };
+  const config = { schemaVersion: 1, kind: "release-input-config", releaseSetId: "produce-20261015", environment: "uat", evidenceRoot: "release-evidence", outputFile: "generated/release-set-input.json", reviewConfigFile: "release-evidence/release-review-trust.json", components: [], compatibilityFile: "compatibility/declaration.json" };
   for (const [index, project, role] of [[0, "wl-produce", "backend"], [1, "wl-ui-produce", "frontend"]]) {
     const sha = (index ? "b" : "c").repeat(40), authorId = `author-${project}`, jobPath = `${project}/build`;
     const summary = { schemaVersion: 1, run: { project, profile: "release", targetEnv: "uat", commitSha: sha, eventId: `${project}-1`, startedAt: now.toISOString(), durationMs: 1, tool: "gate", sourceBound: true, sourceDigest: fixed }, policy: { policyHash: fixed, ruleSetHash: fixed, baselineHash: fixed, waiversHash: fixed, requiredCheckIds: ["CHECK"], checksSelected: 1, lockedToolVersions: { CHECK: "fixture@1" } }, checks: [{ checkId: "CHECK", status: "ok", required: true, toolVersionVerified: true, toolVersion: "fixture@1" }], findings: [], counts: { blockingNew: 0 }, decision: { status: "passed", reasons: [] } };
@@ -42,7 +43,8 @@ async function fixture(t, system = "gitlab", emptyConfig = false) {
     const proofFile = path.join(root, `proofs/${project}.json`);
     signCollectedReleaseProof({ configFile: sourceConfigFile, sourceFile: collected.sourceFile, manifestPath: "release/manifest.json", env: "uat", sha, outFile: proofFile, privateKeyFile, issuer: "component-signer", expectPolicyHash: fixed, expectRulesHash: fixed, expectBaselineHash: fixed, expectWaiversHash: fixed, now: now.getTime() });
     const artifactRoot = `collected/${project}/artifacts`;
-    config.components.push({ project, scope: "standard", role, authorId, sourceConfigFile: `sources/${project}.json`, sourceConfigHash: hash(readFileSync(sourceConfigFile)), sourceFile: `collected/${project}/source.json`, proofFile: `proofs/${project}.json`, publicKeyFile: "keys/proof-public.pem", publicKeyHash: hash(readFileSync(publicKeyFile)), manifestFile: `${artifactRoot}/release/manifest.json`, summaryFile: `${artifactRoot}/quality/summary.json`, artifactRoot, expectIssuer: "component-signer", expectPolicyHash: fixed, expectRulesHash: fixed, expectBaselineHash: fixed, expectWaiversHash: fixed });
+    const review = createReleaseReviewFixture({ root, project, sha, summary, now, authorId });
+    config.components.push({ reviewFile: path.relative(root, review.recordFile), reviewEvidenceRoot: path.relative(root, review.evidenceRoot), project, scope: "standard", role, authorId, sourceConfigFile: `sources/${project}.json`, sourceConfigHash: hash(readFileSync(sourceConfigFile)), sourceFile: `collected/${project}/source.json`, proofFile: `proofs/${project}.json`, publicKeyFile: "keys/proof-public.pem", publicKeyHash: hash(readFileSync(publicKeyFile)), manifestFile: `${artifactRoot}/release/manifest.json`, summaryFile: `${artifactRoot}/quality/summary.json`, artifactRoot, expectIssuer: "component-signer", expectPolicyHash: fixed, expectRulesHash: fixed, expectBaselineHash: fixed, expectWaiversHash: fixed });
   }
   write(path.join(root, "compatibility/openapi.json"), { openapi: "3.0.3", info: { version: "v1" }, paths: { "/health": { get: {} } } });
   writeFileSync(path.join(root, "compatibility/review.txt"), "Fixture release owner reviewed this exact pair: API, no database change, deployment order and recovery constraints.");
@@ -50,24 +52,25 @@ async function fixture(t, system = "gitlab", emptyConfig = false) {
   const declaration = { api: { type: "contract", version: "v1", evidence: ref("openapi.json"), reviewEvidence: ref("review.txt") }, database: { mode: "none", schemaVersion: "schema-1", reason: "No entity or SQL changes in this isolated pair", reviewEvidence: ref("review.txt") }, deploymentOrder: ["wl-produce", "wl-ui-produce"], rollback: { mode: "compatible", reason: "No schema changes; previous artifact pair remains compatible", reviewEvidence: ref("review.txt") } };
   const declarationFile = path.join(root, config.compatibilityFile); write(declarationFile, declaration); write(configFile, config);
   const options = { configFile, now }, output = path.join(root, config.outputFile);
-  return { dir, root, now, config, configFile, output, options, declaration, declarationFile, privateKeyFile, publicKeyFile, saveConfig: () => write(configFile, config), saveDeclaration: () => write(declarationFile, declaration) };
+  return { dir, root, now, reviewConfigFile: path.join(root, "release-review-trust.json"), config, configFile, output, options, declaration, declarationFile, privateKeyFile, publicKeyFile, saveConfig: () => write(configFile, config), saveDeclaration: () => write(declarationFile, declaration) };
 }
 for (const system of ["gitlab", "jenkins"]) test(`${system}真实采集→组件签发→自动组合预览→摘要确认生成→原签发器验收`, async (t) => {
   const f = await fixture(t, system), before = files(f.dir), plan = buildReleaseInputPlan(f.options);
   assert.equal(plan.status, "preview"); assert.equal(plan.written, false); assert.equal(plan.signed, false); assert.equal(plan.approved, false); assert.equal(existsSync(f.output), false); assert.deepEqual(files(f.dir), before);
+  assert(plan.summary.components.every((component) => component.reviewId && component.reviewerId === "independent-reviewer" && /^[a-f0-9]{64}$/.test(component.reviewDigest)));
   assert.equal(plan.configHash, hash(readFileSync(f.configFile))); assert.equal(plan.inputHash, hash(JSON.stringify(plan.input, null, 2) + "\n")); assert.equal(plan.input.components.length, 2);
   assert.equal(plan.input.components[0].sha, "c".repeat(40)); assert.equal(plan.input.components[0].expectPipelineId, "45"); assert.equal(plan.input.components[0].expectJobId, system === "gitlab" ? "61" : "45");
   assert.equal(plan.input.compatibility.api.evidence.sha256, hash(readFileSync(path.join(f.root, "compatibility/openapi.json"))));
   const created = applyReleaseInputPlan({ ...f.options, expectConfigHash: plan.configHash, expectInputHash: plan.inputHash }); assert.equal(created.written, true); assert.equal(created.signed, false); assert.equal(hash(readFileSync(f.output)), plan.inputHash);
-  const signed = createReleaseSet({ inputFile: f.output, evidenceRoot: f.root, expectInputHash: plan.inputHash, privateKeyFile: f.privateKeyFile, issuer: "release-signer", outFile: path.join(f.dir, "release-set.json"), now: f.now });
-  assert.equal(verifyReleaseSet({ releaseSetFile: signed.releaseSetFile, publicKeyFile: f.publicKeyFile, expectIssuer: "release-signer", expectReleaseSetHash: signed.releaseSetHash, env: "uat", now: f.now }).ok, true);
+  const signed = createReleaseSet({ inputFile: f.output, evidenceRoot: f.root, reviewConfigFile: f.reviewConfigFile, expectInputHash: plan.inputHash, privateKeyFile: f.privateKeyFile, issuer: "release-signer", outFile: path.join(f.dir, "release-set.json"), now: f.now });
+  assert.equal(verifyReleaseSet({ releaseSetFile: signed.releaseSetFile, publicKeyFile: f.publicKeyFile, reviewConfigFile: f.reviewConfigFile, expectIssuer: "release-signer", expectReleaseSetHash: signed.releaseSetHash, env: "uat", now: f.now }).ok, true);
   assert.throws(() => applyReleaseInputPlan({ ...f.options, expectConfigHash: plan.configHash, expectInputHash: plan.inputHash }), /已存在/);
 });
 test("签名前共用纯验证无需私钥、不落盘，坏证明不能经预览放行", async (t) => {
   const f = await fixture(t), plan = buildReleaseInputPlan(f.options), before = files(f.dir);
-  assert.equal(validateReleaseSetInput({ input: plan.input, evidenceRoot: f.root, now: f.now }).components.length, 2); assert.deepEqual(files(f.dir), before);
+  assert.equal(validateReleaseSetInput({ input: plan.input, evidenceRoot: f.root, reviewConfigFile: f.reviewConfigFile, now: f.now }).components.length, 2); assert.deepEqual(files(f.dir), before);
   const proofFile = path.join(f.root, f.config.components[0].proofFile), proof = read(proofFile); proof.candidateSha = "d".repeat(40); write(proofFile, signRecord(proof, f.privateKeyFile));
-  assert.throws(() => validateReleaseSetInput({ input: plan.input, evidenceRoot: f.root, now: f.now }), /组件.*证据无效/); assert.throws(() => buildReleaseInputPlan(f.options), /组件.*证据无效/); assert.equal(existsSync(f.output), false);
+  assert.throws(() => validateReleaseSetInput({ input: plan.input, evidenceRoot: f.root, reviewConfigFile: f.reviewConfigFile, now: f.now }), /组件.*证据无效/); assert.throws(() => buildReleaseInputPlan(f.options), /组件.*证据无效/); assert.equal(existsSync(f.output), false);
 });
 test("真实清单中的空配置原件按实际字节验证，不增加未声明的非空约束", async (t) => {
   const f = await fixture(t, "gitlab", true), plan = buildReleaseInputPlan(f.options);
@@ -144,7 +147,7 @@ test("自动输入落盘后至签名前，全部原件仍按已批准真实字�
   applyReleaseInputPlan({ ...f.options, expectConfigHash: plan.configHash, expectInputHash: plan.inputHash });
   const sourceFile = path.join(f.root, f.config.components[0].sourceFile); writeFileSync(sourceFile, readFileSync(sourceFile, "utf8") + "\n");
   const outFile = path.join(f.dir, "must-not-sign.json");
-  assert.throws(() => createReleaseSet({ inputFile: f.output, evidenceRoot: f.root, expectInputHash: plan.inputHash, issuer: "release-signer", privateKeyFile: "not-a-key.pem", outFile, now: f.now }), /原件字节发生变化/);
+  assert.throws(() => createReleaseSet({ inputFile: f.output, evidenceRoot: f.root, reviewConfigFile: f.reviewConfigFile, expectInputHash: plan.inputHash, issuer: "release-signer", privateKeyFile: "not-a-key.pem", outFile, now: f.now }), /原件字节发生变化/);
   assert.equal(existsSync(outFile), false);
 });
 test("自动输入原件绑定不能漏必需文件、重复、越界或伪造字节数", async (t) => {
@@ -157,6 +160,27 @@ test("自动输入原件绑定不能漏必需文件、重复、越界或伪造�
     (value) => value.inputProvenance.configHash = "unknown",
   ]) {
     const input = structuredClone(plan.input); change(input);
-    assert.throws(() => validateReleaseSetInput({ input, evidenceRoot: f.root, now: f.now }));
+    assert.throws(() => validateReleaseSetInput({ input, evidenceRoot: f.root, reviewConfigFile: f.reviewConfigFile, now: f.now }));
   }
+});
+test("中央固定交付目录按两仓实际SHA自动选正式Review，不填动态文件名；新待确认版本使旧输入失效", async (t) => {
+  const f = await fixture(t), catalogFile = path.join(f.root, "review-catalog.json"), publicationDir = path.join(f.root, "review-delivery"), catalog = { schemaVersion: 1, reviews: {}, latest: {} }, trust = read(f.reviewConfigFile);
+  for (const entry of f.config.components) {
+    const recordFile = path.join(f.root, entry.reviewFile), evidenceRoot = path.join(f.root, entry.reviewEvidenceRoot), formal = read(recordFile), draftRecordFile = path.join(evidenceRoot, "draft/review-draft.json"), provenanceFile = path.join(evidenceRoot, "publication-provenance.json"), registrationId = `${entry.project}-${formal.candidateSha.slice(0, 8)}`, collectorConfigFile = path.join(evidenceRoot, "collector.json");
+    write(collectorConfigFile, { schemaVersion: 1, project: entry.project, ciConfigFile: path.join(f.root, entry.sourceConfigFile), reviewPolicyHash: trust.projects[entry.project].reviewPolicyHash, allowedAuthorIds: [entry.authorId], evidence: [] });
+    // Isolated fixed publication metadata; the formal Review and nine-dimension
+    // authorization signatures were produced by the real Review functions.
+    write(provenanceFile, { kind: "isolated-publication-metadata", project: entry.project });
+    const recordHash = hash(readFileSync(draftRecordFile)), provenanceHash = hash(readFileSync(provenanceFile));
+    catalog.reviews[registrationId] = { reviewId: registrationId, project: entry.project, recordFile: draftRecordFile, evidenceRoot, recordHash, provenanceFile, provenanceHash };
+    catalog.latest[`${entry.project}:standard:${formal.candidateSha}`] = { reviewId: registrationId, recordHash };
+    Object.assign(trust.projects[entry.project], { evidenceRoots: [f.root], collectorConfigFile, controlCatalogFile: catalogFile });
+    write(path.join(publicationDir, `${registrationId}.json`), { schemaVersion: 1, kind: "published-review-manifest", project: entry.project, scope: "standard", candidateSha: formal.candidateSha, registrationId, recordFile, evidenceRoot, recordHash: hash(readFileSync(recordFile)), draftRecordFile, provenanceFile, provenanceHash, collectorConfigFile, authorId: formal.authorId, reviewerId: formal.reviewerId });
+    delete entry.reviewFile; delete entry.reviewEvidenceRoot; entry.reviewPublicationDir = "review-delivery";
+  }
+  write(f.reviewConfigFile, trust); write(catalogFile, catalog); f.saveConfig();
+  const plan = buildReleaseInputPlan(f.options); assert.equal(plan.input.components.length, 2); assert(plan.input.components.every((entry) => entry.reviewPublicationFile?.startsWith("review-delivery/") && entry.reviewFile?.endsWith("formal.json")));
+  assert(plan.input.inputProvenance.originals.some((entry) => entry.file.startsWith("review-delivery/")));
+  const component = plan.input.components[0]; catalog.latest[`${component.project}:standard:${component.sha}`] = { reviewId: "new-pending-version" }; write(catalogFile, catalog);
+  assert.throws(() => applyReleaseInputPlan({ ...f.options, expectConfigHash: plan.configHash, expectInputHash: plan.inputHash }), /尚无当前有效/); assert.equal(existsSync(f.output), false);
 });
