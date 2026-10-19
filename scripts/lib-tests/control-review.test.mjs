@@ -12,6 +12,20 @@ const hash = (value) => createHash('sha256').update(value).digest('hex'), now = 
 const json = (file, value) => writeFileSync(file, JSON.stringify(value));
 const authorizationCount = (f) => { const directory = path.join(f.c.dataDir, 'authorizations'); return existsSync(directory) ? readdirSync(directory).filter((v) => v.endsWith('.json')).length : 0; };
 import { createControlReviewFixture as fixture } from '../test-support/control-review-fixture.mjs';
+test('技术经理责任进入认证确认硬门；其他Reviewer不能代签，经理为执行人时必须非作者独立复核',async t=>{
+  for(const manager of ['reviewer','author'])await t.test(manager,async sub=>{
+    const f=await fixture(sub,{technicalManager:manager});await f.register();
+    if(manager==='reviewer'){
+      const cookie=await f.login('other'),session=JSON.parse(readFileSync(path.join(f.c.dataDir,'sessions.json'))).sessions[hash(cookie.split('=')[1])];
+      const fields={csrf:session.csrf,reviewDigest:f.draft.reviewDigest,reason:'attempt independent reviewer substitution'};
+      for(const d of JSON.parse(readFileSync(f.draft.recordFile)).content.dimensions){fields[`decision_${d.id}`]='approved';fields[`reason_${d.id}`]='actual fixture evidence checked';}
+      const denied=await f.http({method:'POST',cookie,body:new URLSearchParams(fields).toString()});assert.equal(denied.status,400);assert.match(denied.text,/技术经理/);assert.equal(authorizationCount(f),0);
+    }
+    const cookie=await f.login('reviewer'),{fields}=await f.form(cookie),accepted=await f.http({method:'POST',cookie,body:new URLSearchParams(fields).toString()});
+    assert.equal(accepted.status,200,accepted.text);assert.equal(authorizationCount(f),1);
+    if(manager==='author'){const own=await f.login('author'),page=await f.http({cookie:own});assert.equal((page.text.match(/type="checkbox"/g)||[]).length,0);}
+  });
+});
 test('可信CI→原自动草稿→补证→登记→OIDC独立逐维确认→原签发器接受，贯通同一证据链', async (t) => {
   const f = await fixture(t); assert.equal((await f.register()).status, 'registered');
   const cookie = await f.login(), { page, fields } = await f.form(cookie);

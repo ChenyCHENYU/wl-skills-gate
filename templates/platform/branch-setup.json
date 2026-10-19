@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "kind": "quality-branch-setup",
+  "automationConfigFile": "./automation-config.json",
+  "controlConfigFile": "./control-config.json",
+  "reviewPublishConfigFile": "./review-publish-config.json",
+  "reviewTrustConfigFile": "./release-review-trust.json",
+  "sourceIds": [
+    "frontend-standard",
+    "backend-standard"
+  ],
+  "keepBaseSource": true
+}

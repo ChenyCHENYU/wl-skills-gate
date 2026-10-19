@@ -32,7 +32,7 @@ test("BD 返回模型警告、请求错误及权限底线在转换后保持等�
     { rule: "B10", severity: "error", file: "src/Service.java", message: "legacy length" },
   ] }, "wl-bd", ctx).data.findings;
   assert.deepEqual(converted.map((f) => f.severity), ["warning", "error", "error", "error"]);
-  assert.deepEqual(converted.map(immutableFailure), [false, true, true, false]);
+  assert.deepEqual(converted.map(immutableFailure), [false, true, true, true]);
   const suppressed = normalizeNative({ ...bd, suppressed: [
     { rule: "B1", severity: "error", file: "src/Controller.java", message: "upstream waived auth", suppressionReason: "legacy" },
   ] }, "wl-bd", ctx).data.findings;

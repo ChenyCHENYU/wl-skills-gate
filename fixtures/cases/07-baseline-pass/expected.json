@@ -1,1 +1,10 @@
-{ "exit": 0, "status": "passed", "counts": { "existing": 1, "new": 0, "blockingNew": 0 } }
+{
+  "exit": 1,
+  "status": "blocked",
+  "counts": {
+    "new": 1,
+    "existing": 0,
+    "waived": 0,
+    "blockingNew": 1
+  }
+}

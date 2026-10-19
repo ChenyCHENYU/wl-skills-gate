@@ -1,0 +1,1485 @@
+{
+  "schemaVersion": 1,
+  "name": "code-scan-kit",
+  "version": "1.1.0",
+  "engines": {
+    "pmd": "6.55.0",
+    "p3c": "2.1.1",
+    "checkstyle": "10.9.3",
+    "cpd": "6.55.0",
+    "ccn": "1.24.1",
+    "spotbugs": "4.10.4"
+  },
+  "files": [
+    {
+      "path": "scripts/evidence.py",
+      "bytes": 10100,
+      "sha256": "fe5f278b2c08212481fbd301dbee8042633cd55d9023fcbe5194f5927fe7d2db"
+    },
+    {
+      "path": "scripts/make_report.py",
+      "bytes": 26300,
+      "sha256": "852bfab84b11b38a8f10ada22d12ade0b76c3b05752a7ecf838121222ac77b90"
+    },
+    {
+      "path": "scripts/scan.py",
+      "bytes": 18932,
+      "sha256": "1fc747353327d30eb387eb03b230bc15efba23d02ea3d214efe02a68fe829848"
+    },
+    {
+      "path": "scripts/spotbugs.py",
+      "bytes": 20598,
+      "sha256": "ceabd68dec26223312d01cc2035a399a7081aaa1a5f00c6f870acdc918f0d085"
+    },
+    {
+      "path": "config/checkstyle-codecc-42of43-sev.xml",
+      "bytes": 5115,
+      "sha256": "034fe4b0b9e686abadcc305695a878d228fd33591543ef2f82a49fe3d8384115"
+    },
+    {
+      "path": "config/p3c_descriptions.json",
+      "bytes": 10677,
+      "sha256": "e4599476f1c48863ffd72cde107e2d564ebfb97d7bc445503e65a3de017ae923"
+    },
+    {
+      "path": "config/p3c_priority.json",
+      "bytes": 2147,
+      "sha256": "4ab089d1eb0cf01e226cc17572f48946dc2d01a5c846c7e68da918c372aa2a4c"
+    },
+    {
+      "path": "config/pmd-categories/bestpractices.xml",
+      "bytes": 85203,
+      "sha256": "3b573b2a875288089b6186d91e505492fba5453338ac7170c74e3dbdea6205b7"
+    },
+    {
+      "path": "config/pmd-categories/codestyle.xml",
+      "bytes": 92065,
+      "sha256": "82506f3fd7bbcce5f45dd5116fbe007144ba04616cbe1ccfa6d56f8a9832e1f9"
+    },
+    {
+      "path": "config/pmd-categories/design.xml",
+      "bytes": 69149,
+      "sha256": "6b18fbf7a745616ff225bb2869747f812b24946024a36cabd393ad5216f983b9"
+    },
+    {
+      "path": "config/pmd-categories/documentation.xml",
+      "bytes": 5087,
+      "sha256": "155cf4cdfe5c3c938d2a5cf9c7990207895ce9e956a953c6f694e7d520c79383"
+    },
+    {
+      "path": "config/pmd-categories/errorprone.xml",
+      "bytes": 137028,
+      "sha256": "6d8c762cc6beef9044a22078724a70edc1a6e6e606646c36600d94af3e3c6031"
+    },
+    {
+      "path": "config/pmd-categories/multithreading.xml",
+      "bytes": 16660,
+      "sha256": "e64555a704b9f90945864f603b31168c5b77237c3309b018ae689c4f818af550"
+    },
+    {
+      "path": "config/pmd-categories/performance.xml",
+      "bytes": 49551,
+      "sha256": "35945ac5369b86a6f2148efdbc3d88184eb07b38b5baac0b2a7e0812194fda31"
+    },
+    {
+      "path": "config/pmd-categories/security.xml",
+      "bytes": 2161,
+      "sha256": "026660b5e7ce16afb4118c49120d02b7c0f8d2df408ac07fa5c4e9333b2e28fa"
+    },
+    {
+      "path": "config/pmd-codecc-91of91.xml",
+      "bytes": 6652,
+      "sha256": "21d66094879d1f4164c00901fd874af88463b785fb3a36317dd999d0b21579c0"
+    },
+    {
+      "path": "config/sb-messages.xml",
+      "bytes": 473397,
+      "sha256": "f3e7565c98c482796c21976961c08a559309b5955288d103c042f3dedb4be68a"
+    },
+    {
+      "path": "config/规则集说明.md",
+      "bytes": 2199,
+      "sha256": "d1f61c9c370a9b1f8adefdd8aaf9dfffce100b33eb600034cf08c4320c9fa4a6"
+    },
+    {
+      "path": "tools/checkstyle-all.jar",
+      "bytes": 16679627,
+      "sha256": "ef6f1206d29c613440f2880d317e970f76856f3d781a3c8dbc15648dd88048f1"
+    },
+    {
+      "path": "tools/p3c/p3c-pmd.jar",
+      "bytes": 172574,
+      "sha256": "e7afec9340a0f30f56f4fdcd3b9c49e79ed24253719fcb9f457f5bcb43e54860"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-comment.xml",
+      "bytes": 4492,
+      "sha256": "97b9d20c0eb364cf71b8484ff9e13d34d7566852bec852d482a12780b8e25365"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-concurrent.xml",
+      "bytes": 10851,
+      "sha256": "dc43f78b743459c663704f19e2b8ff86ade85e26c001db41e5eae5995d25a614"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-constant.xml",
+      "bytes": 1445,
+      "sha256": "414bd5d14b65cf76f4617b53eda24d8e1885a7aef894b1a49e7a12cbadaa5cad"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-exception.xml",
+      "bytes": 3745,
+      "sha256": "d633eadf9f45cf777c5767094c6c22d343cdf2c5aa109a6ce09c30b92976ab02"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-flowcontrol.xml",
+      "bytes": 2658,
+      "sha256": "285db14d26066111586d6b72acf87c387d343a2280c1eb543a9cb3c0f09cbb57"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-naming.xml",
+      "bytes": 5159,
+      "sha256": "40b9addd597a390a0fcfea96addac056851c1c6775f6d67358b3330a9ec21518"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-oop.xml",
+      "bytes": 4514,
+      "sha256": "f956c5292a1059fef8e3f291cb519b61b50d0c258b371a01d290b47ae3e17906"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-orm.xml",
+      "bytes": 636,
+      "sha256": "0eae0079e9abb7891e5515630e21fd8082bdf9f980990984f39af02ddf7ce4f4"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-other.xml",
+      "bytes": 4573,
+      "sha256": "c0eb4429c26c702130c3d6806d5829e610107f6da1452f86a1adecc0c21a33d3"
+    },
+    {
+      "path": "tools/p3c/rulesets/java/ali-set.xml",
+      "bytes": 4130,
+      "sha256": "c271c3fedea099be92a82374d4cdf32a46c0b6e052be0e7a4a1a3fa4f858d27f"
+    },
+    {
+      "path": "tools/p3c/rulesets/vm/ali-other.xml",
+      "bytes": 844,
+      "sha256": "8dc604331b5a2b2f522af31f24da45aa3f0054d00f16414c97730adbc26405f5"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/LICENSE",
+      "bytes": 13190,
+      "sha256": "296dae48eae5658f449a89cf512b8e05386c9c5adfb23d74cfb24efa145625db"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/ast-dump.bat",
+      "bytes": 183,
+      "sha256": "b23b2cec5ffb4f8b0e43c520309964592eb01f402d27201878b75f25fe8146ec"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/bgastviewer.bat",
+      "bytes": 172,
+      "sha256": "cd1f53e05769fa66570a0079921eec7eb9a561128e610e330bbf7fda99ed13a3"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/cpd.bat",
+      "bytes": 161,
+      "sha256": "467bfacce8e2354dced0fb22d5435383f0f508d7e9545a7ba055ad16d65e6042"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/cpdgui.bat",
+      "bytes": 161,
+      "sha256": "9549392a17b4608e36f27783506891bfc7127bf731c074035f6960ee19ec6c3a"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/designer.bat",
+      "bytes": 1532,
+      "sha256": "e0793c9c6fbc2ddb7ffedc2f92929e95249300ba6b07ee7a60c068147a0f654e"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/designerold.bat",
+      "bytes": 176,
+      "sha256": "03c6b2d78fcbb6fa5fac538ecc49299d790309c2d23441d64c25fe113dbf24d4"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/pmd.bat",
+      "bytes": 275,
+      "sha256": "94f345629a0bed3d039e5db7eac300e13a87c063caa58cc0de1049d24424b17d"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/bin/run.sh",
+      "bytes": 6863,
+      "sha256": "31410f31426020a8f40662c5950058110a73131ae7b2d165e2a375f1d0237681"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/animal-sniffer-annotations-1.14.jar",
+      "bytes": 3482,
+      "sha256": "2068320bd6bad744c3673ab048f67e30bef8f518996fa380033556600669905d"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/annotations-13.0.jar",
+      "bytes": 17536,
+      "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/antlr-2.7.7.jar",
+      "bytes": 445288,
+      "sha256": "88fbda4b912596b9f56e8e12e580cc954bacfb51776ecfddd3e18fc1cf56dc4c"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/antlr-runtime-3.5.2.jar",
+      "bytes": 167761,
+      "sha256": "ce3fc8ecb10f39e9a3cddcbb2ce350d272d9cd3d0b1e18e6fe73c3b9389c8734"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/antlr4-runtime-4.7.2.jar",
+      "bytes": 337904,
+      "sha256": "4c518b87d4bdff8b44cd8cbc1af816e944b62a3fe5b80b781501cf1f4759bbc4"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/aopalliance-1.0.jar",
+      "bytes": 4467,
+      "sha256": "0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/asm-9.4.jar",
+      "bytes": 122445,
+      "sha256": "39d0e2b3dc45af65a09b097945750a94a126e052e124f93468443a1d0e15f381"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/cglib-3.3.0.jar",
+      "bytes": 306864,
+      "sha256": "9fe0c26d7464140ccdfe019ac687be1fb906122b508ab54beb810db0f09a9212"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/common_2.13-4.6.0.jar",
+      "bytes": 2383988,
+      "sha256": "c5570578d9983c909b77c24c3a2e0e27bc1fce3bc4f4a7c70cd5a938b717bca9"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/commons-lang3-3.8.1.jar",
+      "bytes": 501879,
+      "sha256": "dac807f65b07698ff39b1b07bfef3d87ae3fd46d91bbf8a2bc02b2a831616f68"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/error_prone_annotations-2.1.3.jar",
+      "bytes": 13704,
+      "sha256": "03d0329547c13da9e17c634d1049ea2ead093925e290567e1a364fd6b1fc7ff8"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/fastparse-v2_2.13-2.3.1.jar",
+      "bytes": 320855,
+      "sha256": "8fca8597ad6d7c13c48009ee13bbe80c176b08ab12e68af54a50f7f69d8447c5"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/geny_2.13-0.6.5.jar",
+      "bytes": 85365,
+      "sha256": "ca3857a3f95266e0d87e1a1f26c8592c53c12ac7203f911759415f6c8a43df7d"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/groovy-2.4.21.jar",
+      "bytes": 4711995,
+      "sha256": "cc637a03e8ffddd487177bed948f162200a08f4847089091e06d70c2a1480fee"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/gson-2.8.9.jar",
+      "bytes": 258075,
+      "sha256": "d3999291855de495c94c743761b8ab5176cfeabe281a5ab0d8e8d45326fd703e"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/j2objc-annotations-1.1.jar",
+      "bytes": 8782,
+      "sha256": "2994a7eb78f2710bd3d3bfb639b2c94e219cedac0d4d084d516e78c16dddecf6"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/javax.inject-1.jar",
+      "bytes": 2497,
+      "sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/jcommander-1.48.jar",
+      "bytes": 63504,
+      "sha256": "a7313fcfde070930e40ec79edf3c5948cf34e4f0d25cb3a09f9963d8bdd84113"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/jol-core-0.4.jar",
+      "bytes": 88926,
+      "sha256": "10d9b76dc418d42dea1ecfe0115dbc20293a561a3b4252d837bd11c5f64522a7"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/jsoup-1.15.3.jar",
+      "bytes": 438018,
+      "sha256": "e20a5e78b1372f2a4e620832db4442d5077e5cbde280b24c666a3770844999bc"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/jsr305-3.0.2.jar",
+      "bytes": 19936,
+      "sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/kotlin-stdlib-1.9.24.jar",
+      "bytes": 1718956,
+      "sha256": "858b902696da9cf585ab9d98ffc1c2712269828354dfe9107e3711b084a36468"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/lenses_2.13-0.11.11.jar",
+      "bytes": 34790,
+      "sha256": "3da04a4ffd7b537ec90beb0d2fa456198a7c6844cc39a16be5aad3961ee59e5c"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/logback-classic-1.2.9.jar",
+      "bytes": 233855,
+      "sha256": "ad745cc243805800d1ebbf5b7deba03b37c95885e6bce71335a73f7d6d0f14ee"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/logback-core-1.2.9.jar",
+      "bytes": 454201,
+      "sha256": "4a9ef7ed809b1fbc6992bf87d404087c247e7a9766e25bb84377b58ed5c9eb58"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/p3c-pmd.jar",
+      "bytes": 172574,
+      "sha256": "e7afec9340a0f30f56f4fdcd3b9c49e79ed24253719fcb9f457f5bcb43e54860"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/parsers_2.13-4.6.0.jar",
+      "bytes": 1214676,
+      "sha256": "336ffb9b4f6bba5126fb1d1ecbef107cf545ed85586d33a21993e6dbf76a80eb"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-apex-6.55.0.jar",
+      "bytes": 360047,
+      "sha256": "586c7891fcad4b2aba3cced626eb88aa280ac14e263ecc46c59dc209cb186abb"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-apex-jorje-6.55.0-lib.jar",
+      "bytes": 6770915,
+      "sha256": "3ed8f254692911752418f608b7487ca667ca3e1d33fc4403d6efc08f019d1b24"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-apex-jorje-6.55.0.pom",
+      "bytes": 5601,
+      "sha256": "ec452cfc3801653fa1c9c0347edfce96f6338cfd0f38af41a5a9256b818d6211"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-core-6.55.0.jar",
+      "bytes": 1391271,
+      "sha256": "6d04fc99a3f74a537c067d0d29e66249dca088fa41b728d467eec36fd867218d"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-cpp-6.55.0.jar",
+      "bytes": 34485,
+      "sha256": "731e2fa2df860d41e7c50618f7765020c2111f3d252a606a5f54e401ed8b0068"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-cs-6.55.0.jar",
+      "bytes": 36513,
+      "sha256": "bddc36ed10d01c7f3094673eaf4e6e1dd0ed4375e1dd1776ad345fc7cf0539d6"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-dart-6.55.0.jar",
+      "bytes": 272333,
+      "sha256": "28e5c610150cefbe0d8e476b212f8b801544f4fee3e872a41ee1b7da45025172"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-fortran-6.55.0.jar",
+      "bytes": 4893,
+      "sha256": "f04921c92eb5f7bb40feb4a0ba6c9ba8b16ae2ebd3471467f1880352251af3a4"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-gherkin-6.55.0.jar",
+      "bytes": 47847,
+      "sha256": "cba3e12d094c9f259fab3247be3e6d791b6f8ada9813fc3324032289ef45659f"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-go-6.55.0.jar",
+      "bytes": 159888,
+      "sha256": "5b9480e30d0b60a2b7aab075d77c597f6ac921871c3a0a2faec954cc4d7e115e"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-groovy-6.55.0.jar",
+      "bytes": 5443,
+      "sha256": "f661b73cd3d2a31a9339494f31a92ddc10d5f735e69f6e577fbd0e1902f4fdb3"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-html-6.55.0.jar",
+      "bytes": 29553,
+      "sha256": "8b666fac075319543d3a010b5e42f996ef8c1c5a19e53d06ae337f97237acf56"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-java-6.55.0.jar",
+      "bytes": 1217288,
+      "sha256": "7dd04ff31d4964d6027f13c0468170d4e0ba2e2685033ed524b59ac08acfdc46"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-javascript-6.55.0.jar",
+      "bytes": 144817,
+      "sha256": "2b069a9037496ecaef261d4f7c3f7885e293cb0c25874ec54815710916c20d4d"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-jsp-6.55.0.jar",
+      "bytes": 100822,
+      "sha256": "58ddbb18d0ef2325c2a1d2cde8f25b9aadbd441553a38d4977cd4811a7693207"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-kotlin-6.55.0.jar",
+      "bytes": 38408,
+      "sha256": "df82619fdae222576489aecd05fa1d82fb47f425eab0c2daf598f22a8cb68275"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-lua-6.55.0.jar",
+      "bytes": 108517,
+      "sha256": "43949464bc7e79a400299953ef16262721561e177e0068f077da890585b88c90"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-matlab-6.55.0.jar",
+      "bytes": 24544,
+      "sha256": "34e6bfa83b1a9e7239a105c5dec191b3cf385dbfe1bd0323420b628aa63171b4"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-modelica-6.55.0.jar",
+      "bytes": 288596,
+      "sha256": "0c188a81cfa3ec26d8aa69871501b022a3233e92f916c66deba8a80e8ca1bd71"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-objectivec-6.55.0.jar",
+      "bytes": 53345,
+      "sha256": "a8bf97a4065273122af604a73059f0bd43db7d79f74f60e208d1e0c9948a6740"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-perl-6.55.0.jar",
+      "bytes": 3540,
+      "sha256": "b8a4d1bd3caa901c621b587dd7021805c32c2f99f2aa374785a3250bc457ab45"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-php-6.55.0.jar",
+      "bytes": 5028,
+      "sha256": "efbcb63ab6f2778898fb2a9f53a2fb5dedf3a6a730f6682f990488ec9ca2992b"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-plsql-6.55.0.jar",
+      "bytes": 562170,
+      "sha256": "96a2e157cd93a97f0e5445d18662248be6785ea214533aed55f3901d59fe6f19"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-python-6.55.0.jar",
+      "bytes": 36147,
+      "sha256": "469e6d22d82e0eca9fb29f3bd28fc0aedde234aedc9b9bca7bd6197819ac228a"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-ruby-6.55.0.jar",
+      "bytes": 4651,
+      "sha256": "ca71035731353d0a6d1a7f37a2f9624428da8fbdf9d25b97cab88ff77d0394bb"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-scala_2.13-6.55.0.jar",
+      "bytes": 190624,
+      "sha256": "a4b21be8e81eba67f720805da04735edf4496864b722d68f29606a35983374ed"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-swift-6.55.0.jar",
+      "bytes": 439805,
+      "sha256": "e936f473a6b234e7f70c86cd0af6e85cc485a6ce5b1ed76d147f4b10b944dd37"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-tsql-6.55.0.jar",
+      "bytes": 136449,
+      "sha256": "a8a195d09445c42f115e60fe2f7792ca02a5556cd12b80ec2ad66fa06128cd3b"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-ui-6.49.0.jar",
+      "bytes": 5756352,
+      "sha256": "4544eceb04ac00cda243ae1a84e72fdf218a4447466a775cd364beaa89f128d3"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-visualforce-6.55.0.jar",
+      "bytes": 139368,
+      "sha256": "d9d69140009fbd1ab231ac23b9bef6fb8610051eb3a4a9da9b21e08ca367096f"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-vm-6.55.0.jar",
+      "bytes": 154903,
+      "sha256": "f58f2e658636ab90213cae7d46a0f54ef204563a409ee8784de0c587df5ac1df"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/pmd-xml-6.55.0.jar",
+      "bytes": 64913,
+      "sha256": "e6a11122ba2b1bd40a117a155c7768f3b5d27688bbb30f22632df71b0d721534"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/protobuf-java-3.16.3.jar",
+      "bytes": 1658823,
+      "sha256": "6d3758b483e1ac7505649371a5b058a717260ef470100fefad7a1e2aba75e06f"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/rhino-1.7.14.jar",
+      "bytes": 1383644,
+      "sha256": "c9290b0d801bf0dbbbc44338e0f769b7650a0c5d04e6bb1aeb85775c0211b003"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/saxon-9.1.0.8-dom.jar",
+      "bytes": 129236,
+      "sha256": "c6cf3ecc7f4b65ab8b613d00fd9e9c0648a5aa03264a941ba0fd2da5339f917a"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/saxon-9.1.0.8.jar",
+      "bytes": 5046534,
+      "sha256": "f3dcde81066c75db4ffca341d543555dbbbba7fff7ba6d1c2e7de1101dea394a"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/scala-collection-compat_2.13-2.7.0.jar",
+      "bytes": 5596,
+      "sha256": "936510670822c634f34ef793ef937a75e220f28824e591b220867c2f14943ad6"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/scala-library-2.13.9.jar",
+      "bytes": 5939419,
+      "sha256": "317e0cd80aa8b0ce9e98d154053d9a0f5acc63854b68ca5522d3e017c68dc8e5"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/scalapb-runtime_2.13-0.11.11.jar",
+      "bytes": 2427221,
+      "sha256": "11415623de89db09d64902a38ada91c037714d10f01e2337bb1b9afc3a4072b6"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/slf4j-api-1.7.32.jar",
+      "bytes": 41513,
+      "sha256": "3624f8474c1af46d75f98bc097d7864a323c81b3808aa43689a6e1c601c027be"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/sourcecode_2.13-0.3.0.jar",
+      "bytes": 119136,
+      "sha256": "6e5b2d55e942b450a222bfd3ebc23e99ca03716e42da25af1b2c8cde038100f5"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/stringtemplate-3.2.1.jar",
+      "bytes": 148627,
+      "sha256": "f66ce72e965e5301cb0f020e54d2ba6ad76feb91b3cbfc30dbbf00c06a6df6d7"
+    },
+    {
+      "path": "tools/pmd-bin-6.55.0/lib/trees_2.13-4.6.0.jar",
+      "bytes": 4519608,
+      "sha256": "573e1e3b922e55987fdd26c049ea1c95c066db1bf08c06772f037347ef917bfd"
+    },
+    {
+      "path": "tools/pylibs/lizard.py",
+      "bytes": 44257,
+      "sha256": "7dda92187a2b5a92d91cb41c6c8beba3ce1cf32954148f3c23aef8b4c2e3cc85"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/__init__.py",
+      "bytes": 871,
+      "sha256": "510da86787a3d4209e920898d908fcb06c7c1e17a8632c6370ec6faf017bd247"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/auto_open.py",
+      "bytes": 1096,
+      "sha256": "6f20ff45b79586f494851d9b24c462b6f037cdc2846a9170bf4f9768327a185a"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/checkstyleoutput.py",
+      "bytes": 1245,
+      "sha256": "5330c783cdfb12b1197a95e447c23c602a33dabd65926cc672d300edda7207e3"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/csvoutput.py",
+      "bytes": 2485,
+      "sha256": "3084df1747f492cbc0ceb097ad8ddf74061c9c5d03dcb9e19f1912f75bb03ac0"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/default_ordered_dict.py",
+      "bytes": 831,
+      "sha256": "61b573ea73e543a0e359cfc4385073e8024dd972e8f5da6751d7b27a342f5031"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/extension_base.py",
+      "bytes": 346,
+      "sha256": "ae78d42f69aa4864e8515632763bbb7daf19c329cb3d8f12d45d7b80824fe792"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/halstead_classifier.py",
+      "bytes": 5355,
+      "sha256": "f57d4e67a045a66c339696f1c4e187207f6840a8378ececa5bfa8fa232dcd005"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/halstead_metrics.py",
+      "bytes": 2308,
+      "sha256": "746b08f51623b8dc3be21c8c798ead6499001fbd3bc14f80deeae400dc4c58dd"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/htmloutput.py",
+      "bytes": 6537,
+      "sha256": "1bb31d2c3ec0c2e4742cb080904a721f1e0dfecb0270541d5dded78398d9597d"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/keywords.py",
+      "bytes": 893,
+      "sha256": "571b31a004ed295fbc7a030a77b23cb1ddaa6d932d105129b2cce4fffeab9a34"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardboolcount.py",
+      "bytes": 1062,
+      "sha256": "69b98c03d5f754544ee66ce289c53158a98795d1cd0b48c111eecd280280e5fb"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardcognitive.py",
+      "bytes": 36600,
+      "sha256": "e49f7d8b628eb7a943392ef36a8917e9174cbc8a81517be3fd56a574893f43a2"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardcomplextags.py",
+      "bytes": 1027,
+      "sha256": "cf826ccfc1cdc5b65784346e51e56735f82de59bf8158116da444f3b81b71771"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardcpre.py",
+      "bytes": 1277,
+      "sha256": "6d5acc5df7c651997276fff3c0856da7e223f57c9730511c6a9d91e0398b5cf5"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizarddependencycount.py",
+      "bytes": 2423,
+      "sha256": "e8db76cfaf5cc86f0fde971e4d409353aca1e21ef795eccbd9ac11161ecaefb6"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizarddumpcomments.py",
+      "bytes": 683,
+      "sha256": "f9ce3a53708ffdb7837c1b81f5084e6e9881eb02bbc6ad6ef637918e003253dd"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardduplicate.py",
+      "bytes": 11020,
+      "sha256": "039cae25fb8820a24ae02839e32027f2f77c1b63bd995599c0a3663ad60e46e0"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardduplicated_param_list.py",
+      "bytes": 1811,
+      "sha256": "fc0a5e49b8c0f8d53fae6202b22bf27c6104834f8ef78c16816a5e784f05dd97"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardexitcount.py",
+      "bytes": 692,
+      "sha256": "ce2015162e51823c493b0010cba2f375965f964befc53897388a741402f4c0a4"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardgotocount.py",
+      "bytes": 514,
+      "sha256": "c361965b0a958788fb16e9b8d56be0d7bd9bef426fb429b9042cd952699395c3"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardhalstead.py",
+      "bytes": 8443,
+      "sha256": "6743c9edad7c1fecb0427233313233d6e03a87acb0c498a128ddf80d0da0e587"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardignoreassert.py",
+      "bytes": 644,
+      "sha256": "b2a2f0727250d3a498a8893dd3589be0d43c102c2321efea2f84facf5c0b5c09"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardio.py",
+      "bytes": 3357,
+      "sha256": "c5037e0202c62ca25aac99207daa97fd32b2ba96dbec64dcc0fc6b2f6075275c"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardmccabe.py",
+      "bytes": 1538,
+      "sha256": "9cbc1f6239c05a7d434a80dcfa4de23ef96d8925ff6260047407ccdeb39d2d24"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardmodified.py",
+      "bytes": 1765,
+      "sha256": "91670cf506f2712d3bc688324fdcb47de1b416357ef8cfb552d0b3cce1462af5"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardnd.py",
+      "bytes": 8425,
+      "sha256": "fe8f8b03608e83844b3eea1c9fa27443eb8df031dd489162ec79ea7b2c2e96e6"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardnonstrict.py",
+      "bytes": 457,
+      "sha256": "0d6744da44e7dfd19ff1491a47020ef688164c3baa038957365408053dee2d13"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardns.py",
+      "bytes": 5161,
+      "sha256": "dcf609ad765e163cc59dba2d20d6419be307792f0c43154db6440977f4b97d80"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardoutside.py",
+      "bytes": 336,
+      "sha256": "1469b6b5b059d7bfb63828264250febe86d409f40a6f4140ca07fce9e337c6e3"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardstatementcount.py",
+      "bytes": 1182,
+      "sha256": "c5893a8b148822d484d415905f3ad699db85806840dd547cd7b48d28b7dfc954"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/lizardwordcount.py",
+      "bytes": 7575,
+      "sha256": "d906170fbf80b6492001b8bd55289dba731b4ac190ecc2986fa213f9b4be7289"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/version.py",
+      "bytes": 181,
+      "sha256": "27f953eae6c59436b4d93657c2e7c57b342737277388be9189880bbd15b36ebe"
+    },
+    {
+      "path": "tools/pylibs/lizard_ext/xmloutput.py",
+      "bytes": 5609,
+      "sha256": "f9c6e1d217b83bf5fec17e7a824bfd02748f34dd2abd1ec5002aa505e7b3512e"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/__init__.py",
+      "bytes": 567,
+      "sha256": "0d7f9fcd64b2f207c34617586821c2fd0795adbff94cc6d3002fe519f01728b1"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/clike.py",
+      "bytes": 14926,
+      "sha256": "0218139ff599cf658d842629fb73beefc8e0c6600695e4fe62313b9d75b45119"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/code_reader.py",
+      "bytes": 7845,
+      "sha256": "0e7381e9f3161efd733f0ae9a718101ac4fc285438c69b98b69bfe281f9002cc"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/csharp.py",
+      "bytes": 3015,
+      "sha256": "503ba21b6d1875b6f828c0ff9a06fcdac843dfb511ab766fa8d2e923bed504f1"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/erlang.py",
+      "bytes": 4245,
+      "sha256": "88b532f2eb8477d7a197610b77b977084377494288061411270beb37fd7fd1a4"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/fortran.py",
+      "bytes": 8993,
+      "sha256": "bf02b3d55770c94b56a04094457b91e9ef04da44d1ef51eda5d6ceb260e8c83c"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/gdscript.py",
+      "bytes": 733,
+      "sha256": "00c080b91dbd332cfe6e1e769748cdc4f31bfb8b34dc36d9c260f0f3de460093"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/go.py",
+      "bytes": 1346,
+      "sha256": "b27b73d23384ba3e2494f8a9a1315dd7a5032b57c05107f02bb617fdc2cc6407"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/golike.py",
+      "bytes": 3273,
+      "sha256": "cd187551edf4ae999d627fdee99c0fb15a20121c57bb0f7ff87ae00b454eee3f"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/java.py",
+      "bytes": 8901,
+      "sha256": "fd714199ddcb8b6e46f08ab72a9c52de8bb5f401041eeff2aa5cd83dd0fe5647"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/java_body_states.py",
+      "bytes": 4033,
+      "sha256": "c944dd874e0bb48dd1ee236f470d7e2e0a7ae0a7b613e4e7794070d7f1cb6016"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/javascript.py",
+      "bytes": 317,
+      "sha256": "be788234c5be79af49a6fe9cf2a09c8cb5436234fc573b635e2829e57456b741"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/js_style_regex_expression.py",
+      "bytes": 1013,
+      "sha256": "a16cea23ffec88a6599941630beb6b028a3b3e40f0f5a749928a67b998abff7c"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/kotlin.py",
+      "bytes": 4457,
+      "sha256": "9b4628bbeb9b0588258af501ba3a4caf2f0bfcbc6e4d9608e3bb5272bffe51d5"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/lua.py",
+      "bytes": 1573,
+      "sha256": "de7a8172e9c1cc9ae1bf822a69ff31bdbcaac59cb7692c49f888878a61c595a7"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/objc.py",
+      "bytes": 2889,
+      "sha256": "073bc3a0c6e0595e26dd730576c873630633362b587dbb2e156318e368bf60a7"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/perl.py",
+      "bytes": 12106,
+      "sha256": "43ea3d749d0eeec3bd5a635382db4b6f2c92dc2eb72143b68f4d5c1efc9e2b47"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/php.py",
+      "bytes": 1707,
+      "sha256": "8673a6d35077a6901e887d64ca4126d30539a1c7db007b2774a05aca91610ef0"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/php_states.py",
+      "bytes": 9150,
+      "sha256": "c66fc7335ffaf829c17e0828a29bc6faae241ea941be4d2e145e4abc53a2308b"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/plsql.py",
+      "bytes": 17261,
+      "sha256": "5ad9f2ebe616e0973a1b81210a0a12bb0f03f3ac7a255444a6bcda504c8a7dfc"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/python.py",
+      "bytes": 17465,
+      "sha256": "920fa0672264d13744e14e88025e18e2b823c7727aaab1d1297732f64b0ab539"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/r.py",
+      "bytes": 12930,
+      "sha256": "34734f0c69d65dc97c84c8b554bf0e33a9f0f05f693fac595fb120508a1c39e7"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/ruby.py",
+      "bytes": 2285,
+      "sha256": "819a68594361c1551d84a9cf264276ef13280af3a43c749c98738b07dc708e74"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/rubylike.py",
+      "bytes": 3603,
+      "sha256": "ca32376d2379a92aa337e41495bca2cdf374c7dccc176ee566a702c834f9c774"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/rust.py",
+      "bytes": 2180,
+      "sha256": "17f9e9d5cf30bb63a6c49d6ec94528081e489df14536498ea2a840a648beb2c0"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/scala.py",
+      "bytes": 1432,
+      "sha256": "fa13d519e7992df1beccb1085328f159ed151a2382d9e27b9b75e16f28291452"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/script_language.py",
+      "bytes": 1396,
+      "sha256": "1a06d3d12a9bb308b2379b8a96da6b01f288a543f3caeb780d62356825fd27ef"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/solidity.py",
+      "bytes": 676,
+      "sha256": "9af5823bed0c6418fb68bb8a3881df66f151c2f421c473814ef5f7153d3393c8"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/st.py",
+      "bytes": 4385,
+      "sha256": "42288635813c0b399f999005ff02d02a8bd7935172a9af101464d733599e34d9"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/swift.py",
+      "bytes": 2566,
+      "sha256": "807dd815e39cff8559db583a32d518d6f1e427bfbe62bd74960cc5b58df5ac97"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/tnsdl.py",
+      "bytes": 3009,
+      "sha256": "cb675c648fcf9ab88d77b5133f50dbf50129581cca7a81fca1d47392237e3f59"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/tsx.py",
+      "bytes": 5274,
+      "sha256": "f0b9437dfb47a872455073e7a14004d5297c20a13522902bfa8fa9059604807a"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/ttcn.py",
+      "bytes": 2199,
+      "sha256": "b5290f9ad89fb2e508e5a50a046fae1efc1c9994d671bb4c5a850c1770b0e1c2"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/typescript.py",
+      "bytes": 24626,
+      "sha256": "c073ffb9042b1debd9615dcb329c8dfa4b10e26f9bbeb46cfaa96705c9b39404"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/vue.py",
+      "bytes": 1038,
+      "sha256": "297501528d91d73345f0f7dfaf3fcab1010de389b95c544ca065f2971294793d"
+    },
+    {
+      "path": "tools/pylibs/lizard_languages/zig.py",
+      "bytes": 809,
+      "sha256": "b589e67b727f4bbb19ea2e4d35ef1b22f30965e285169f119dd223d5ddc37222"
+    },
+    {
+      "path": "tools/pylibs/pathspec/__init__.py",
+      "bytes": 1408,
+      "sha256": "d0f9d909e715a38523b1f0341051ac0148a4cb3d6348316640ff600a82975bf6"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/__init__.py",
+      "bytes": 130,
+      "sha256": "0a3817e2e48f302e541f88b2fc8add157adc2d0fe0c0af0c296e506eca73fee1"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/_utils.py",
+      "bytes": 1066,
+      "sha256": "9838db1a99dd3b2564b7d16e7b458358a4e493e8d5a8e7a3a1ff41bfda7302b1"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/agg.py",
+      "bytes": 2505,
+      "sha256": "9da1c5a985cc479de1c2d807b441ebc0d244045a5b5166dd31b174ce0bb11e51"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/hyperscan/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/hyperscan/_base.py",
+      "bytes": 1773,
+      "sha256": "fb2517feb0bc05204d47260284e027bf253d51745e070bb29d312794828b488c"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/hyperscan/base.py",
+      "bytes": 673,
+      "sha256": "a1f7d052f47f396033172833c36f7ce3b5089c769366ce97f8db474c34ca56c2"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/hyperscan/gitignore.py",
+      "bytes": 6963,
+      "sha256": "1eda825d88267286805c0311ba93a6cddd6c097a6cc2976fddc68a840575a287"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/hyperscan/pathspec.py",
+      "bytes": 6803,
+      "sha256": "abb302f34cd88bbf2aea16a02fc4643990e2444b40a933473f505effe5ee022f"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/re2/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/re2/_base.py",
+      "bytes": 2299,
+      "sha256": "d18cd841d6e4d231e6f57cccb92abd7a86dbc2022adba44be55bb51e488f9595"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/re2/base.py",
+      "bytes": 488,
+      "sha256": "6186fe38a1b77d6a45afa38aad0a06eb89a9e8f60af32e6119fbd4fe212afe0b"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/re2/gitignore.py",
+      "bytes": 5237,
+      "sha256": "7191e1bb1c76b27891ed55678780189655846047628ac581acaadc1c4fb7d723"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/re2/pathspec.py",
+      "bytes": 5063,
+      "sha256": "13eccda4c957d36c8f9ee6e07efa5d388918fd06247b880ad048ee23d7e1669a"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/simple/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/simple/gitignore.py",
+      "bytes": 2893,
+      "sha256": "01327855b1b0d4e1d7e610a2aa8c015132e6219616e5d920c9432466e482be1d"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_backends/simple/pathspec.py",
+      "bytes": 2095,
+      "sha256": "67379bb2dd9ebcdf3e8ee66be70e95070228c7b2d3a184f82b6cc3e09a7733b5"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_meta.py",
+      "bytes": 3073,
+      "sha256": "deb681ec541f2799e8dff0ccd57729adabc1af94b4f025db5baca1be6f926943"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_typing.py",
+      "bytes": 1756,
+      "sha256": "24206b320603ebfc734d36373f63f8e3c8c5c926f8dcc981a710488d150397e8"
+    },
+    {
+      "path": "tools/pylibs/pathspec/_version.py",
+      "bytes": 64,
+      "sha256": "074dff733b0c2ae215dda3037257710ce1d90a5de46ac141345286b24931b640"
+    },
+    {
+      "path": "tools/pylibs/pathspec/backend.py",
+      "bytes": 1470,
+      "sha256": "1e12c5e239fbaf990fd970376eb930d3a0dab8097fcab5b31580fe6a5eab3a7b"
+    },
+    {
+      "path": "tools/pylibs/pathspec/gitignore.py",
+      "bytes": 5698,
+      "sha256": "e4914a27a90e1bf444c7ae79b82a068153eb8dc51c90ca365f3e939448a736d6"
+    },
+    {
+      "path": "tools/pylibs/pathspec/pathspec.py",
+      "bytes": 16892,
+      "sha256": "d362dd67fbf230e187164ff5e890c027511fdf5625cad1b925f391edf0326502"
+    },
+    {
+      "path": "tools/pylibs/pathspec/pattern.py",
+      "bytes": 7269,
+      "sha256": "4b511079f3420a1c11b62eac3df883e9380272b75802b8846280a75bc8c7e188"
+    },
+    {
+      "path": "tools/pylibs/pathspec/patterns/__init__.py",
+      "bytes": 406,
+      "sha256": "4c5c227638b8babd28c1ff6c5e42f22aca7dd006fcd4803e372e8936a72727e5"
+    },
+    {
+      "path": "tools/pylibs/pathspec/patterns/gitignore/__init__.py",
+      "bytes": 422,
+      "sha256": "31a48065dd030e0d2f087f64d4bb256898c1270e43917e2dcbe16e2e6075cffe"
+    },
+    {
+      "path": "tools/pylibs/pathspec/patterns/gitignore/base.py",
+      "bytes": 5639,
+      "sha256": "9befc1bc55698a8359bdf1fc592f20216fe26cf52f8d7a5925a9222e5a04b3fb"
+    },
+    {
+      "path": "tools/pylibs/pathspec/patterns/gitignore/basic.py",
+      "bytes": 10131,
+      "sha256": "eae0401248b42b41a763238331a8b6b7977c44f18c2219bb01599f38e8c07280"
+    },
+    {
+      "path": "tools/pylibs/pathspec/patterns/gitignore/spec.py",
+      "bytes": 10598,
+      "sha256": "a1ae9f963301cf5fc61ccb7974514699beeeac4cb74b4c6c8a80386806c4da01"
+    },
+    {
+      "path": "tools/pylibs/pathspec/patterns/gitwildmatch.py",
+      "bytes": 1463,
+      "sha256": "6c5d8f52d73d80e147b85c07274df9c7dd72dd1f009f9748639a1189bca5b1ca"
+    },
+    {
+      "path": "tools/pylibs/pathspec/py.typed",
+      "bytes": 68,
+      "sha256": "c2aef0c037b206e9e02ba0ec895e0ef88ba380acc04701f3f78b90b217697445"
+    },
+    {
+      "path": "tools/pylibs/pathspec/util.py",
+      "bytes": 25551,
+      "sha256": "b7f231615cc1f853413e28494d0c7366063d985e172523de23d816f7f3ebcfad"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-ASM.txt",
+      "bytes": 1511,
+      "sha256": "daa45cc0832746afadb8778c1155bb5ba9079da624803a4a6bc3429ea52e7523"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-Saxon-HE.txt",
+      "bytes": 16726,
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-bcel.txt",
+      "bytes": 11767,
+      "sha256": "89d169e7f764953a228534b510f33eab77d4a3d52d91b37d8a2c0f226c6c3e89"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-commons-lang.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-docbook.txt",
+      "bytes": 1257,
+      "sha256": "b7d257c19e1c61e729ac6dcef939c412b44335c6077ccd83eafa4dbdbf114b22"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-dom4j.txt",
+      "bytes": 1964,
+      "sha256": "b9f4995e68097eefe649cc32752948aaef35825071f55f08af524830a3266a8e"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-gson.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-jaxen.txt",
+      "bytes": 1586,
+      "sha256": "eda841868809fcdbfafca2f76b93e4f8daf80a86a15f10b2d304a63c4e4db6fb"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-jcip.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-jsr305.txt",
+      "bytes": 251,
+      "sha256": "dd4d25087a6c267b32bad877156edc920e4f1ea666b510e52a1cb05d691add86"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-logback.txt",
+      "bytes": 435,
+      "sha256": "4ae3423d8740747fa0cc445aab3dadf5a3922462ac3baa20ce9182781c9a815b"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE-slf4j.txt",
+      "bytes": 1152,
+      "sha256": "168ab54a956df43b6c36fb52fcbda9f539c13d080dedcb7015826ffe529c6a69"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/LICENSE.txt",
+      "bytes": 26430,
+      "sha256": "a190dc9c8043755d90f8b0a75fa66b9e42d4af4c980bf5ddc633f0124db3cee7"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/README.txt",
+      "bytes": 633,
+      "sha256": "c9f9df452cebafb24250aa6b6c7fd5a303fffb1b4222b122e2cdde2714a1014c"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/addMessages",
+      "bytes": 77,
+      "sha256": "4d5d632829fc1dae4e0e4e57dbd275610cbda0ba7f82cffc7022ff3637a55412"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/computeBugHistory",
+      "bytes": 189,
+      "sha256": "9eb8ec2304b00ccb8a7b95e24605bd6aa461891c99fe3776f1c265dd5a70888a"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/convertXmlToText",
+      "bytes": 85,
+      "sha256": "0ffb71182f707f1191de1060b6cbb85892a0791c6e2ba40a56a1ae42adbb4421"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/copyBuggySource",
+      "bytes": 90,
+      "sha256": "9f3e8d8221036475e7fae613cffcba61136fdbad26468e538ef79179a08a5a38"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/defectDensity",
+      "bytes": 145,
+      "sha256": "a5489fb950aa14d3d2bf8e02bc193748315e36415c31dc2b12d9e6c52602410e"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/deprecated/bugHistory",
+      "bytes": 102,
+      "sha256": "c67458da2c6a2fe0cc6e42ec1ff7a31fd424f44687cb02d15cb57ac8b65c1663"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/deprecated/unionBugs",
+      "bytes": 65,
+      "sha256": "22f62c2bdf687d0b2fbd5ab9a7ed66e7fca6eedabee9bc7d128fa4c6171a6e0e"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/deprecated/unionResults",
+      "bytes": 89,
+      "sha256": "06201f51d6a65f5bfee6f4b5f60b5cd978baa4b8df41868bad4bed4eb84227be"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/deprecated/updateBugs",
+      "bytes": 105,
+      "sha256": "625a300aabb6f700e6fac0b6b0b93ac6e0ad829bcc0268e4724ee61a1cbfc7cf"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/experimental/backdateHistoryUsingSource",
+      "bytes": 104,
+      "sha256": "b6c9530646f08441864e94e8539df8b395be9af697f4ed6c6f36c9328253c4f0"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/experimental/churn",
+      "bytes": 83,
+      "sha256": "5825ae1077dfe5861e934e9ca991d5545ee1cd062b94d2fbc26fea4437a5204a"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/experimental/obfuscate",
+      "bytes": 91,
+      "sha256": "c18acabef5af09bb7e37e2f9997560e289a55299ba5276c56a7e1650ef0cde28"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/experimental/treemapVisualization",
+      "bytes": 98,
+      "sha256": "0d75a90beefac4c7ea78e3d47593242f9b9d8bc205cb72934acc2dfba9d4a9a3"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/fb",
+      "bytes": 4280,
+      "sha256": "6b7b5c6f108ea24d11932680928436a77480b628654b7eca5a8877dfbedf6b41"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/fbwrap",
+      "bytes": 2053,
+      "sha256": "e7d60a216e7c65a799d56e2cbbbd113579edbc07e2ce30959dcae108869b4ee7"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/filterBugs",
+      "bytes": 186,
+      "sha256": "253c59fbf8a4b4f25f9afd6ef050730ac1683ae0d121add6d784f920dffd3726"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/findbugs-msv",
+      "bytes": 96,
+      "sha256": "ee572bdc76a1a978c11ab2648e5515906688538b322d9a2d672e30280231c4b3"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/listBugDatabaseInfo",
+      "bytes": 94,
+      "sha256": "03246c3ffcf340cc9ee81b82eeccaea4e2b1170aa60d08488dcd9c0ccd1d86ac"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/mineBugHistory",
+      "bytes": 89,
+      "sha256": "731061d6d27db4ff598cd6c494f34e9a047dbae15e760569498c298dd4cf9418"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/printAppVersion",
+      "bytes": 90,
+      "sha256": "d9a7bfaf46763f0e680a4f44e0d69bad96652e0225a48c45a446d9852b1ca52e"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/printClass",
+      "bytes": 87,
+      "sha256": "99c2f42f73005e614a77defc17146864d055e56fe8647a0e21385a9d53fc73d9"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/rejarForAnalysis",
+      "bytes": 98,
+      "sha256": "b18670d9ff88d55f52302ccd25a00d1e0367040ad555bc6c127212835735a822"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/setBugDatabaseInfo",
+      "bytes": 93,
+      "sha256": "73370627fc71c9954fc423228fa1a2258b86844754728afc3ba8658fd4113bd6"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/spotbugs",
+      "bytes": 4387,
+      "sha256": "29d029c0fc837d1592992d9fd27a4a31edd081e6710d4cdf29510eeca77b4f91"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/spotbugs.bat",
+      "bytes": 6636,
+      "sha256": "fff060ff7caadbdd29603dcf6ed1ab038188d1e932ab5142ed6994607bd1398a"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/spotbugs.ico",
+      "bytes": 9662,
+      "sha256": "bc12e4f52f440fb21c80219bd0d31fef06ab73826b9cb3695138c7aca4aae32d"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/spotbugs2",
+      "bytes": 3187,
+      "sha256": "d91e899c13ecad799680ec7a1559a38333cebc38889e178a126ea3e779e4a4f8"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/unionBugs",
+      "bytes": 197,
+      "sha256": "3a776544b9fb269ac4aa5df9b9b09d1ed780d7a730f935aa108de94d7a08b73b"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/bin/xpathFind",
+      "bytes": 79,
+      "sha256": "775a87971477a10afa90bee69a7ce55fe41219a6f66e1608d54a74cb95e8bec4"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/Saxon-HE-12.10.jar",
+      "bytes": 5793277,
+      "sha256": "b571af282f25d7301059f788b9a149aab8b5cdc14ef3d212dc5425d3dcbb9a97"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/asm-9.10.1.jar",
+      "bytes": 126151,
+      "sha256": "ed825d10ab1399c8c0cb669e688cf0c8c82629b4c8399b58352b68e92ca10fcb"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/asm-analysis-9.10.1.jar",
+      "bytes": 35140,
+      "sha256": "dede75a21306b65974ecd8f87114ff6970f09fb794157a4ca09ab25c888c2bfc"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/asm-commons-9.10.1.jar",
+      "bytes": 74840,
+      "sha256": "6d0abefb7cbf972ea16edb37ec14835372505063a45f976ab7ea889ed9497895"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/asm-tree-9.10.1.jar",
+      "bytes": 51958,
+      "sha256": "3dfb0d5b6a106cd40b5b250e39935fbf2f927f4477546a5369a3ac609cf0506b"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/asm-util-9.10.1.jar",
+      "bytes": 95628,
+      "sha256": "1bb99d091fba2597dc6d51193e9bbcf0d8447e7ed96bd8f0198b18152f09655c"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/bcel-6.12.0.jar",
+      "bytes": 740803,
+      "sha256": "012639e3d2a3079f4c9c1350f18202cea83a7112ef210e50c93b0b771ad5d3af"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/commons-io-2.21.0.jar",
+      "bytes": 585274,
+      "sha256": "7d643a2afea8b058b762aa6fb90e5b256f6c729739f8b3784c3370ddc609e88d"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/commons-lang3-3.20.0.jar",
+      "bytes": 713862,
+      "sha256": "69e5c9fa35da7a51a5fd2099dfe56a2d8d32cf233e2f6d770e796146440263f4"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/commons-text-1.15.0.jar",
+      "bytes": 264873,
+      "sha256": "58d2da30f058512a1e7f914e39241deca4dff5c27a085b4ed2faa9e7208067f6"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/config/log4j2.xml",
+      "bytes": 600,
+      "sha256": "7f20627bf4ab4a8c4672221e3c1d45a5d1e4f0bc872fe1b2204310e37d88ae9e"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/dom4j-2.2.0.jar",
+      "bytes": 331953,
+      "sha256": "3fae79e081096e1410645eb3557c63b79ca266d510ab479889511109becd1690"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/error_prone_annotations-2.48.0.jar",
+      "bytes": 20255,
+      "sha256": "b49c5c958316ed67a09c699dda9aa749caf434d51d863dea599ef36a49b9c855"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/gson-2.14.0.jar",
+      "bytes": 313604,
+      "sha256": "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/jaxen-2.0.6.jar",
+      "bytes": 225431,
+      "sha256": "3e2a755b283fd492fa4be204294c7abb7cd63ac94fb366baab9c7bb9afb00b6d"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/jcip-annotations-1.0-1.jar",
+      "bytes": 4722,
+      "sha256": "4fccff8382aafc589962c4edb262f6aa595e34f1e11e61057d1c6a96e8fc7323"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/jsr305-3.0.2.jar",
+      "bytes": 19936,
+      "sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/log4j-api-2.26.1.jar",
+      "bytes": 351428,
+      "sha256": "f1810a4704ccce019d02bba029dc02a4f2ac0c997f647b465e7d409c1927f822"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/log4j-core-2.26.1.jar",
+      "bytes": 2015459,
+      "sha256": "2ec8c3bf5a6d7c89be8620116a2fc973f7dda1ad0261ad393c4d4726edfd3dcb"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/log4j-slf4j2-impl-2.26.1.jar",
+      "bytes": 30212,
+      "sha256": "cbdfb4c2bcc10f0927c61036db54924250f3924ecd13ea913cefe4f99c08fa66"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/slf4j-api-2.0.18.jar",
+      "bytes": 69982,
+      "sha256": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/spotbugs-annotations.jar",
+      "bytes": 14854,
+      "sha256": "28fa4befaddce5d7b79b07c68e7c12fa27c5d9282c4229528717971606661ea3"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/spotbugs-ant.jar",
+      "bytes": 31689,
+      "sha256": "9ec240477b7c87270be7dfe3196180cd3763f04c369e5691feeb12e66110a065"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/spotbugs.jar",
+      "bytes": 3962260,
+      "sha256": "a88cad2e0ea9bb74b908ce82ae89416c61fa8f8ea5cfcc9368b1baac2da878d2"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/xmlresolver-5.3.3-data.jar",
+      "bytes": 1033122,
+      "sha256": "b0c487ad2f3e558be8d829c916d2458d10aca6a5bafa7a4d0524b70845e48a5c"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/lib/xmlresolver-5.3.3.jar",
+      "bytes": 167889,
+      "sha256": "1fe4d5b92f708dcdb82dbce12919e0171e6b5ca62c6dca6220483625098feb5f"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/plugin/README",
+      "bytes": 306,
+      "sha256": "17fe1b9be86ef826a073a35059cd2fdb1220290347a8dc8cbf128094973d9c22"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/src/xsl/color.xsl",
+      "bytes": 13964,
+      "sha256": "ec8ce8393b7e2e90a889414a72e0e1ed4e65136a65ced16ebaced39bd625539d"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/src/xsl/default.xsl",
+      "bytes": 11474,
+      "sha256": "c1037a447e185ee66c42aa0e6debda0b84a6a7856ff5a31c31ae965f07654874"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/src/xsl/fancy-hist.xsl",
+      "bytes": 55136,
+      "sha256": "871e067f70798a7b44ee541c37a37ed70b3ad05ced7c76bb29aaeab101b91929"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/src/xsl/fancy.xsl",
+      "bytes": 40980,
+      "sha256": "ccd2e733a57cf345cd3dd2652d54f05a7f126702bb61dd83f0c4ab174358556c"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/src/xsl/plain.xsl",
+      "bytes": 10110,
+      "sha256": "895f69a0b2bdc8138357cb03425eb0778e537b42287df8ebb6441be04283f8db"
+    },
+    {
+      "path": "tools/spotbugs-4.10.4/src/xsl/summary.xsl",
+      "bytes": 11080,
+      "sha256": "b2e92800f51795aad4b418b664194a149723d165a77b0625b8ae397c6306794a"
+    },
+    {
+      "path": "LICENSES/PMD-LICENSE.txt",
+      "bytes": 13190,
+      "sha256": "296dae48eae5658f449a89cf512b8e05386c9c5adfb23d74cfb24efa145625db"
+    },
+    {
+      "path": "LICENSES/SpotBugs-LICENSE.txt",
+      "bytes": 26430,
+      "sha256": "a190dc9c8043755d90f8b0a75fa66b9e42d4af4c980bf5ddc633f0124db3cee7"
+    },
+    {
+      "path": "LICENSES/lizard-LICENSE.txt",
+      "bytes": 1303,
+      "sha256": "d39663810f02975743f69d01856f93c7391ce6b842a20189544b9fd464f663f3"
+    },
+    {
+      "path": "LICENSES/lizard-METADATA.txt",
+      "bytes": 18391,
+      "sha256": "b563fa2e34e00c7af905a5a6f146e1308e111fc12782844986737b9fe0c0c562"
+    },
+    {
+      "path": "LICENSES/lizard-vendor.json",
+      "bytes": 545,
+      "sha256": "a6e83a19a647b985bdc327bff5c7d5791366db8b0d6b770d67aeb2ac5fd55d9e"
+    },
+    {
+      "path": "LICENSES/pathspec-LICENSE.txt",
+      "bytes": 16726,
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+    }
+  ]
+}

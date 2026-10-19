@@ -281,6 +281,7 @@ try {
     : action === 'apply-repair' ? ![0, 1, 3].includes(args.length)
       : action === 'commit-msg' ? args.length > 1 : args.length > 0;
   if (invalidArgs) throw new Error('动作参数不合法。');
+  if (['pre-commit','pre-push'].includes(action)) process.env.WL_GATE_TRIGGER='local-hook';
   if (action === 'pre-commit') process.exitCode = runCheck('fast', 'staged');
   else if (action === 'pre-push' || action === 'check') process.exitCode = runCheck('standard');
   else if (action === 'commit-msg') {

@@ -3,7 +3,7 @@ schemaVersion: 1
 project: wl-ui-produce
 enforceWarnings: false
 blockerWaivers: reject
-releaseRequires: [FE-ESLINT, FE-TYPECHECK, FE-KIT, FE-UI]
+releaseRequires: [FE-ESLINT, FE-TYPECHECK, FE-KIT, FE-UI, FE-TYPED, FE-SECURITY, FE-SECRETS, FE-DUPLICATES, FE-ARCHITECTURE, FE-DEPENDENCIES, FE-LICENSES]
 checks:
   - id: FE-ESLINT
     dimension: 编码规范
@@ -37,4 +37,39 @@ checks:
     file: quality-reports/native/ui.json
     okExitCodes: [0, 1]
     versionCommand: node node_modules/@agile-team/wl-skills-ui/bin/wl-ui.js --version
+    profiles: [standard, release]
+  - id: FE-TYPED
+    dimension: 编码规范
+    tool: frontend
+    analyzer: typed
+    profiles: [standard, release]
+  - id: FE-SECURITY
+    dimension: 编码规范
+    tool: frontend
+    analyzer: security
+    profiles: [fast, standard, release]
+  - id: FE-SECRETS
+    dimension: 编码规范
+    tool: frontend
+    analyzer: secrets
+    profiles: [fast, standard, release]
+  - id: FE-DUPLICATES
+    dimension: 编码规范
+    tool: frontend
+    analyzer: duplicates
+    profiles: [standard, release]
+  - id: FE-ARCHITECTURE
+    dimension: 编码规范
+    tool: frontend
+    analyzer: architecture
+    profiles: [standard, release]
+  - id: FE-DEPENDENCIES
+    dimension: 编码规范
+    tool: frontend
+    analyzer: dependencies
+    profiles: [standard, release]
+  - id: FE-LICENSES
+    dimension: 编码规范
+    tool: frontend
+    analyzer: licenses
     profiles: [standard, release]

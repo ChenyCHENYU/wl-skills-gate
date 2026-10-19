@@ -92,7 +92,7 @@ test("已配置项目生成实际原生预览与锁候选，确认绑定全部so
   assert.equal(plan.complete.blockers.length, 0, JSON.stringify(plan.complete.blockers));
   assert.equal(plan.complete.installation, null); assert.equal(plan.complete.native.length, 2);
   assert.equal(plan.complete.lock.status, "patch-planned"); assert.equal(JSON.parse(plan.complete.lock.afterContent)["wl-skills-gate"], GATE_VERSION);
-  assert.ok(plan.complete.lock.queries.every((q) => Array.isArray(q.args) && q.executable));
+  assert.ok(plan.complete.lock.queries.every((q) => Array.isArray(q.args) && q.executable || q.status === "fixed-native-distribution" && q.executed === false && q.expectedVersion));
   const drifted = { ...options, runner: fakeRunner(root, "frontend", [], { drift: true }) };
   assert.throws(() => apply(drifted, plan), /planHash 不一致/);
   assert.equal(existsSync(path.join(root, "quality/rules.lock.json")), false);
@@ -147,6 +147,12 @@ test("BD后先输出POM审批；确认精确profile/真实PL includes后写入�
 test("doctor通过仍必须实际首扫；失败与旧绿报告均不能接入通过", async (t) => {
   for (const mode of ["failed", "stale"]) await t.test(mode, (sub) => {
     const root = fixture(sub, "backend"); apply({ root }); installIsolatedTools(root, "backend");
+    // doctor only checks the approved input's presence. The fake first-scan
+    // below must still fail; this is deliberately not a valid Java archive.
+    const previousArchive=process.env.WL_JAVA_SCAN_ARCHIVE;
+    put(root,"fixture-java-tools.zip","presence-only input for readonly doctor");
+    process.env.WL_JAVA_SCAN_ARCHIVE=path.join(root,"fixture-java-tools.zip");
+    sub.after(()=>{if(previousArchive===undefined)delete process.env.WL_JAVA_SCAN_ARCHIVE;else process.env.WL_JAVA_SCAN_ARCHIVE=previousArchive;});
     for (const name of ["audit", "unit"]) put(root, `.github/java-quality/maven-snippets/quality-${name}-profile.xml`, readFileSync(path.join(BD_FILES, `quality-${name}-profile.xml`), "utf8"));
     if (mode === "stale") put(root, "quality-reports/quality-summary.json", { run: { eventId: "old-green" }, decision: { status: "passed" } });
     const calls = [], native = fakeRunner(root, "backend", calls);

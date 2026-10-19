@@ -34,16 +34,16 @@ test("摘要按完整报告计数，明细过滤不能改变阻断结论或漏�
   const summary = inspectReport(file);
   assert.equal(summary.exitCode, 1);
   assert.equal(summary.result.totals.findings, 4);
-  assert.equal(summary.result.totals.blocking, 2);
+  assert.equal(summary.result.totals.blocking, 3);
   assert.equal(summary.result.findings.length, 0);
   const filtered = inspectReport(file, { view: "findings", severity: "info" });
   assert.equal(filtered.exitCode, 1);
   assert.equal(filtered.result.decision.status, "blocked");
   assert.equal(filtered.result.page.selectedTotal, 0);
-  assert.equal(filtered.result.totals.blocking, 2);
+  assert.equal(filtered.result.totals.blocking, 3);
   const all = inspectReport(file, { view: "findings" }).result.findings;
-  assert.deepEqual(new Set(all.slice(0, 2).map((f) => f.fingerprint)), new Set(["fingerprint-2", "fingerprint-3"]));
-  assert.ok(all.slice(0, 2).every((f) => f.blocking));
+  assert.deepEqual(new Set(all.slice(0, 3).map((f) => f.fingerprint)), new Set(["fingerprint-0", "fingerprint-2", "fingerprint-3"]));
+  assert.ok(all.slice(0, 3).every((f) => f.blocking));
 });
 
 test("UTF-8 字节预算含换行，长描述裁剪可见，保留精确定位和全量计数", (t) => {

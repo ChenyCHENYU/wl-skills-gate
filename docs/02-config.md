@@ -67,7 +67,7 @@ tools 以 check id 为键。执行 versionCommand 时使用其真实输出，随
 }
 ```
 
-只承接经审批的历史静态 error/warning。blocker、类型/编译、关键测试、权限/数据/环境等质量底线不进入基线；其他执行器用 `baselineAllowed:false` 标出不可基线化规则。
+只承接经审批的历史静态 warning。blocker/error 无论新增、历史或豁免一律阻断；类型/编译、关键测试、权限/数据/环境等质量底线也不进入基线；其他执行器用 `baselineAllowed:false` 标出不可基线化规则。
 
 同指纹合并取最高严重程度，发生次数超过基线 occurrenceCount、风险提高时重新判新增。基线摘要需与批准版本一致。完整且所有检查有效的全量扫描才标 resolvedPending；增量扫描不以“没看到”认定消失；最终移除仍需独立复验，复发按新增。
 

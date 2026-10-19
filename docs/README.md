@@ -1,6 +1,6 @@
 # wl-skills-gate 技术手册索引
 
-当前版本 0.11.0；对照团队落地执行 V3.4。技术宣贯基线仍为 V3.1；团队具体操作单源见 [16 项目与运维入口](16-project-ci-integration.md)，本索引提供工具契约与参数参考。
+当前源码版本 0.12.0；对照团队落地执行 V3.4。技术宣贯基线仍为 V3.1；团队具体操作单源见 [16 项目与运维入口](16-project-ci-integration.md)，本索引提供工具契约与参数参考。
 
 授权声明见 [LICENSE](../LICENSE)；公开获取不授予使用、复制、修改或再分发授权，申请入口为 [仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
 
@@ -12,7 +12,7 @@
 | [02 配置](02-config.md) | 3.3/3.4/3.6、A1 | 策略、版本锁、基线、例外与中央底线 |
 | [03 报告与证明](03-reports.md) | 4.2、A2/C3/C4 | unsigned 结果、受控签名、制品清单 |
 | [04 修复](04-fix-loop.md) | 6.1/6.2、A7 | 文件防漂移、白名单、回滚与待复验 |
-| [05 适配器](05-adapters.md) | 4.3、A4 | 七类输入、原生转换、JUnit 全集与同轮 producer、新鲜度/终轮防改、范围/版本 |
+| [05 适配器](05-adapters.md) | 4.3、A4 | 十一类输入、原生转换、JUnit 全集与同轮 producer、新鲜度/终轮防改、范围/版本 |
 | [06 GitLab](06-gitlab.md) | B1～B6 | 只读检查、候选、独立 Review、受控更新 |
 | [07 Jenkins](07-jenkins.md) | C1～C5 | 构建、签发、实际制品验证和部署 |
 | [08 Hooks](08-hooks.md) | A13 | 与现有 Hook 合并、部分暂存边界 |

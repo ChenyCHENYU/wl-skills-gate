@@ -9,8 +9,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@agile-team/wl-skills-gate"><img src="https://img.shields.io/npm/v/@agile-team/wl-skills-gate?color=087A7D&label=npm" alt="npm version" /></a>
-  <img src="https://img.shields.io/badge/Node.js-%E2%89%A522.12-172634" alt="Node.js 22.12 or later" />
-  <img src="https://img.shields.io/badge/runtime_dependencies-0-087A7D" alt="Zero runtime dependencies" />
+  <img src="https://img.shields.io/badge/Node.js-22.13%2B_or_24%2B-172634" alt="Node.js 22.13+ / 24+" />
 </p>
 
 <p align="center">
@@ -23,6 +22,7 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 
 | 场景 | Gate 提供什么 | 能看到什么 |
 | --- | --- | --- |
+| 完整检测 | Java参考六引擎＋BD组织规则；前端类型语义、安全、密钥、重复、架构和依赖 | 原件、覆盖范围、指标与具体位置 |
 | 日常提交 | Hook 自动运行分档检查 | 问题位置、规则、修复建议与阻断原因 |
 | 问题整改 | 预览方案 → 本人确认 → 白名单脚本 → 复扫 | 修前修后变化、剩余问题与回归项 |
 | Code Review | 汇总九维证据，生成待确认草稿 | 非作者逐维确认后的正式 Review |
@@ -33,12 +33,13 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 
 ## 快速接入
 
-技术经理拿到批准的 Gate 完整包后，打开 `templates/launchers/setup.command`（macOS）、`setup.cmd`（Windows）或 `setup.sh`（Linux），按菜单选择任务。先提供 Node.js ≥22.12、项目固定的包管理器及原有构建工具。
+技术经理拿到批准的 Gate 完整包后，打开 `templates/launchers/setup.command`（macOS）、`setup.cmd`（Windows）或 `setup.sh`（Linux），按菜单选择任务。先提供 Node.js 22.13+ 或 24+、项目固定的包管理器及原有构建工具。
 
 | 任务 | 人只需做什么 | 脚本完成什么 |
 | --- | --- | --- |
 | 首次接入项目 | 选择 Git 项目根、批准安装源，确认各阶段差异 | 识别范围、安装固定依赖、同步规则、Hook、POM/锁、首扫及提交说明正反验证 |
 | 新成员初始化 | 选择已接项目，在安装与激活计划上确认 | 按仓库已提交清单恢复本机环境，保留项目策略，再验真实 Hook |
+| 六分支接线 | 选择批准基础配置，确认完整差异 | 自动生成目标分支独立scope与Review接线；保留验证来源，权限与作业仍由运维配置 |
 | 运维接线 | 选择批准配置目录，预检后选择启动 | 核对配置/身份/凭据存在性/旧状态，启动中央采集与操作入口；消息默认预览 |
 | 组合发布输入 | 选择批准配置，确认组件与输出 | 从真实采集原件生成输入，核验来源、SHA、制品与兼容证据 |
 
@@ -47,7 +48,7 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 ```bash
 npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
   --@agile-team:registry=https://registry.npmjs.org/ \
-  @agile-team/wl-skills-gate@0.11.0 setup project
+  @agile-team/wl-skills-gate@0.12.0 setup project
 ```
 
 | 项目 | 依赖装在哪里 | 业务构建 |

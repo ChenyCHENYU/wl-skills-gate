@@ -391,5 +391,7 @@ test('桥接真实受控Gate修前修后原件：提交绑定源码→机械脚�
       rulesHash: before.policy.ruleSetHash, baselineHash: before.policy.baselineHash, waiversHash: before.policy.waiversHash,
       beforeSha: before.run.commitSha, fixedSha: fixed.run.commitSha, recurSha: recur.run.commitSha, beforeSummaryHash: digest(beforeBytes), fixedSummaryHash: digest(fixedBytes), recurSummaryHash: digest(recurBytes),
       nativeChecker: 'deterministic cmd-json fixture canary-checker@1.0.0', gatesExecuted: true, gitCommitAndSourceBindingVerified: true, realBusinessProjectChanged: false });
+    const frozenFiles=['bridge-before-summary.json','bridge-fixed-summary.json','bridge-fixed-release-summary.json','bridge-recur-summary.json','bridge-fixed-manifest.json','bridge-fix-report.json','bridge-source-snapshots.json','bridge-source.bundle','bridge-identity.json',...['quality-reports/canary-app.bin','quality/policy.json','quality/rules.lock.json'].map(file=>'bridge-artifact-root/'+file)];
+    put(EVIDENCE_ROOT,'bridge-freeze.json',{schemaVersion:1,files:frozenFiles.map(file=>({path:file,sha256:digest(readFileSync(path.join(EVIDENCE_ROOT,file)))}))});
   }
 });

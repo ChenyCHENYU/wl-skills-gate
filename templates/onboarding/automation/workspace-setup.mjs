@@ -22,7 +22,7 @@ async function main() {
   const action = process.argv[2] || "check";
   if (!["check", "init"].includes(action) || process.argv.length > 3) throw new Error("工作区入口仅接受 check 或 init");
   const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
-  if (nodeMajor < 22 || nodeMajor === 22 && nodeMinor < 12) throw new Error("工作区质量环境需要 Node 22.12+；请使用批准执行环境，不自动安装或切换 Node");
+  if (!(nodeMajor === 22 && nodeMinor >= 13 || nodeMajor >= 24)) throw new Error("工作区质量环境需要 Node 22.13+ 或 24+；请使用批准执行环境，不自动安装或切换 Node");
   const gitRoot = spawnSync("git", ["-C", root, "rev-parse", "--show-toplevel"], { encoding: "utf8", shell: false });
   if (gitRoot.status !== 0 || realpathSync(gitRoot.stdout.trim()) !== realpathSync(root)) throw new Error("初始化入口必须位于实际业务 Git 根的 scripts/quality，不支持聚合根或跨项目安装");
   const manifest = committed("quality/workspace.json");

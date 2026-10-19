@@ -30,16 +30,21 @@ test("新发现计入 new/blockingNew", () => {
   assert.equal(r.counts.blockingNew, 1);
 });
 
-test("基线命中为 existing 不阻断", () => {
-  const f = finding();
+test("warning基线命中为existing；error/blocker历史问题仍硬阻断", () => {
+  const f = finding({severity: "warning"});
   const fp = findingFingerprint("p", f);
   const r = collect({ project: "p", findings: [f], baselineItems: [{ fingerprint: fp }], now });
   assert.equal(r.counts.existing, 1);
   assert.equal(r.counts.blockingNew, 0);
+  for (const severity of ["error", "blocker"]) {
+    const f = finding({severity});
+    const result = collect({project:"p", findings:[f], baselineItems:[{fingerprint:findingFingerprint("p",f),severity}], now});
+    assert.equal(result.counts.blockingNew,1);
+  }
 });
 
 test("有效豁免 waived；到期豁免 expired 并阻断", () => {
-  const ok = collect({ project: "p", findings: [finding()], waivers: [waiver()], now });
+  const ok = collect({ project: "p", findings: [finding({severity:"warning"})], waivers: [waiver()], now });
   assert.equal(ok.counts.waived, 1);
   const expired = collect({ project: "p", findings: [finding()], waivers: [waiver({ expiresAt: "2020-01-01" })], now });
   assert.equal(expired.counts.expired, 1);
@@ -73,9 +78,9 @@ test("enforceWarnings 将新增 warning 升级为阻断", () => {
 });
 
 test("豁免 path 通配：** 覆盖子目录、* 单段、精确匹配", () => {
-  const f = finding({ file: "src/mock/deep/a.ts" });
+  const f = finding({ file: "src/mock/deep/a.ts", severity:"warning" });
   const w = (path) => [waiver({ path })];
   assert.equal(collect({ project: "p", findings: [f], waivers: w("src/mock/**"), now }).counts.waived, 1);
-  assert.equal(collect({ project: "p", findings: [finding({ file: "src/x.ts" })], waivers: w("src/*.ts"), now }).counts.waived, 1);
+  assert.equal(collect({ project: "p", findings: [finding({ file: "src/x.ts",severity:"warning" })], waivers: w("src/*.ts"), now }).counts.waived, 1);
   assert.equal(collect({ project: "p", findings: [f], waivers: w("src/other/**"), now }).counts.waived, 0);
 });

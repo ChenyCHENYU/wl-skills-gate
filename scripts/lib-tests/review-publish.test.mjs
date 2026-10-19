@@ -29,6 +29,10 @@ test('实际OIDC九维授权由独立作业自动签发正式Review和交付mani
   for (const key of ['repairAuthorized', 'promotionAuthorized', 'deploymentAuthorized', 'closureAuthorized']) assert.equal(formal[key], false);
   const before = readFileSync(manifest.recordFile), again = await f.run(); assert.equal(again.published.length, 0); assert.equal(again.reused.length, 1); assert.deepEqual(readFileSync(manifest.recordFile), before);
 });
+test('独立签发再次核对经理责任，不能只相信合法签名授权来自任意Reviewer',async t=>{
+ const f=await fixture(t);const p=f.publishConfig.projects.demo;p.requireTechnicalManagerReview=true;p.technicalManager='other';p.reviewers.push('other');write(f.publishConfigFile,f.publishConfig);
+ const denied=await f.run();assert.equal(denied.published.length,0);assert.match(denied.errors[0].reason,/技术经理/);
+});
 test('签发作业不加载身份服务/事件私钥，只持有独立Review私钥与授权公钥', async (t) => {
   const f = await fixture(t); rmSync(path.join(f.root, 'identity-private.pem')); rmSync(path.join(f.root, 'receipt-private.pem')); rmSync(path.join(f.root, 'authorization-private.pem'));
   const result = await f.run(); assert.equal(result.published.length, 1, JSON.stringify(result.errors));

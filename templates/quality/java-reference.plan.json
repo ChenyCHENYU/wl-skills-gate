@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "modules": ["wl-produce-pl/wl-produce-pl-service"],
+  "excludes": [],
+  "settings": ".mvn/settings-hx.xml",
+  "online": false
+}

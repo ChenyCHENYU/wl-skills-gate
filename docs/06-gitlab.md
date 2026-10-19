@@ -19,7 +19,7 @@
 
 | 受控项 | 用途 |
 |---|---|
-| `WL_APPROVED_QUALITY_IMAGE` / `WL_APPROVED_JAVA_QUALITY_IMAGE` | 固定前端 / Java 检查镜像，包含批准 Node ≥22.12、项目固定包管理器及 JDK/Maven |
+| `WL_APPROVED_QUALITY_IMAGE` / `WL_APPROVED_JAVA_QUALITY_IMAGE` | 固定前端 / Java 检查镜像，包含批准 Node 22.13+或24+、项目固定包管理器及 JDK/Maven |
 | `WL_APPROVED_BOOTSTRAP_GATE_CLI` | 镜像预装的固定 Gate，先于项目依赖执行 `ci-prepare` |
 | `WL_APPROVED_WORKSPACE_HASH`、`WL_APPROVED_DEPENDENCY_LOCK_HASH` | 已审阅提交的工作副本清单与对应依赖锁真实字节摘要 |
 | `WL_APPROVED_POLICY_HASH`、`WL_APPROVED_RULES_HASH`、`WL_APPROVED_BASELINE_HASH`、`WL_APPROVED_WAIVERS_HASH` | 技术经理/运维批准登记的四类摘要，不能从候选现算后自封批准 |

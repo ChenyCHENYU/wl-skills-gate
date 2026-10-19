@@ -48,7 +48,7 @@ BD 的 verify:quality-codecc 等属于源码包维护者夹具验证。业务项
 
 包内collect-ci提供固定GitLab/Jenkins只读查询；实际来源配置、SSO、认证网页、应用回调、工作日历和企业群权限由团队现有环境配置。receipt 签名要求统一质量服务先核验真实来源/身份。首期 SLA 为中央首次摄入起的自然分钟，源发生/接收延迟单独观测，不冒充完整工作日历。共享首期采用中央串行台账及写锁；多实例/数据库/外部系统需保留相同幂等与审计语义的适配。
 
-共享版本与项目已装版本、registry 发布状态分别核验。组合工具当前至少 Node 22，正式固定符合项目要求的 Node 22.12+、pnpm/JDK/Maven、settings/toolchains 和镜像摘要。Gate 升级引入新 schema/能力时，同步审查 policy、工具锁、基线和批准摘要。
+共享版本与项目已装版本、registry 发布状态分别核验。组合工具当前至少 Node 22，正式固定符合项目要求的 Node 22.13+或24+、pnpm/JDK/Maven、settings/toolchains 和镜像摘要。Gate 升级引入新 schema/能力时，同步审查 policy、工具锁、基线和批准摘要。
 
 ## 命令与配置参考
 

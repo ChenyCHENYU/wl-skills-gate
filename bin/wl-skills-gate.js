@@ -79,6 +79,20 @@ try {
   } else if (command === "setup") {
     const { runSetupCli } = await import("../lib/setup.js");
     process.exitCode = await runSetupCli(rest);
+  } else if (command === "java-tools") {
+    const o=options(["--source","--archive","--python"]);
+    const {javaDistribution,javaReferenceLock}=await import("../lib/java-distribution.js");
+    javaReferenceLock();
+    if(o.positional[0]==="pack") {
+      if(!o["--source"] || !o["--archive"]) throw new Error("java-tools pack 需要 --source 固定参考目录和 --archive 新ZIP路径");
+      protectOutput(o["--archive"]);
+      const {runCommand,quote}=await import("../lib/exec.js"),{fileURLToPath}=await import("node:url");
+      const r=await runCommand([o["--python"] || "python3","-B",fileURLToPath(new URL("../scripts/java-distribution.py",import.meta.url)),"pack","--directory",path.resolve(o["--source"]),"--archive",path.resolve(o["--archive"])].map(quote).join(" "),{timeoutMs:180000});
+      if(r.code!==0) throw new Error("固定Java工具交付打包失败；检查分发摘要、Python及目标是否已存在");
+      process.stdout.write(r.stdout);
+    } else if(o.positional[0]==="prepare" && !o["--source"] && !o["--archive"]) {
+      process.stdout.write(JSON.stringify(await javaDistribution({python:o["--python"] || "python3"}),null,2)+"\n");
+    } else throw new Error("java-tools 仅支持 pack / prepare；普通项目由Gate自动准备，不需开发者执行");
   } else if (command === "ci-prepare") {
     const o = options(["--root", "--apply", "--confirm", "--expect-workspace-hash", "--expect-lock-hash"]);
     if (o.positional.length || !o["--apply"] && o["--confirm"]) throw new Error("ci-prepare 默认只读；执行需 --apply --confirm 及中央批准清单/锁摘要");

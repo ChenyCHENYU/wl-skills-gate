@@ -14,7 +14,8 @@
         "/srv/wl-quality/evidence/frontend"
       ],
       "reviewers": [
-        "REPLACE_FRONTEND_REVIEWER"
+        "REPLACE_FRONTEND_REVIEWER",
+        "REPLACE_TEAM_LEAD"
       ],
       "collectorConfigFile": "./review-collector.frontend.json",
       "reviewPolicyFile": "./review-policy.frontend.json",
@@ -23,14 +24,17 @@
       "rulesHash": "REPLACE_APPROVED_RULES_SHA256",
       "baselineHash": "REPLACE_APPROVED_BASELINE_SHA256",
       "waiversHash": "REPLACE_APPROVED_WAIVERS_SHA256",
-      "profile": "standard"
+      "profile": "standard",
+      "technicalManager": "REPLACE_TEAM_LEAD",
+      "requireTechnicalManagerReview": true
     },
     "wl-produce": {
       "evidenceRoots": [
         "/srv/wl-quality/evidence/backend"
       ],
       "reviewers": [
-        "REPLACE_BACKEND_REVIEWER"
+        "REPLACE_BACKEND_REVIEWER",
+        "REPLACE_TEAM_LEAD"
       ],
       "collectorConfigFile": "./review-collector.backend.json",
       "reviewPolicyFile": "./review-policy.backend.json",
@@ -39,7 +43,9 @@
       "rulesHash": "REPLACE_APPROVED_RULES_SHA256",
       "baselineHash": "REPLACE_APPROVED_BASELINE_SHA256",
       "waiversHash": "REPLACE_APPROVED_WAIVERS_SHA256",
-      "profile": "standard"
+      "profile": "standard",
+      "technicalManager": "REPLACE_TEAM_LEAD",
+      "requireTechnicalManagerReview": true
     }
   }
 }

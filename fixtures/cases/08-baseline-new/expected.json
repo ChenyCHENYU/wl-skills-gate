@@ -1,1 +1,9 @@
-{ "exit": 1, "status": "blocked", "counts": { "existing": 1, "new": 1, "blockingNew": 1 } }
+{
+  "exit": 1,
+  "status": "blocked",
+  "counts": {
+    "existing": 0,
+    "new": 2,
+    "blockingNew": 2
+  }
+}

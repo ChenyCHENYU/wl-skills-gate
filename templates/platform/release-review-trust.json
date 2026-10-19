@@ -7,7 +7,8 @@
       "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
       "authorizationIssuer": "wl-quality-identity",
       "reviewers": [
-        "REPLACE_WITH_AUTHENTICATED_INDEPENDENT_REVIEWER"
+        "REPLACE_WITH_AUTHENTICATED_INDEPENDENT_REVIEWER",
+        "REPLACE_TEAM_LEAD"
       ],
       "reviewPolicyHash": "REPLACE_WITH_APPROVED_NINE_DIMENSION_POLICY_SHA256",
       "policyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
@@ -20,14 +21,17 @@
         "/srv/wl-quality/evidence/wl-ui-produce"
       ],
       "collectorConfigFile": "/srv/wl-quality/config/review-collector.frontend.json",
-      "controlCatalogFile": "/srv/wl-quality/control/reviews.json"
+      "controlCatalogFile": "/srv/wl-quality/control/reviews.json",
+      "technicalManager": "REPLACE_TEAM_LEAD",
+      "requireTechnicalManagerReview": true
     },
     "wl-produce": {
       "publicKeyFile": "/controlled/keys/review-public.pem",
       "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
       "authorizationIssuer": "wl-quality-identity",
       "reviewers": [
-        "REPLACE_WITH_AUTHENTICATED_INDEPENDENT_REVIEWER"
+        "REPLACE_WITH_AUTHENTICATED_INDEPENDENT_REVIEWER",
+        "REPLACE_TEAM_LEAD"
       ],
       "reviewPolicyHash": "REPLACE_WITH_APPROVED_NINE_DIMENSION_POLICY_SHA256",
       "policyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",
@@ -40,7 +44,9 @@
         "/srv/wl-quality/evidence/wl-produce"
       ],
       "collectorConfigFile": "/srv/wl-quality/config/review-collector.backend.json",
-      "controlCatalogFile": "/srv/wl-quality/control/reviews.json"
+      "controlCatalogFile": "/srv/wl-quality/control/reviews.json",
+      "technicalManager": "REPLACE_TEAM_LEAD",
+      "requireTechnicalManagerReview": true
     }
   }
 }

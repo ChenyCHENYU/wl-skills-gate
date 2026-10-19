@@ -1,2 +1,4 @@
 fixtures/cases/*/quality-reports/
 node_modules/
+quality-reports/
+**/__pycache__/

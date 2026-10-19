@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "version": "0.11.0",
+  "frontend": {
+    "schemaVersion": 1,
+    "project": "wl-ui-produce",
+    "enforceWarnings": false,
+    "blockerWaivers": "reject",
+    "releaseRequires": [
+      "FE-ESLINT",
+      "FE-TYPECHECK",
+      "FE-KIT",
+      "FE-UI"
+    ],
+    "checks": [
+      {
+        "id": "FE-ESLINT",
+        "dimension": "编码规范",
+        "tool": "eslint",
+        "targets": [
+          "src"
+        ],
+        "versionCommand": "node_modules/.bin/eslint --version",
+        "profiles": [
+          "fast",
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "FE-TYPECHECK",
+        "dimension": "编码规范",
+        "tool": "typecheck",
+        "bin": "node_modules/.bin/vue-tsc",
+        "args": "--noEmit",
+        "versionCommand": "node_modules/.bin/vue-tsc --version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "FE-KIT",
+        "dimension": "编码规范",
+        "tool": "cmd-json",
+        "format": "wl-kit",
+        "command": "node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js validate src/views --json",
+        "captureStdout": true,
+        "file": "quality-reports/native/kit.json",
+        "okExitCodes": [
+          0,
+          1
+        ],
+        "versionCommand": "node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js --version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "FE-UI",
+        "dimension": "UI与交互",
+        "tool": "cmd-json",
+        "format": "wl-ui",
+        "command": "node node_modules/@agile-team/wl-skills-ui/bin/wl-ui.js all --project . --target src --profile legacy-jh-ag --output json --fail-on-error",
+        "captureStdout": true,
+        "file": "quality-reports/native/ui.json",
+        "okExitCodes": [
+          0,
+          1
+        ],
+        "versionCommand": "node node_modules/@agile-team/wl-skills-ui/bin/wl-ui.js --version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      }
+    ]
+  },
+  "backend": {
+    "schemaVersion": 1,
+    "project": "wl-produce",
+    "enforceWarnings": false,
+    "blockerWaivers": "reject",
+    "releaseRequires": [
+      "BE-PL-UNIT",
+      "BE-PL-BD",
+      "BE-PL-CHECKSTYLE",
+      "BE-PL-PMD",
+      "BE-PL-SPOTBUGS"
+    ],
+    "checks": [
+      {
+        "id": "BE-PL-UNIT",
+        "dimension": "测试规范",
+        "tool": "junit",
+        "producer": "JAVA-UNIT",
+        "command": "node scripts/quality/java-unit.mjs --plan quality/java-unit.plan.json",
+        "timeoutMs": 1200000,
+        "files": [
+          "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-com.jhict.produce.pl.common.ProductFormCodeTest.xml",
+          "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-com.jhict.produce.pl.common.support.StableBusinessIdTest.xml",
+          "wl-produce-pl/wl-produce-pl-service/target/surefire-reports/TEST-com.jhict.produce.pl.performance.ActualHeatNumberTest.xml"
+        ],
+        "reportDirs": [
+          "wl-produce-pl/wl-produce-pl-service/target/surefire-reports"
+        ],
+        "requiredSuites": [
+          "com.jhict.produce.pl.common.ProductFormCodeTest",
+          "com.jhict.produce.pl.common.support.StableBusinessIdTest",
+          "com.jhict.produce.pl.performance.ActualHeatNumberTest"
+        ],
+        "requiredTests": [
+          "com.jhict.produce.pl.common.ProductFormCodeTest#shouldOnlyClassifyCanonicalCodes",
+          "com.jhict.produce.pl.common.support.StableBusinessIdTest#shouldGenerateStablePositiveBigintCompatibleId",
+          "com.jhict.produce.pl.common.support.StableBusinessIdTest#shouldSeparateNamespaceAndBusinessKey",
+          "com.jhict.produce.pl.performance.ActualHeatNumberTest#shouldFollowFixedProductIdHeatSeriesAndCarryWithoutGrowingLength",
+          "com.jhict.produce.pl.performance.ActualHeatNumberTest#shouldReconcileWholeSourceMaximumAndNeverRecycleHistory",
+          "com.jhict.produce.pl.performance.ActualHeatNumberTest#shouldRejectExhaustionAndIllegalSeedsWithoutGuessing"
+        ],
+        "versionCommand": "mvn -version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "BE-PL-BD",
+        "dimension": "编码规范",
+        "tool": "cmd-json",
+        "format": "wl-bd",
+        "command": "node quality-tools/node_modules/@agile-team/wl-skills-bd/bin/wl-skills-bd.js validate wl-produce-pl/wl-produce-pl-service --target . --json",
+        "captureStdout": true,
+        "file": "quality-reports/native/bd-pl.json",
+        "okExitCodes": [
+          0,
+          1
+        ],
+        "versionCommand": "node quality-tools/node_modules/@agile-team/wl-skills-bd/bin/wl-skills-bd.js --version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "BE-PL-CHECKSTYLE",
+        "dimension": "编码规范",
+        "tool": "java-xml",
+        "format": "checkstyle",
+        "producer": "JAVA-STATIC",
+        "command": "mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs",
+        "timeoutMs": 600000,
+        "file": "wl-produce-pl/wl-produce-pl-service/target/checkstyle-result.xml",
+        "sourceRoots": [
+          "wl-produce-pl/wl-produce-pl-service/src/main/java"
+        ],
+        "versionCommand": "mvn -version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "BE-PL-PMD",
+        "dimension": "编码规范",
+        "tool": "java-xml",
+        "format": "pmd",
+        "producer": "JAVA-STATIC",
+        "command": "mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs",
+        "timeoutMs": 600000,
+        "file": "wl-produce-pl/wl-produce-pl-service/target/pmd.xml",
+        "sourceRoots": [
+          "wl-produce-pl/wl-produce-pl-service/src/main/java"
+        ],
+        "versionCommand": "mvn -version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      },
+      {
+        "id": "BE-PL-SPOTBUGS",
+        "dimension": "编码规范",
+        "tool": "java-xml",
+        "format": "spotbugs",
+        "producer": "JAVA-STATIC",
+        "command": "mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs",
+        "timeoutMs": 600000,
+        "file": "wl-produce-pl/wl-produce-pl-service/target/spotbugsXml.xml",
+        "sourceRoots": [
+          "wl-produce-pl/wl-produce-pl-service/src/main/java"
+        ],
+        "versionCommand": "mvn -version",
+        "profiles": [
+          "standard",
+          "release"
+        ]
+      }
+    ]
+  }
+}

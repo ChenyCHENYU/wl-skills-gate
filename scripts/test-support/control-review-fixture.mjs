@@ -19,13 +19,19 @@ export async function createControlReviewFixture(t, extra) {
   const governanceConfigFile = path.join(f.root, 'governance.json'), controlConfigFile = path.join(f.root, 'control.json');
   json(governanceConfigFile, { schemaVersion: 1, issuer: 'central', publicKeyFile: path.join(f.root, 'receipt-public.pem'), allowedLinkOrigins: [origin], operators: ['operator'],
     projects: { demo: { owner: 'owner', backup: 'backup', escalationOwner: 'manager', reviewers: ['reviewer', 'author'], channel: 'group', issueBaseUrl: origin + '/issues',
-      scopes: { standard: { requiredChecks: ['CHECK'], policyHash: 'a'.repeat(64), rulesHash: 'a'.repeat(64), baselineHash: 'a'.repeat(64), waiversHash: 'a'.repeat(64) } } } }, channels: { group: { type: 'feishu', webhookEnv: 'GROUP_WEBHOOK', signingSecretEnv: 'GROUP_SECRET' } } });
+      scopes: { [extra?.scope || 'standard']: { requiredChecks: ['CHECK'], policyHash: 'a'.repeat(64), rulesHash: 'a'.repeat(64), baselineHash: 'a'.repeat(64), waiversHash: 'a'.repeat(64) } } } }, channels: { group: { type: 'feishu', webhookEnv: 'GROUP_WEBHOOK', signingSecretEnv: 'GROUP_SECRET' } } });
+  if(extra?.technicalManager){
+    const g=JSON.parse(readFileSync(governanceConfigFile));g.projects.demo.technicalManager=extra.technicalManager;g.projects.demo.requireTechnicalManagerReview=true;
+    g.people=Object.fromEntries(['author','reviewer','other'].map(actor=>[actor,{name:actor,roles:[actor===extra.technicalManager?'technical-manager':'reviewer']}]));
+    g.projects.demo.reviewers.push('other');json(governanceConfigFile,g);
+  }
   if (extra?.supplement) {
     f.collector.supplement = { governanceConfigFile, authorizationPublicKeyFile: path.join(f.root, 'authorization-public.pem'), authorizationIssuer: 'identity-authority' }; json(f.configFile, f.collector);
   }
   const draft = collectReviewEvidence(f.options);
   const c = { schemaVersion: 1, origin, governanceConfigFile, stateFile: path.join(f.root, 'ledger.json'), dataDir: path.join(f.root, 'control'), receiptPrivateKeyFile: path.join(f.root, 'receipt-private.pem'), authorizationPrivateKeyFile: path.join(f.root, 'authorization-private.pem'), authorizationIssuer: 'identity-authority',
     reviewPolicies: { demo: { policyHash: f.collector.reviewPolicyHash, evidenceRoot: f.root, collectorConfigFile: f.configFile } }, identity: { algorithm: 'EdDSA', keyId: 'identity-key', publicKeyFile: path.join(f.root, 'identity-public.pem'), issuer: 'https://identity.example.invalid', authorizationEndpoint: 'https://identity.example.invalid/authorize', tokenEndpoint: 'https://identity.example.invalid/token', clientId: 'quality', subjects: { 'user-author': 'author', 'user-reviewer': 'reviewer' } } };
+  if(extra?.technicalManager)c.identity.subjects["user-other"]="other";
   json(controlConfigFile, c);
   let nonce, challenge, subject;
   const handler = createControlHandler({ configFile: controlConfigFile, clock: () => now, env: { TOKEN: 'secret' }, fetchImpl: async (url, init) => {

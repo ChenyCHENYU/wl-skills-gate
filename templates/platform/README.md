@@ -4,7 +4,7 @@
 
 | 顺序 | 实施工作 | 执行与成功现象 |
 |---|---|---|
-| 1 | 运维准备固定 Node 22.12+、中央目录/持久卷、独立密钥、只读CI凭据与SSO客户端 | 配置/目录权限收紧；检查Runner无法获得签名或部署凭据 |
+| 1 | 运维准备固定 Node 22.13+ 或 24+、中央目录/持久卷、独立密钥、只读CI凭据与SSO客户端 | 配置/目录权限收紧；检查Runner无法获得签名或部署凭据 |
 | 2 | 米传汇智填项目CI来源、全部必需作业、Runner/配置摘要、真实用户映射、初始发现窗口 | `automation-config.json`引用前后端`ci-source.*.json`，无作业/取消也被发现；不手填expectedRuns |
 | 3 | 配置九维策略、原始证据映射与认证入口 | `review-ci.*.json`→`review-collector.*.json`→`control-config.json`；缺人工证据生成待补报告，逐维非作者确认前不能签发 |
 | 4 | 启动认证入口与一个中央调度方式 | `control serve`由现有HTTPS反向代理接入；选择Jenkinsfile.automation或systemd自动循环，勿重复部署 |

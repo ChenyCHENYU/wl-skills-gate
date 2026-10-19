@@ -6,7 +6,8 @@
   "allowedAuthorIds": [
     "REPLACE_BACKEND_OWNER",
     "REPLACE_BACKEND_BACKUP",
-    "REPLACE_BACKEND_DEVELOPER"
+    "REPLACE_BACKEND_DEVELOPER",
+    "REPLACE_TEAM_LEAD"
   ],
   "evidence": [
     {

@@ -27,7 +27,17 @@
             "FE-ESLINT",
             "FE-TYPECHECK",
             "FE-KIT",
-            "FE-UI"
+            "FE-UI",
+            "FE-TYPED",
+            "FE-SECURITY",
+            "FE-SECRETS",
+            "FE-DUPLICATES",
+            "FE-ARCHITECTURE",
+            "FE-DEPENDENCIES",
+            "FE-LICENSES",
+            "FE-DEPENDENCY-CONTRACT",
+            "FE-BUSINESS-CONTRACTS",
+            "FE-BUSINESS-TESTS"
           ],
           "policyHash": "REPLACE_WITH_APPROVED_SHA256",
           "rulesHash": "REPLACE_WITH_APPROVED_SHA256",
@@ -45,7 +55,11 @@
       "members": [
         "REPLACE_FRONTEND_DEVELOPER",
         "REPLACE_AUTHENTICATED_RELEASE_OPERATOR"
-      ]
+      ],
+      "domain": "生产",
+      "technicalManager": "REPLACE_TEAM_LEAD",
+      "requireRiskMentions": true,
+      "requireTechnicalManagerReview": true
     },
     "wl-produce": {
       "owner": "REPLACE_BACKEND_OWNER",
@@ -60,7 +74,11 @@
       "scopes": {
         "standard": {
           "requiredChecks": [
-            "REPLACE_WITH_ALL_APPROVED_MODULE_CHECKS"
+            "BE-JAVA-REFERENCE",
+            "BE-PL-UNIT",
+            "BE-PL-BD",
+            "BE-PL-CHECKSTYLE-ORG",
+            "BE-PL-PMD-ORG"
           ],
           "policyHash": "REPLACE_WITH_APPROVED_SHA256",
           "rulesHash": "REPLACE_WITH_APPROVED_SHA256",
@@ -78,7 +96,11 @@
       "members": [
         "REPLACE_BACKEND_DEVELOPER",
         "REPLACE_AUTHENTICATED_RELEASE_OPERATOR"
-      ]
+      ],
+      "domain": "生产",
+      "technicalManager": "REPLACE_TEAM_LEAD",
+      "requireRiskMentions": true,
+      "requireTechnicalManagerReview": true
     }
   },
   "channels": {
@@ -102,5 +124,127 @@
     "maxAttempts": 3,
     "retrySeconds": 60,
     "timeoutMs": 10000
+  },
+  "people": {
+    "REPLACE_FRONTEND_OWNER": {
+      "name": "REPLACE_FRONTEND_OWNER",
+      "roles": [
+        "technical-owner"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_FRONTEND_OWNER"
+      }
+    },
+    "REPLACE_FRONTEND_DEVELOPER": {
+      "name": "REPLACE_FRONTEND_DEVELOPER",
+      "roles": [
+        "developer"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_FRONTEND_DEVELOPER"
+      }
+    },
+    "REPLACE_TEAM_LEAD": {
+      "name": "REPLACE_TEAM_LEAD",
+      "roles": [
+        "technical-manager"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_TEAM_LEAD"
+      }
+    },
+    "REPLACE_AUTHENTICATED_RELEASE_OPERATOR": {
+      "name": "REPLACE_AUTHENTICATED_RELEASE_OPERATOR",
+      "roles": [
+        "release-operator"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_AUTHENTICATED_RELEASE_OPERATOR"
+      }
+    },
+    "REPLACE_FRONTEND_BACKUP": {
+      "name": "REPLACE_FRONTEND_BACKUP",
+      "roles": [
+        "backup-owner"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_FRONTEND_BACKUP"
+      }
+    },
+    "REPLACE_BACKEND_DEVELOPER": {
+      "name": "REPLACE_BACKEND_DEVELOPER",
+      "roles": [
+        "developer"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_BACKEND_DEVELOPER"
+      }
+    },
+    "REPLACE_BACKEND_BACKUP": {
+      "name": "REPLACE_BACKEND_BACKUP",
+      "roles": [
+        "backup-owner"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_BACKEND_BACKUP"
+      }
+    },
+    "REPLACE_BACKEND_OWNER": {
+      "name": "REPLACE_BACKEND_OWNER",
+      "roles": [
+        "technical-owner"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_BACKEND_OWNER"
+      }
+    },
+    "REPLACE_FRONTEND_REVIEWER": {
+      "name": "REPLACE_FRONTEND_REVIEWER",
+      "roles": [
+        "independent-reviewer"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_FRONTEND_REVIEWER"
+      }
+    },
+    "REPLACE_INDEPENDENT_VERIFIER": {
+      "name": "REPLACE_INDEPENDENT_VERIFIER",
+      "roles": [
+        "independent-reviewer"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_INDEPENDENT_VERIFIER"
+      }
+    },
+    "REPLACE_BACKEND_REVIEWER": {
+      "name": "REPLACE_BACKEND_REVIEWER",
+      "roles": [
+        "independent-reviewer"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_BACKEND_REVIEWER"
+      }
+    },
+    "REPLACE_CHANNEL_OPERATOR": {
+      "name": "REPLACE_CHANNEL_OPERATOR",
+      "roles": [
+        "channel-operator"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_REPLACE_CHANNEL_OPERATOR"
+      }
+    }
   }
 }

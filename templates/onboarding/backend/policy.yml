@@ -1,11 +1,18 @@
 # PL service 接线示例，不代表整个 wl-produce 或全部 PL 业务已覆盖。
-# 单元生产器先准备依赖，故必须在静态组之前；依赖准备不算测试。
+# Java完整参考生产者先执行clean编译，再运行真实单元；原始报告放独立目录，避免被clean清除。
 schemaVersion: 1
 project: wl-produce
 enforceWarnings: false
 blockerWaivers: reject
-releaseRequires: [BE-PL-UNIT, BE-PL-BD, BE-PL-CHECKSTYLE, BE-PL-PMD, BE-PL-SPOTBUGS]
+releaseRequires: [BE-PL-UNIT, BE-PL-BD, BE-JAVA-REFERENCE, BE-PL-CHECKSTYLE-ORG, BE-PL-PMD-ORG]
 checks:
+  - id: BE-JAVA-REFERENCE
+    dimension: 编码规范
+    tool: java-scan
+    plan: quality/java-reference.plan.json
+    planHash: 975561948f796fb7843fdbb1b396bb09fd55fbd6cb0f281ef759561893de3981
+    timeoutMs: 1800000
+    profiles: [standard, release]
   - id: BE-PL-UNIT
     dimension: 测试规范
     tool: junit
@@ -28,36 +35,25 @@ checks:
     okExitCodes: [0, 1]
     versionCommand: node quality-tools/node_modules/@agile-team/wl-skills-bd/bin/wl-skills-bd.js --version
     profiles: [standard, release]
-  - id: BE-PL-CHECKSTYLE
+  - id: BE-PL-CHECKSTYLE-ORG
     dimension: 编码规范
     tool: java-xml
     format: checkstyle
-    producer: JAVA-STATIC
-    command: mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
+    producer: JAVA-ORG-STATIC
+    command: mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit checkstyle:checkstyle pmd:pmd
     timeoutMs: 600000
     file: wl-produce-pl/wl-produce-pl-service/target/checkstyle-result.xml
     sourceRoots: [wl-produce-pl/wl-produce-pl-service/src/main/java]
     versionCommand: mvn -version
     profiles: [standard, release]
-  - id: BE-PL-PMD
+  - id: BE-PL-PMD-ORG
     dimension: 编码规范
     tool: java-xml
     format: pmd
-    producer: JAVA-STATIC
-    command: mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
+    producer: JAVA-ORG-STATIC
+    command: mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit checkstyle:checkstyle pmd:pmd
     timeoutMs: 600000
     file: wl-produce-pl/wl-produce-pl-service/target/pmd.xml
-    sourceRoots: [wl-produce-pl/wl-produce-pl-service/src/main/java]
-    versionCommand: mvn -version
-    profiles: [standard, release]
-  - id: BE-PL-SPOTBUGS
-    dimension: 编码规范
-    tool: java-xml
-    format: spotbugs
-    producer: JAVA-STATIC
-    command: mvn -B -ntp -s .mvn/settings-hx.xml -pl wl-produce-pl/wl-produce-pl-service -Pwl-quality-audit compile checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
-    timeoutMs: 600000
-    file: wl-produce-pl/wl-produce-pl-service/target/spotbugsXml.xml
     sourceRoots: [wl-produce-pl/wl-produce-pl-service/src/main/java]
     versionCommand: mvn -version
     profiles: [standard, release]

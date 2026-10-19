@@ -16,8 +16,23 @@ import { registerControlDeployment } from "../../lib/control-deployment.js";
 import { queueDeploymentPlan, queueDeploymentDelivery, selectDeploymentAuthorization, waitForDeploymentAuthorization } from "../../lib/deployment-queue.js";
 import { ingestDeploymentDeliveries } from "../../lib/deployment-delivery.js";
 import { createReleaseReviewFixture } from "../test-support/release-review-fixture.mjs";
+import { createUatDeliveryReport } from "../../lib/delivery-report.js";
 
 const hash = (v) => createHash("sha256").update(v).digest("hex"), jsonHash = (v) => hash(stableStringify(v));
+test("UAT客户版报告由真实部署及独立smoke后自动事实生成；拒绝无冒烟、篡改与虚构改善",t=>{
+  const f=fixture(t),set=f.releaseSet();
+  const deploy=f.planned(set),applied=runDeployment({...deploy.options,send:true});assert.equal(applied.status,"success");
+  const options={...deploy.options,executionFile:applied.executionFile,executorPublicKeyFile:f.executor.publicKeyFile,sequence:2,pipelineId:"central",jobId:"smoke",pipelineUrl:"https://deploy.example.invalid/pipeline",reportUrl:"https://deploy.example.invalid/report",now:f.now.getTime(),outDir:path.join(f.dir,"customer-report")};
+  assert.throws(()=>createUatDeliveryReport(options),/独立smoke/);
+  const smoke=f.planned(set,"smoke"),verified=runDeployment({...smoke.options,send:true});assert.equal(verified.status,"success");
+  options.executionFile=verified.executionFile;
+  const report=createUatDeliveryReport(options),value=JSON.parse(readFileSync(report.jsonFile,"utf8"));
+  assert.equal(value.environment,"uat");assert.equal(value.components.length,2);assert.equal(value.verification.checks.length,2);
+  for(const component of value.components){assert.equal(component.review.dimensions.length,9);assert.equal(component.review.comparison,null);assert.equal(component.technicalManager,null);assert.ok(component.review.authorizationId);}
+  const html=readFileSync(report.htmlFile,"utf8");assert.match(html,/不虚构改善数量/);assert.match(html,/不自动署名/);
+  assert.deepEqual(createUatDeliveryReport(options),report);
+  writeFileSync(path.join(path.dirname(verified.executionFile),"health.txt"),"tampered");assert.throws(()=>createUatDeliveryReport(options),/smoke-evidence/);assert.equal(readFileSync(report.htmlFile,"utf8"),html);
+});
 const write = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + "\n"); };
 function fixture(t) {
   const dir = mkdtempSync(path.join(realpathSync(tmpdir()), "wl-deployment-")); t.after(() => rmSync(dir, { recursive: true, force: true }));
