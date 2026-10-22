@@ -12,7 +12,10 @@ pipeline {
     }
     stage('Verify this checkout has an authorized nine-dimension Review') {
       steps {
-        withCredentials([string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN')]) {
+        withCredentials([
+          string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN'),
+          usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')
+        ]) {
         sh '''
           set -eu
           mkdir -p quality-reports
@@ -84,7 +87,17 @@ pipeline {
   }
   post {
     always {
-      archiveArtifacts artifacts: 'quality-reports/**,**/target/surefire-reports/*.xml,**/target/site/jacoco/**,**/target/checkstyle-result.xml,**/target/pmd.xml,**/target/p3c.xml,**/target/spotbugsXml.xml', allowEmptyArchive: true
+      script {
+        try {
+          if (fileExists('quality-reports/quality-summary.json')) {
+            if (!env.WL_APPROVED_REPORT_PUBLISHER) error('缺少受控报告发布配套；禁止发送不可访问的详情按钮')
+            def publisher = load(env.WL_APPROVED_REPORT_PUBLISHER)
+            publisher.call()
+          }
+        } finally {
+          archiveArtifacts artifacts: 'quality-reports/**,**/target/surefire-reports/*.xml,**/target/site/jacoco/**,**/target/checkstyle-result.xml,**/target/pmd.xml,**/target/p3c.xml,**/target/spotbugsXml.xml', allowEmptyArchive: true
+        }
+      }
       // Platform collector queries this completed job and immutable artifacts before signing events/proofs.
       // It must also reconcile jobs that never started; do not hold its secrets here.
     }

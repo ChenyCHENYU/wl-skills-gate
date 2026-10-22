@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "system": "jenkins",
+  "project": "wl-produce",
+  "scope": "pl-test",
+  "baseUrl": "https://jenkins.example.internal",
+  "jobPath": "produce/REPLACE_WITH_ACTUAL_QUALITY_JOB",
+  "jobConfigHash": "REPLACE_WITH_APPROVED_CONFIG_XML_SHA256",
+  "requiredJobs": [
+    "produce/REPLACE_WITH_ACTUAL_QUALITY_JOB"
+  ],
+  "userEnv": "WL_JENKINS_READ_USER",
+  "tokenEnv": "WL_JENKINS_READ_TOKEN",
+  "ref": "origin/test",
+  "artifacts": {
+    "job": "produce/REPLACE_WITH_ACTUAL_QUALITY_JOB",
+    "paths": [
+      "quality-reports/quality-summary.json",
+      "quality-reports/quality-report.html",
+      "quality-reports/report-publication.json",
+      "quality-reports/report-publication-check.json",
+      "quality-reports/report-retention.json"
+    ]
+  },
+  "qualitySummary": "quality-reports/quality-summary.json",
+  "reportPublication": {
+    "manifestPath": "quality-reports/report-publication.json"
+  },
+  "maxArtifactBytes": 67108864,
+  "actorSource": {
+    "system": "gitlab",
+    "baseUrl": "https://gitlab.example.internal",
+    "projectId": 1,
+    "tokenEnv": "WL_GITLAB_READ_TOKEN",
+    "ref": "test"
+  }
+}

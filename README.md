@@ -33,7 +33,7 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 
 ## 快速接入
 
-技术经理拿到批准的 Gate 完整包后，打开 `templates/launchers/setup.command`（macOS）、`setup.cmd`（Windows）或 `setup.sh`（Linux），按菜单选择任务。先提供 Node.js 22.13+ 或 24+、项目固定的包管理器及原有构建工具。
+技术经理拿到批准的完整接入包后，填写`现场参数.json`，运行根目录`01_接入项目.sh`（macOS可双击`.command`）；运维使用运维包的`01_接入Jenkins.sh`。脚本安装固定包并调用Gate；所需参数与成功反馈见包内唯一主说明。先提供 Node.js 22.13+（22系列）或24+、项目固定的包管理器及原有构建工具。
 
 | 任务 | 人只需做什么 | 脚本完成什么 |
 | --- | --- | --- |
@@ -43,13 +43,13 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 | 运维接线 | 选择批准配置目录，预检后选择启动 | 核对配置/身份/凭据存在性/旧状态，启动中央采集与操作入口；消息默认预览 |
 | 组合发布输入 | 选择批准配置，确认组件与输出 | 从真实采集原件生成输入，核验来源、SHA、制品与兼容证据 |
 
-也可用一个命令启动相同交互流程；进入后无需复制计划摘要或拼接后续命令：
+已安装批准版本的维护者也可启动相同交互流程；进入后无需复制计划摘要或拼接后续命令：
 
 ```bash
-npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
-  --@agile-team:registry=https://registry.npmjs.org/ \
-  @agile-team/wl-skills-gate@0.12.0 setup project
+wl-quality init
 ```
+
+本轮统一使用`0.13.2`固定版本；交付包与批准安装源的版本和字节摘要须一致，安装脚本自动核验。
 
 | 项目 | 依赖装在哪里 | 业务构建 |
 | --- | --- | --- |
@@ -85,7 +85,7 @@ npx --yes --ignore-scripts --registry https://registry.npmjs.org/ \
 | 接线内容 | 入口 | 验证方式 |
 | --- | --- | --- |
 | GitLab MR、候选与受保护分支 | [CI 模板](./templates/ci) · [GitLab 指南](./docs/06-gitlab.md) | 违规候选不能合并，真实必需作业齐全 |
-| Jenkins 构建、制品与部署 | [Jenkins 指南](./docs/07-jenkins.md) | SHA、制品摘要、目标环境一致，缺证据拒绝推进 |
+| Jenkins 检查与构建 | 服务器本地公共入口，单维护任务批量接入／核验／回退；[Jenkins 指南](./docs/07-jenkins.md) | 两个Job共用包内入口，自动识别范围、核对配置与严格准入 |
 | 真实 CI 证据、身份与 Review | [可信 CI 采集](./docs/18-ci-source.md) · [九维 Review](./docs/19-nine-dimension-review.md) | 旧报告、缺证据、自审与过期批准被拒绝 |
 | 飞书通知、认领、超时与复验 | [中央执行接线](./templates/platform/README.md) | 实际送达、失败重试、认领和独立关闭均留记录 |
 

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "system": "jenkins",
+  "project": "wl-produce",
+  "scope": "pl-test",
+  "baseUrl": "https://jenkins.example.internal",
+  "jobPath": "produce/REPLACE_WITH_ACTUAL_BUILD_JOB",
+  "jobConfigHash": "REPLACE_WITH_APPROVED_BUILD_CONFIG_XML_SHA256",
+  "requiredJobs": [
+    "produce/REPLACE_WITH_ACTUAL_BUILD_JOB"
+  ],
+  "userEnv": "WL_JENKINS_READ_USER",
+  "tokenEnv": "WL_JENKINS_READ_TOKEN",
+  "ref": "origin/test",
+  "artifacts": {
+    "job": "produce/REPLACE_WITH_ACTUAL_BUILD_JOB",
+    "paths": [
+      "quality-reports/ci-integration/build-result.json",
+      "quality-reports/ci-integration/business-artifacts.zip"
+    ]
+  },
+  "maxArtifactBytes": 268435456,
+  "actorSource": {
+    "system": "gitlab",
+    "baseUrl": "https://gitlab.example.internal",
+    "projectId": 1,
+    "tokenEnv": "WL_GITLAB_READ_TOKEN",
+    "ref": "test"
+  }
+}

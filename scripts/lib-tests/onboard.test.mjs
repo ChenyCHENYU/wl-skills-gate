@@ -55,7 +55,7 @@ test("真实 Git Hook 在 Gate 缺失时拒绝提交，不会假成功", (t) => 
   const root = fixture(t); apply({ root });
   put(root, "src/new.js", "export const x = 1;\n"); git(root, "add", "src/new.js");
   const result = spawnSync("git", ["-C", root, "commit", "-m", "feat: verify hook"], { encoding: "utf8" });
-  assert.notEqual(result.status, 0); assert.match(result.stderr + result.stdout, /缺少固定版本 Gate|依赖不可用|入口或依赖不可用/);
+  assert.notEqual(result.status, 0); assert.match(result.stderr + result.stdout, /缺少固定版本 Gate|依赖不可用|入口或依赖不可用|固定Gate入口不可用/);
   assert.equal(git(root, "rev-list", "--count", "HEAD"), "1");
 });
 

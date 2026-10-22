@@ -1,0 +1,75 @@
+// Protected TEST build job, separate from CHECK. No GitLab push/upstream-success
+// trigger on this job. The controlled dispatcher supplies the approved SHA.
+pipeline {
+  agent { label 'wl-quality-isolated' }
+  options { skipDefaultCheckout(true); disableConcurrentBuilds() }
+  parameters { string(name: 'WL_REVIEW_SHA', defaultValue: '', description: '受控续建传入的获批SHA；仍须重新核验正式Review与当前CI') }
+  stages {
+    stage('Checkout approved test') {
+      steps {
+        script {
+          if (!(params.WL_REVIEW_SHA ==~ /(?:[a-f0-9]{40}|[a-f0-9]{64})/)) error('缺少合法的获批SHA')
+          if (!env.WL_SOURCE_REPOSITORY || !env.WL_SOURCE_CREDENTIALS_ID) error('缺少固定业务仓库或只读SCM凭据')
+          deleteDir()
+          checkout(changelog: true, poll: false, scm: [
+            $class: 'GitSCM', branches: [[name: 'origin/test']],
+            userRemoteConfigs: [[name: 'origin', url: env.WL_SOURCE_REPOSITORY, credentialsId: env.WL_SOURCE_CREDENTIALS_ID,
+              refspec: '+refs/heads/test:refs/remotes/origin/test']],
+            extensions: [[$class: 'CloneOption', shallow: false, noTags: true, honorRefspec: true]]
+          ])
+          env.WL_CHECKED_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+          if (env.WL_CHECKED_SHA != params.WL_REVIEW_SHA) error('当前test已经变化，拒绝用旧审批构建')
+        }
+      }
+    }
+    stage('严格构建准入') {
+      steps {
+        withCredentials([
+          string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN'),
+          usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')
+        ]) {
+          sh '''
+            set -eu
+            : "${WL_APPROVED_GATE_CLI:?固定Gate CLI}"
+            : "${WL_PROJECT:?固定业务项目}"
+            : "${WL_APPROVED_REVIEW_TRUST_CONFIG:?固定正式Review信任配置}"
+            : "${WL_APPROVED_REVIEW_PUBLICATION_DIR:?正式Review目录}"
+            mkdir -p quality-reports
+            node "$WL_APPROVED_GATE_CLI" verify-release-review \
+              --config "$WL_APPROVED_REVIEW_TRUST_CONFIG" --project "$WL_PROJECT" --sha "$WL_CHECKED_SHA" \
+              --publication-dir "$WL_APPROVED_REVIEW_PUBLICATION_DIR" --out-dir quality-reports/release-review-live \
+              > quality-reports/release-review-verification.json 2> quality-reports/release-review-verification.log
+            wl_ci_gate_root="$(dirname "$(dirname "$WL_APPROVED_GATE_CLI")")"
+            node "$wl_ci_gate_root/templates/ci/assert-build-admission.mjs" \
+              quality-reports/release-review-verification.json "$WL_PROJECT" "$WL_CHECKED_SHA"
+          '''
+        }
+      }
+    }
+    stage('准备固定依赖') {
+      steps {
+        sh '''
+          set -eu
+          wl_ci_gate_root="$(dirname "$(dirname "$WL_APPROVED_GATE_CLI")")"
+          node "$wl_ci_gate_root/templates/ci/check-project.mjs" --config "$WL_QUALITY_CONFIG" --prepare-only
+        '''
+      }
+    }
+    stage('原有业务构建') {
+      steps {
+        sh '''
+          set -eu
+          : "${WL_APPROVED_BUILD_SCRIPT:?批准的工作区外POSIX构建入口}"
+          : "${WL_APPROVED_BUILD_SCRIPT_HASH:?批准构建脚本SHA256}"
+          wl_ci_gate_root="$(dirname "$(dirname "$WL_APPROVED_GATE_CLI")")"
+          node "$wl_ci_gate_root/templates/ci/run-approved-build.mjs" "$WL_APPROVED_BUILD_SCRIPT" "$WL_APPROVED_BUILD_SCRIPT_HASH"
+        '''
+        script {
+          if (!env.WL_APPROVED_ARTIFACT_GLOB) error('缺少批准的制品归档范围')
+          archiveArtifacts artifacts: env.WL_APPROVED_ARTIFACT_GLOB, allowEmptyArchive: false
+        }
+      }
+    }
+  }
+  post { always { archiveArtifacts artifacts: 'quality-reports/**', allowEmptyArchive: true } }
+}

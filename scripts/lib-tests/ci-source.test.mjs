@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { collectCiSource } from "../../lib/ci-source.js";
 import { createBuildLifecycle } from "../../lib/lifecycle-source.js";
+import { archiveQualityReport } from "../../lib/report-publication.js";
 
 const sha = "a".repeat(40), origin = "https://ci.example.invalid";
 function fixture(t, system = "gitlab") {
@@ -19,11 +20,12 @@ function fixture(t, system = "gitlab") {
   const pipeline = { id: 45, project_id: 12, sha, ref: "uat", web_url: `${origin}/p/45` };
   const jobs = ["quality", "business-test"].map((name, i) => ({ id: 60 + i, name, pipeline: { id: 45 }, commit: { id: sha }, ref: "uat", runner: { id: 77 }, allow_failure: false, status: "success", web_url: `${origin}/j/${60 + i}` }));
   const build = { number: 45, building: false, result: "SUCCESS", actions: [{ lastBuiltRevision: { SHA1: sha, branch: [{ name: "origin/uat", SHA1: sha }] } }], artifacts: [{ relativePath: "quality/summary.json" }] };
-  const request = { sha, runId: 45, sequence: 1, authorId: "author" }, calls = [];
+  const request = { sha, runId: 45, sequence: 1, authorId: "author" }, calls = [], extra = new Map();
   let modifyResponse = (route, value) => value;
   const fetchImpl = async (url, init) => {
     calls.push({ url, init }); assert.equal(init.method, "GET"); assert.equal(init.redirect, "error");
     const route = new URL(url).pathname; let value;
+    if (extra.has(route)) return extra.get(route)();
     if (route.endsWith("/config.xml")) return new Response("<flow-definition/>");
     if (route.endsWith("/pipelines/45")) value = pipeline;
     else if (route.endsWith("/pipelines/45/jobs")) value = jobs;
@@ -36,8 +38,24 @@ function fixture(t, system = "gitlab") {
     return new Response(JSON.stringify(value), { status: 200, headers: { "Content-Type": "application/json" } });
   };
   const run = async () => { writeFileSync(configFile, JSON.stringify(config)); writeFileSync(requestFile, JSON.stringify(request)); return collectCiSource({ configFile, requestFile, outDir, fetchImpl, env: { CI_TOKEN: "TOP_SECRET", CI_USER: "reader" }, now: Date.parse("2026-10-15T00:00:00Z") }); };
-  return { config, summary, pipeline, jobs, build, request, calls, outDir, configFile, run, modify: (fn) => modifyResponse = fn };
+  return { config, summary, pipeline, jobs, build, request, calls, outDir, configFile, run, extra, modify: (fn) => modifyResponse = fn };
 }
+
+for (const mode of ["valid", "login", "403"]) test(`Jenkins发布报告${mode}经真实采集校验，详情不再指向摘要JSON`, async (t) => {
+  const f = fixture(t, "jenkins"); f.summary.run.stage = "ci";
+  const input = { summary: f.summary, dimensions: [] };
+  const publication = archiveQualityReport({ input, outDir: path.join(path.dirname(f.outDir), "published"), jenkinsBuildUrl: `${origin}/job/produce/job/build/45/` });
+  const manifestPath = "quality/publication.json";
+  f.config.artifacts.paths.push(manifestPath); f.build.artifacts.push({ relativePath: manifestPath });
+  f.config.reportPublication = { manifestPath };
+  f.extra.set(`/job/produce/job/build/45/artifact/${manifestPath}`, () => new Response(JSON.stringify(publication)));
+  f.extra.set(new URL(publication.reportUrl).pathname, () => new Response(mode === "valid" ? readFileSync(publication.entryFile) : "<html>Sign in</html>", { status: mode === "403" ? 403 : 200, headers: { "Content-Type": "text/html" } }));
+  if (mode !== "valid") { await assert.rejects(f.run, /在线报告|HTTP 403/); assert(!existsSync(f.outDir)); return; }
+  const result = await f.run(), event = JSON.parse(readFileSync(result.eventFile));
+  assert.equal(event.reportUrl, publication.reportUrl); assert(!event.reportUrl.endsWith(".json"));
+  assert.equal(readFileSync(path.join(f.outDir, "published-report.html"), "utf8"), readFileSync(publication.entryFile, "utf8"));
+  assert.equal(JSON.parse(readFileSync(result.sourceFile)).publishedReport.htmlSha256, publication.htmlSha256);
+});
 
 for (const system of ["gitlab", "jenkins"]) test(`${system}固定来源查询真实身份和工件，生成未签事件，不保存凭据`, async (t) => {
   const f = fixture(t, system), result = await f.run();
@@ -150,4 +168,9 @@ for (const system of ["gitlab", "jenkins"]) test(`${system}构建失败无工件
 test("作业成功但固定工件缺失仍严格拒绝，不降级成成功事实", async (t) => {
   const f = fixture(t); f.modify((route, value) => route.endsWith("/quality/summary.json") ? new Response("missing", { status: 404 }) : value);
   await assert.rejects(f.run, /HTTP 404/); assert.equal(existsSync(f.outDir), false);
+});
+
+for(const mode of ['valid','missing','old-runtime','other-sha'])test(`Jenkins公共入口证据${mode}：固定路径与包升级隔离`,async t=>{
+ const f=fixture(t,'jenkins'),p='quality-reports/ci-integration/entry-context.json';f.config.nativeEntry={runtimeHash:'b'.repeat(64),entryPointHash:'c'.repeat(64)};f.config.artifacts.paths.push(p);if(mode!=='missing')f.build.artifacts.push({relativePath:p});f.extra.set(`/job/produce/job/build/45/artifact/${p}`,()=>new Response(JSON.stringify({schemaVersion:1,kind:'wl-quality-native-execution',project:'demo',scope:'standard',job:'produce/build',buildNumber:45,sha:mode==='other-sha'?'f'.repeat(40):sha,sourceDigest:'1'.repeat(64),registryHash:'2'.repeat(64),bindingHash:'3'.repeat(64),runtimeHash:mode==='old-runtime'?'d'.repeat(64):f.config.nativeEntry.runtimeHash,entryPointHash:f.config.nativeEntry.entryPointHash})));
+ if(mode==='valid')assert.equal((await f.run()).passed,true);else await assert.rejects(f.run,/公共入口|旧报告|固定工件缺失/);
 });

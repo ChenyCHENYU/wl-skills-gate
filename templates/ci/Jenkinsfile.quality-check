@@ -1,0 +1,52 @@
+// Paste into the protected TEST CHECK job's Pipeline script definition.
+// Keep this definition outside the business test branch. Replace only the Agent
+// label with the prepared TEST node label; configure the approved variables.
+pipeline {
+  agent { label 'wl-quality-isolated' }
+  options { skipDefaultCheckout(true); disableConcurrentBuilds() }
+  stages {
+    stage('Checkout test') {
+      steps {
+        script {
+          if (!env.WL_SOURCE_REPOSITORY || !env.WL_SOURCE_CREDENTIALS_ID) error('缺少固定业务仓库或只读SCM凭据')
+          deleteDir()
+          checkout(changelog: true, poll: false, scm: [
+            $class: 'GitSCM', branches: [[name: 'origin/test']],
+            userRemoteConfigs: [[name: 'origin', url: env.WL_SOURCE_REPOSITORY, credentialsId: env.WL_SOURCE_CREDENTIALS_ID,
+              refspec: '+refs/heads/test:refs/remotes/origin/test']],
+            extensions: [[$class: 'CloneOption', shallow: false, noTags: true, honorRefspec: true]]
+          ])
+          env.WL_CHECKED_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+          if (env.gitlabActionType && !env.gitlabAfter) error('自动Push事件缺少目标SHA；不以最新分支冒充本轮事件')
+          if (env.gitlabAfter && env.gitlabAfter != env.WL_CHECKED_SHA) error('事件SHA与当前test不一致；旧事件不得放行，等待当前提交检查')
+        }
+      }
+    }
+    stage('Gate质量检查') {
+      steps {
+        sh '''
+          set -eu
+          : "${WL_APPROVED_GATE_CLI:?固定Gate CLI}"
+          : "${WL_QUALITY_CONFIG:?工作区外项目CI配置}"
+          wl_ci_gate_root="$(dirname "$(dirname "$WL_APPROVED_GATE_CLI")")"
+          node "$wl_ci_gate_root/templates/ci/check-project.mjs" --config "$WL_QUALITY_CONFIG"
+        '''
+      }
+    }
+  }
+  post {
+    always {
+      script {
+        try {
+          if (fileExists('quality-reports/quality-summary.json')) {
+            if (!env.WL_APPROVED_REPORT_PUBLISHER) error('缺少受控报告发布脚本')
+            def publisher = load(env.WL_APPROVED_REPORT_PUBLISHER)
+            publisher.call()
+          }
+        } finally {
+          archiveArtifacts artifacts: 'quality-reports/**', allowEmptyArchive: true
+        }
+      }
+    }
+  }
+}

@@ -79,6 +79,22 @@ function automaticJenkins(f, mutation=(value)=>value) {
 test('Jenkins自动SCM触发以唯一已合并MR真实SHA/作者绑定身份，凭据按官方来源隔离',async(t)=>{
   const f=fixture(t,'jenkins'),fetchImpl=automaticJenkins(f);const r=await f.run({fetchImpl,actors:{'gitlab:8':'actual-author'},env:{...env,GITLAB_TOKEN:'separate-gitlab-read-secret'}});assert.equal(r.runs[0].authorId,'actual-author');assert.equal(r.runs[0].actorSource.mechanism,'merged-commit-association');assert.equal(r.runs[0].actorSource.mappingKey,'gitlab:8');assert.equal(r.runs[0].status,'success');assert(!JSON.stringify(r).includes('separate-gitlab-read-secret'));
 });
+test('Jenkins手动重建仍以批准GitLab关联核验源码作者，构建点击人单独记录',async(t)=>{
+  const f=fixture(t,'jenkins'),fetchImpl=automaticJenkins(f);
+  f.builds[0].actions[1].causes=[{_class:'hudson.model.Cause$UserIdCause',userId:'jenkins-user',userName:'操作人'}];
+  const r=await f.run({fetchImpl,actors:{'gitlab:8':'actual-author','jenkins-user':'build-operator'},env:{...env,GITLAB_TOKEN:'separate-gitlab-read-secret'}});
+  assert.equal(r.runs[0].authorId,'actual-author');
+  assert.equal(r.runs[0].actorSource.mechanism,'merged-commit-association');
+  assert.equal(r.runs[0].triggerSource.employeeId,'build-operator');
+  assert.equal(r.runs[0].triggerSource.userId,'jenkins-user');
+});
+test('Jenkins手动点击不能绕过已配置的GitLab作者关联核验',async(t)=>{
+  const f=fixture(t,'jenkins'),fetchImpl=automaticJenkins(f,(v)=>Array.isArray(v)?[]:v);
+  f.builds[0].actions[1].causes=[{_class:'hudson.model.Cause$UserIdCause',userId:'jenkins-user'}];
+  const r=await f.run({fetchImpl,actors:{'jenkins-user':'build-operator'},env:{...env,GITLAB_TOKEN:'separate-gitlab-read-secret'}});
+  assert.equal(r.runs[0].authorId,null);assert.equal(r.runs[0].status,'unmapped-actor');
+  assert.equal(r.runs[0].triggerSource.employeeId,'build-operator');
+});
 for(const [name,mutate]of[
  ['未合并',(v)=>Array.isArray(v)?v.map(m=>({...m,state:'opened'})):v],['其他目标分支',(v)=>Array.isArray(v)?v.map(m=>({...m,target_branch:'prd'})):v],['不同合并SHA',(v)=>Array.isArray(v)?v.map(m=>({...m,merge_commit_sha:'b'.repeat(40)})):v],['多份MR关联',(v)=>Array.isArray(v)?[...v,{...v[0],id:801,iid:3}]:v],['其他项目',(v)=>Array.isArray(v)?v.map(m=>({...m,project_id:99,target_project_id:99})):v]
 ])test(`Jenkins自动触发${name}不能冒充认证作者`,async(t)=>{const f=fixture(t,'jenkins'),fetchImpl=automaticJenkins(f,mutate);const r=await f.run({fetchImpl,actors:{'gitlab:8':'actual-author'},env:{...env,GITLAB_TOKEN:'separate-gitlab-read-secret'}});assert.equal(r.runs[0].authorId,null);assert.equal(r.runs[0].status,'unmapped-actor');});

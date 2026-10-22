@@ -145,7 +145,8 @@ test('采集启动故障清理自身监听，反馈实际失败且保留状态�
 });
 test('真实本地操作监听 + 实际automation单周期：只隔离CI发现，不发送并自动结束监听', async (t) => {
   const f = await fixture(t), reservation = createServer();
-  await new Promise((resolve, reject) => { reservation.once('error', reject); reservation.listen(0, '127.0.0.1', resolve); });
+  try { await new Promise((resolve, reject) => { reservation.once('error', reject); reservation.listen(0, '127.0.0.1', resolve); }); }
+  catch(error){if(error.code==='EPERM' || error.code==='EACCES'){t.skip('宿主禁止回环TCP监听；真实HTTP处理器/实际automation由无套接字用例独立验收，现场监听仍待验收');return;}throw error;}
   const port = reservation.address().port; await new Promise((resolve) => reservation.close(resolve));
   const options = { ...f.options, port }, plan = planCentralSetup(options);
   let realTick;
@@ -160,6 +161,15 @@ test('真实本地操作监听 + 实际automation单周期：只隔离CI发现�
   const resumed = planCentralSetup(options); assert.equal(resumed.status, 'ready', JSON.stringify(resumed.steps));
   await new Promise((resolve, reject) => { reservation.once('error', reject); reservation.listen(port, '127.0.0.1', resolve); });
   await new Promise((resolve) => reservation.close(resolve));
+});
+test('无套接字：真实登录处理器与实际automation单周期，保留状态并清理监听生命周期',async t=>{
+  const f=await fixture(t);await f.register();const cookie=await f.login();assert.equal((await f.http({cookie})).status,200);
+  const plan=planCentralSetup(f.options),stub=stubRuntime();let actual;
+  const result=await runCentralSetup({...f.options,start:true,expectPlanHash:plan.planHash},{...stub.runtime,automationTick:async args=>{
+    actual=await automationTick({...args,now:Date.parse('2026-10-15T03:00:00Z'),discoverImpl:async()=>({runs:[],discoveryErrors:[],attemptedRecheckRunIds:[],partial:false}),fetchImpl:async()=>assert.fail('隔离环境不得联系真实外部服务')});return actual;
+  }});
+  assert.equal(result.status,'completed',JSON.stringify(actual));assert.equal(actual.errors.length,0);assert.equal(result.messagesSent,false);assert.equal(result.execution.controlListening,false);
+  assert(existsSync(f.c.stateFile));assert(existsSync(path.join(f.a.dataDir,'automation-state.json')));
 });
 test('同批两个CI来源均给检查反馈，不能第一个失败就漏掉另一个', async (t) => {
   const f = await fixture(t);

@@ -5,7 +5,7 @@ try {
   process.exitCode = r.exitCode;
 } catch (e) {
   if (e && (e.code === "ERR_MODULE_NOT_FOUND" || e.code === "MODULE_NOT_FOUND")) {
-    console.error("[quality] wl-skills-gate 未安装，无法执行质量检查。请先执行: npm i -D @agile-team/wl-skills-gate（失败关闭，不跳过）");
+    console.error("[quality] 固定Gate未安装，请使用项目初始化任务恢复批准依赖；质量检查不会跳过。");
   } else {
     console.error(`[quality] 质量入口异常: ${e && e.message ? e.message : e}`);
   }

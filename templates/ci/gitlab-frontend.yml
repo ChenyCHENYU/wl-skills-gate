@@ -5,10 +5,14 @@ wl-quality-frontend:
   variables:
     GIT_DEPTH: "0"
   image: "$WL_APPROVED_QUALITY_IMAGE"
+  # Personal commits remain local. Review jobs run for the six target branches.
+  # A fixed validation ref is an explicit pilot exception; it does not enable group notifications.
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(dev|sit|uat|pre|prd|main)$/'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^(dev|sit|uat|pre|prd|main)$/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH =~ /^(dev|sit|uat|pre|prd|main)$/'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $WL_QUALITY_VALIDATION_REF && $CI_COMMIT_BRANCH == $WL_QUALITY_VALIDATION_REF'
+    - when: never
   script:
     - |
       set -eu

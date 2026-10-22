@@ -1,14 +1,14 @@
 # 中央执行与认证处理接线
 
-包内已提供执行器和认证页面。配置及脚本随固定 Gate 包交付；此目录不需要另开发服务。`REPLACE` 必须替换为批准的实际值，不能用模板值验收。
+本页供工程维护者配置中央服务，日常接入按交付包根目录主说明执行。包内已提供执行器和认证页面；配置及脚本随固定Gate交付。`REPLACE`必须替换为批准的实际值，不能用模板值验收。Jenkins新接入使用服务器公共入口与fleet，见[接入契约](../../docs/07-jenkins.md)。
 
 | 顺序 | 实施工作 | 执行与成功现象 |
 |---|---|---|
 | 1 | 运维准备固定 Node 22.13+ 或 24+、中央目录/持久卷、独立密钥、只读CI凭据与SSO客户端 | 配置/目录权限收紧；检查Runner无法获得签名或部署凭据 |
 | 2 | 米传汇智填项目CI来源、全部必需作业、Runner/配置摘要、真实用户映射、初始发现窗口 | `automation-config.json`引用前后端`ci-source.*.json`，无作业/取消也被发现；不手填expectedRuns |
 | 3 | 配置九维策略、原始证据映射与认证入口 | `review-ci.*.json`→`review-collector.*.json`→`control-config.json`；缺人工证据生成待补报告，逐维非作者确认前不能签发 |
-| 4 | 启动认证入口与一个中央调度方式 | `control serve`由现有HTTPS反向代理接入；选择Jenkinsfile.automation或systemd自动循环，勿重复部署 |
-| 5 | 杨晨誉配置前后端飞书群与签名密钥，先预览再验收实投 | 默认无发送；批准后中央调度`--send`，卡片能跳到问题/Review处理页，故障可在投递恢复页处理 |
+| 4 | 启动认证入口与一个中央调度方式 | `control serve`独立常驻并由HTTPS反向代理接入；Jenkins使用自动创建的中央任务，其他宿主可选systemd循环，同一配置勿重复调度 |
+| 5 | 杨晨誉配置项目/流水线两个飞书渠道与签名密钥，先预览再验收实投 | 默认无发送；批准后中央调度`--send`，卡片能跳到问题/Review处理页，故障可在投递恢复页处理 |
 
 执行入口（由受控作业/服务管理器调用）：
 
@@ -24,7 +24,7 @@ node "$GATE_BIN" automation --config "$AUTOMATION_CONFIG" --watch
 
 源码证据由CI自动调用`produce-review-facts.mjs`产生真实提交/分支/diff；必需JUnit清单由接入程序从批准policy带入，并核原XML。中央从已核验CI和批准责任配置生成流水线/责任事实。缺少UI、影响分析或外部测试材料时，非作者Reviewer在认证页填写实际范围、结论和批准来源的报告链接，生成签名补证及新版本，再另行逐维确认。此记录不冒充机器测试执行，也不清除原机器阻断。`ci-source.artifacts.optionalPaths`只对明确登记的非机器Review原件有效；原始Gate报告、发布清单和实际制品缺失仍阻断。
 
-Review身份确认后，`Jenkinsfile.review-sign`独立自动消费授权并发布正式记录；中央`automation.review.publication`订阅其manifest，公钥复验后入账和通知。签发器不持有身份或事件私钥。
+Review身份确认后，独立签发任务自动消费授权并发布正式记录；Jenkins由公共入口按review角色执行，历史接线保留`Jenkinsfile.review-sign`模板。中央`automation.review.publication`订阅其manifest，公钥复验后入账和通知。签发器不持有身份或事件私钥。
 
 发布采用已有检查/构建模板（构建前按实际SHA从固定中央目录自动匹配最新正式Review并重查CI，缺失/旧版/新失败均阻断），再依次使用`Jenkinsfile.attest`、`Jenkinsfile.release-sign`、`Jenkinsfile.deployment`。组合必须固定前后端SHA/制品、实际API契约或兼容测试、数据库迁移/无变更依据、部署顺序和恢复约束。计划先登记到`/deployments/<id>`，实际操作人确认后执行；冒烟由独立验证人另行授权。模板`controlled-deployment-http.mjs`提供真实HTTP适配，也可配置经过摘要批准的现有现场脚本。执行系统须回传实际组合、API/schema与顺序，单纯success不被接受。
 
@@ -36,4 +36,6 @@ CI依赖准备复用已提交工作副本清单/锁及中央批准摘要，关�
 
 关闭要求当前修复SHA的完整通过报告，以及关闭策略逐环境要求的当前修复后产生且观察到的最新部署/独立验证事实。构建成功、扫描消失、消息已接收均不关闭问题；新失败使旧成功失效。复发重新打开。旧配置缺必要环境可读账但不能关闭，`governance migrate`只接受独立签名授权的精确策略收紧，不删除旧账绕过。
 
-验收必须留下真实作业、认证用户、群投递、同候选/同制品、各必要环境复验和独立关闭记录。包内隔离测试不代替现场结果；统一操作仍以V3接入手册为准。
+验收必须留下真实作业、认证用户、群投递、同候选/同制品、各必要环境复验和独立关闭记录。包内隔离测试不代替现场结果；按交付包的主说明及`验收/现场验收清单.json`登记。
+
+TEST薄接入使用`automation-config.jenkins-test.json`，配套CHECK/BUILD来源分别固定真实作业摘要。CHECK的`buildDispatch`自动消费正式Review并核当前HEAD，BUILD的`buildResultPath`采集固定结果与真实ZIP；同项目/scope可各登记一个CHECK和BUILD来源，不会重复当作代码扫描。`notification`按批准范围指定项目或CI群、分支与技术经理；项目群服务端补验保持真实CI来源，禁止伪造本地Hook结果。模板中的占位与员工/模块映射由工程维护者交付，运维不手算批准摘要。

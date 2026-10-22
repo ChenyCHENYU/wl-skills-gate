@@ -25,6 +25,17 @@ test("普通扫描后自动生成九维待确认草稿，缺证据不伪造已�
   assert.equal(r.signed, false); assert.equal(record.content.dimensions.length, 9);
   assert.equal(record.content.dimensions.filter((d) => d.status === "pending-evidence").length, 8);
 });
+test("项目Hook自动生成九维可读详情，使用本轮原始发现和草稿证据且不生成CI页面", (t) => {
+  const f = fixture(t); f.summary.run.stage = "local-hook";
+  const result = f.run();
+  assert(result.projectReportFile);
+  const html = readFileSync(result.projectReportFile, "utf8");
+  assert.equal((html.match(/class="dimension-section" id="dimension-/g) || []).length, 9);
+  assert.match(html, /第一道 · 项目内检查/);
+  assert.match(html, /代码审核由技术经理确认/);
+  f.summary.run.stage = "ci"; f.summary.run.eventId = "event-ci";
+  const ci = f.run(); assert.equal(ci.projectReportFile, undefined);
+});
 test("后续扫描自动留存前后原始报告并生成可比差异，旧草稿保持", (t) => {
   const f = fixture(t); f.summary.findings = [{ fingerprint: "f".repeat(64), ruleId: "R", severity: "error", file: "a.java", status: "new" }];
   const before = f.run(); f.summary.run.eventId = "event-two"; f.summary.findings = [];

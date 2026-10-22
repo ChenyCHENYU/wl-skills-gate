@@ -15,15 +15,22 @@ node bin/wl-skills-gate.js self-test
 
 使用前须取得 AGILE TEAM 事先书面授权，并遵循该授权约定范围；公开 npm 包可下载不构成使用许可。详见 [LICENSE](../LICENSE)，申请通过 [仓库 Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
 
+项目负责人优先使用完整交付包的`01_接入项目.sh`，自动识别前后端、安装配套、接入Hook并首扫；运维使用运维包的`01_接入Jenkins.sh`。均按包内主说明逐步执行。
+
+已安装固定Gate时运行：
+
 ```bash
-# 取得书面授权后，从公共 npm registry 安装固定版本。
-pnpm add -D --save-exact @agile-team/wl-skills-gate@0.7.0
-mkdir -p quality
-# 从安装包 templates/quality 取模板，按真实检查器和工具版本修改。
-pnpm exec wl-skills-gate run --profile standard
+wl-quality init
 ```
 
-首次只读试运行先确认真实工具被调用、发现一条预设错误、报告定位正确、退出码非零；随后集成现有 Hook，禁止覆盖原有检查。
+未安装Gate的维护者也可从批准源启动固定版本向导：
+
+```bash
+npm exec --yes --ignore-scripts --registry=https://registry.npmjs.org/ \
+  --package=@agile-team/wl-skills-gate@0.13.2 -- wl-quality init
+```
+
+向导展示差异与实际安装计划，确认后执行；检查异常不能当成零问题。接入后日常由Hook自动检查；正式Review、远端强制检查、群消息与报告权限仍按现场清单验收。
 
 ## 三档
 

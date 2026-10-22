@@ -1,0 +1,24 @@
+// Read-only verification task; Agent label must match an existing controlled node.
+// __WL_BOOTSTRAP__
+pipeline {
+  agent { label '__WL_AGENT__' }
+  options { skipDefaultCheckout(true); disableConcurrentBuilds(); timeout(time: 10, unit: 'MINUTES') }
+  stages {
+    stage('节点环境自检') {
+      steps { script { wlGatePreflight(mode: 'verify', gateRoot: '__WL_GATE_ROOT__', registry: '__WL_REGISTRY__') } }
+    }
+    stage('核验Gate接线') {
+      steps {
+        withEnv(['WL_APPROVED_GATE_CLI=__WL_GATE_ROOT__/bin/wl-skills-gate.js', 'WL_GATE_BINDINGS=__WL_REGISTRY__', "PATH+WLGATE=${env.WL_NODE_BIN_DIR ?: '/usr/bin'}"]) {
+          withCredentials([usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')]) {
+            sh 'node "$WL_APPROVED_GATE_CLI" jenkins verify-jobs --registry "$WL_GATE_BINDINGS"'
+          }
+        }
+      }
+    }
+  }
+  post {
+    unsuccessful { script { wlGateFailureNotice() } }
+    always { archiveArtifacts artifacts: '.wl-gate-bootstrap/**', allowEmptyArchive: true }
+  }
+}

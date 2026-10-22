@@ -1,15 +1,17 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.12.0",
+  "version": "0.13.2",
   "description": "质量工程执行包 — 统一接入、九维Review证据授权、自动门禁、可信CI采集与分类治理通知",
   "type": "module",
   "main": "./lib/run.js",
   "bin": {
     "wl-skills-gate": "bin/wl-skills-gate.js",
     "wl-gate": "bin/wl-skills-gate.js",
-    "wl-quality-setup": "bin/wl-quality-setup.js"
+    "wl-quality-setup": "bin/wl-quality-setup.js",
+    "wl-quality": "bin/wl-quality.js"
   },
   "scripts": {
+    "verify:chain": "node scripts/verify-quality-chain.mjs",
     "test": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs",
     "verify": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs"
   },

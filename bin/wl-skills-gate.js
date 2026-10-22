@@ -73,12 +73,37 @@ function proofOptions(o) {
 try {
   if (command === "run") {
     process.exitCode = (await runGate({ argv: rest })).exitCode;
+  } else if (command === "report-publication") {
+    const action = rest.shift(), o = options(["--input", "--summary", "--review-index", "--out-dir", "--jenkins-build-url", "--manifest", "--jenkins-origin", "--user-env", "--token-env", "--out"]);
+    const r = await import("../lib/report-publication.js");
+    let result;
+    if (action === "archive") {
+      if (!!o["--input"] === !!o["--summary"] || !o["--out-dir"]) throw new Error("归档需要--input或--summary二选一，以及--out-dir");
+      const { readFileSync } = await import("node:fs");
+      const input = o["--input"] ? JSON.parse(readFileSync(o["--input"], "utf8")) : r.publicationInput({ summaryFile: o["--summary"], reviewIndexFile: o["--review-index"] });
+      result = r.archiveQualityReport({ input, outDir: path.resolve(o["--out-dir"]), jenkinsBuildUrl: o["--jenkins-build-url"] || process.env.BUILD_URL });
+    } else if (action === "verify") {
+      if (!o["--manifest"] || !(o["--jenkins-origin"] || process.env.JENKINS_URL)) throw new Error("验收需要--manifest和批准的Jenkins入口");
+      const userEnv = o["--user-env"] || "WL_JENKINS_REPORT_USER", tokenEnv = o["--token-env"] || "WL_JENKINS_REPORT_TOKEN";
+      if (![userEnv, tokenEnv].every((name) => /^[A-Z][A-Z0-9_]+$/.test(name))) throw new Error("凭据必须使用环境变量引用");
+      result = await r.verifyPublishedQualityReport({ manifestFile: o["--manifest"], expectedOrigin: o["--jenkins-origin"] || process.env.JENKINS_URL, user: process.env[userEnv], token: process.env[tokenEnv] });
+    } else throw new Error("report-publication仅支持archive或verify");
+    if (o["--out"]) {
+      const archiveDir = action === "archive" ? result.archiveDir : path.dirname(path.resolve(o["--manifest"]));
+      const relative = path.relative(archiveDir, path.resolve(o["--out"]));
+      if (!relative || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))) throw new Error("操作结果不能写入或覆盖固定报告归档");
+      protectOutput(o["--out"], [o["--input"], o["--summary"], o["--review-index"], o["--manifest"]]); writeJson(o["--out"], result);
+    }
+    else console.log(JSON.stringify(result));
   } else if (command === "onboard") {
     const { runOnboardCli } = await import("../lib/onboard.js");
     process.exitCode = await runOnboardCli(rest);
   } else if (command === "setup") {
     const { runSetupCli } = await import("../lib/setup.js");
     process.exitCode = await runSetupCli(rest);
+  } else if (command === "jenkins") {
+    const { runJenkinsCli } = await import("../lib/jenkins-runtime.js");
+    process.exitCode = await runJenkinsCli(rest);
   } else if (command === "java-tools") {
     const o=options(["--source","--archive","--python"]);
     const {javaDistribution,javaReferenceLock}=await import("../lib/java-distribution.js");
@@ -108,7 +133,7 @@ try {
     const review = await import("../lib/release-review.js");
     if (o["--out-dir"] && !o["--publication-dir"]) throw new Error("--out-dir 仅用于自动选择后的本次CI重查证据");
     const result = o["--publication-dir"] ? await review.selectReleaseReview({ configFile: o["--config"], project: o["--project"], sha: o["--sha"], publicationDir: o["--publication-dir"], outDir: o["--out-dir"] }) : review.verifyReleaseReview({ configFile: o["--config"], project: o["--project"], sha: o["--sha"], recordFile: o["--record"], evidenceRoot: o["--evidence-root"] });
-    process.stdout.write(JSON.stringify(Object.fromEntries(["status", "project", "sha", "reviewId", "reviewerId", "authorId", "recordHash", "reviewDigest", "bodyDigest", "evidenceDigest", "sourceDigest", "trustHash", "liveVerified", "liveCheckDirectory"].filter((key) => result[key] !== undefined).map((key) => [key, result[key]])), null, 2) + "\n");
+    process.stdout.write(JSON.stringify(Object.fromEntries(["status", "project", "sha", "reviewId", "reviewerId", "authorId", "recordHash", "reviewDigest", "bodyDigest", "evidenceDigest", "sourceDigest", "trustHash", "preBuildFindingsResolved", "liveVerified", "liveCheckDirectory"].filter((key) => result[key] !== undefined).map((key) => [key, result[key]])), null, 2) + "\n");
   } else if (command === "doctor") {
     const o = options(["--root", "--kind", "--out"]);
     if (o.positional.length) throw new Error("doctor 不接受位置参数");
@@ -326,5 +351,5 @@ try {
     if (rest.length) throw new Error("self-test 不接受额外参数");
     const { runAllFixtures } = await import("../scripts/run-fixtures.mjs");
     process.exitCode = await runAllFixtures();
-  } else throw new Error("用法: wl-skills-gate <setup|onboard|ci-prepare|verify-release-review|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
+  } else throw new Error("用法: wl-skills-gate <setup|onboard|jenkins|ci-prepare|verify-release-review|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
 } catch (e) { console.error(`[${command || "wl-skills-gate"}] ${e.message}`); process.exitCode = 2; }

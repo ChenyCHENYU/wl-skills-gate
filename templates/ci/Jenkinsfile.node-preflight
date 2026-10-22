@@ -1,0 +1,23 @@
+// Render with Gate delivery tooling. No checkout, build, signing or deployment.
+// __WL_BOOTSTRAP__
+pipeline {
+  agent any
+  options { skipDefaultCheckout(true); disableConcurrentBuilds(); timeout(time: 5, unit: 'MINUTES') }
+  parameters {
+    booleanParam(name: 'TEST_NOTIFICATION', defaultValue: false, description: '仅测试流水线机器人签名推送；不执行检查、构建、部署或签发')
+  }
+  stages {
+    stage('飞书连通测试') {
+      when { expression { params.TEST_NOTIFICATION } }
+      steps { script { wlGateNotificationTest() } }
+    }
+    stage('节点环境自检') {
+      when { expression { !params.TEST_NOTIFICATION } }
+      steps { script { wlGatePreflight(mode: 'node', gateRoot: '__WL_GATE_ROOT__') } }
+    }
+  }
+  post {
+    unsuccessful { script { wlGateFailureNotice() } }
+    always { archiveArtifacts artifacts: '.wl-gate-bootstrap/**', allowEmptyArchive: true }
+  }
+}

@@ -58,12 +58,12 @@ for (const [label, mutate] of [
 ]) test(`运行事实拒绝${label}`, (t) => { const f = fixture(t), e = f.fact(); mutate(e); assert.throws(() => f.ingest(e)); });
 test("Review草稿、正式授权分开，作者/未登记审批人不能发已批准事实", (t) => {
   const f = fixture(t), draft = f.fact({ category: "review", status: "draft", reviewId: "review-1", reportHash: hash, evidenceHash: hash }); draft.source.system = "review";
-  f.ingest(draft); assert.match(outboxGovernance(f).messages[0].text, /草稿 · 待确认/);
+  f.ingest(draft); assert.match(outboxGovernance(f).messages[0].text, /待技术经理审核/);
   const approved = { ...draft, eventId: "review-approved", sequence: 2, status: "approved", authorizationId: "auth-1", actorId: "reviewer" };
   assert.throws(() => f.ingest({ ...approved, actorId: "author" }), /明确授权/);
   assert.throws(() => f.ingest({ ...approved, actorId: "stranger" }), /明确授权/);
   assert.throws(() => f.ingest({ ...approved, authorizationId: undefined }), /明确授权/);
-  f.ingest(approved); assert.match(outboxGovernance(f).messages[0].text, /已授权确认/); assert.equal(Object.keys(f.state().issues).length, 0);
+  f.ingest(approved); assert.match(outboxGovernance(f).messages[0].text, /审核已确认/); assert.equal(Object.keys(f.state().issues).length, 0);
 });
 test("已部署和环境验证分别陈述事实，缺独立复核和验证记录拒绝", (t) => {
   const f = fixture(t), deployed = f.fact({ category: "deploy", environment: "uat", deploymentId: "deploy-1", authorizationId: "release-auth" });

@@ -1,0 +1,53 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import {readFileSync,writeFileSync,existsSync,symlinkSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {fixture,bind,put} from '../test-support/jenkins-fixture.mjs';
+import {planJenkinsInstallation,applyJenkinsInstallation} from '../../lib/jenkins-installation.js';
+import {resolveJenkinsContext} from '../../lib/jenkins-cluster.js';
+import {GATE_VERSION,gateRuntimeHash,digest,renderJenkinsEntry} from '../../lib/jenkins-integration.js';
+import {ENTRY_CONTEXT_PATH,entryPointHash,nativePipelineEntry,assertNativeProof} from '../../lib/jenkins-entry-contract.js';
+import {runJenkinsAction} from '../../lib/jenkins-runtime.js';
+import {planJenkinsBootstrap,applyJenkinsBootstrap} from '../../lib/jenkins-node-bootstrap.js';
+import {jobContract} from '../../lib/jenkins-job-config.js';
+const installed=f=>{const input={prefix:path.join(f.base,'install space'),configDir:path.join(f.base,'config'),registryFiles:[f.registryFile],jenkinsOrigin:'https://jenkins.example.invalid/',centralAgentLabel:'central',reviewSignerAgentLabel:'signer'};const p=planJenkinsInstallation(input);return {input,p,result:applyJenkinsInstallation({...input,confirm:true,planHash:p.planHash})};};
+const environment=(job='wl-quality-fleet')=>({JENKINS_URL:'https://jenkins.example.invalid/',JOB_NAME:job,BUILD_NUMBER:'4',BUILD_URL:`https://jenkins.example.invalid/job/${job}/4/`});
+test('服务器公共入口随Gate安装，零新仓库；重复安装无差异且修改须重新预览',t=>{
+ const f=fixture(t),v=installed(f);assert.match(v.result.pipelineScript,/node\('wl-quality-router'\).*load\(.*entry.groovy.*\) \}\.call\(\)/);assert(!v.result.remoteModified);assert(existsSync(v.result.nativeEntry.loaderFile));assert(planJenkinsInstallation(v.input).files.every(e=>e.action==='unchanged'));assert.throws(()=>applyJenkinsInstallation({...v.input,confirm:true,planHash:v.p.planHash}),/差异计划/);assert.throws(()=>planJenkinsInstallation({...v.input,libraryManifestFile:'unused'}),/未知/);
+ const alias=spawnSync(v.result.command,['--version'],{encoding:'utf8'});assert.equal(alias.status,0,alias.stderr);assert.equal(alias.stdout.split(' ')[1],GATE_VERSION);
+ const minimal=spawnSync(v.result.command,['--version'],{encoding:'utf8',env:{...process.env,PATH:'/usr/bin:/bin'}});assert.equal(minimal.status,0,minimal.stderr);assert.equal(minimal.stdout.split(' ')[1],GATE_VERSION);
+ assert.equal(v.result.nodeEnvironment.WL_NODE_BIN_DIR,path.dirname(process.execPath));const cluster=JSON.parse(readFileSync(v.result.clusterFile));assert.equal(cluster.nodeBinDir,path.dirname(process.execPath));assert(!readFileSync(v.result.nativeEntry.loaderFile,'utf8').includes('__WL_NODE_BIN_DIR__'));assert(readFileSync(v.result.nativeEntry.loaderFile,'utf8').includes(path.dirname(process.execPath)));
+});
+test('路由按真实Job识别维护角色，拒绝冒充签发者和入口漂移',async t=>{
+ const f=fixture(t),v=installed(f),args={configFile:v.result.clusterFile,env:environment(),verifyEntry:true};const c=await resolveJenkinsContext(args);assert.equal(c.role,'fleet');assert.equal(c.agentLabel,'central');assert(c.entryVerified);await assert.rejects(resolveJenkinsContext({...args,role:'review'}),/不能借/);writeFileSync(v.result.nativeEntry.loaderFile,'changed');await assert.rejects(resolveJenkinsContext(args),/入口被修改/);
+ assert.equal(c.nodeBinDir,path.dirname(process.execPath));
+});
+test('业务Job按登记路由，公共入口和当前包字节都须一致',async t=>{
+ const f=fixture(t);await bind(f);const v=installed(f),r=JSON.parse(readFileSync(f.registryFile));r.nativeEntry=v.result.nativeEntry;put(f.base,'bindings.json',r);const c=await resolveJenkinsContext({configFile:v.result.clusterFile,env:f.environment('CHECK'),verifyEntry:true});assert.equal(c.role,'job');assert.equal(c.registry,f.registryFile);assert.equal(renderJenkinsEntry(r,f.registryFile),v.result.pipelineScript);await assert.rejects(resolveJenkinsContext({role:'review',configFile:v.result.clusterFile,env:f.environment('CHECK')}),/不能借/);
+ r.nativeEntry.runtimeHash='0'.repeat(64);put(f.base,'bindings.json',r);await assert.rejects(resolveJenkinsContext({configFile:v.result.clusterFile,env:f.environment('CHECK')}),/不一致/);
+});
+test('真实扫描入口生成本轮公共入口工件；旧Gate或不同SHA不能复用',async t=>{
+ const f=fixture(t);await bind(f);const v=installed(f),r=JSON.parse(readFileSync(f.registryFile));r.nativeEntry=v.result.nativeEntry;put(f.base,'bindings.json',r);
+ const result=await runJenkinsAction({action:'check',registryFile:f.registryFile,root:f.root,env:{...process.env,...f.environment('CHECK')},runner:(exe,args,o)=>args[1]==='ci-prepare'?{status:0}:spawnSync(exe,args,{...o,stdio:'pipe'})});assert.equal(result.exitCode,0);const proof=JSON.parse(readFileSync(path.join(f.root,ENTRY_CONTEXT_PATH)));assert.equal(proof.runtimeHash,gateRuntimeHash());const source={project:'wl-produce',scope:'test',jobPath:'produce/CHECK',nativeEntry:{runtimeHash:gateRuntimeHash(),entryPointHash:entryPointHash(r.nativeEntry)}};const request={sha:proof.sha,runId:12};assert(assertNativeProof(proof,source,request));assert.throws(()=>assertNativeProof({...proof,runtimeHash:'0'.repeat(64)},source,request),/旧报告/);assert.throws(()=>assertNativeProof(proof,source,{...request,sha:'a'.repeat(40)}),/不匹配/);
+});
+test('公共任务首次只建四个、逐个回读；重跑零写入，同名自定义不覆盖，超时先对账',async t=>{
+ const f=fixture(t),v=installed(f),script=nativePipelineEntry(v.result.nativeEntry);const jobs=new Map(),env={WL_JENKINS_CONFIG_USER:'service',WL_JENKINS_CONFIG_TOKEN:'fixture'},posts=[];let unknown=true;
+ const xml=s=>`<flow-definition><properties/><definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition"><script>${s}</script><sandbox>true</sandbox></definition><disabled>false</disabled></flow-definition>`;
+ jobs.set('wl-quality-fleet',xml(script));const fetchImpl=async(url,o)=>{const u=new URL(url);if(o.method==='GET'){const name=decodeURIComponent(u.pathname.split('/')[2]);return jobs.has(name)?new Response(jobs.get(name)):new Response('',{status:404});}assert.equal(u.pathname,'/createItem');const name=u.searchParams.get('name');posts.push(name);jobs.set(name,o.body);if(unknown){unknown=false;throw Error('timeout after create');}return new Response('');};
+ const options={configFile:v.result.clusterFile,env,fetchImpl};let p=await planJenkinsBootstrap(options);assert.equal(p.entries.filter(e=>e.action==='create').length,4);await assert.rejects(applyJenkinsBootstrap({...options,confirm:true,planHash:'0'.repeat(64)}),/预览/);let result=await applyJenkinsBootstrap({...options,confirm:true,planHash:p.planHash});assert.equal(result.status,'common-jobs-verified',JSON.stringify(result));assert.equal(posts.length,4);assert(result.entries.some(e=>e.writeReconciled));assert(!result.businessBuildsTriggered);assert(!result.schedulesEnabled);assert.equal(jobs.size,5);p=await planJenkinsBootstrap(options);result=await applyJenkinsBootstrap({...options,confirm:true,planHash:p.planHash});assert.equal(result.status,'common-jobs-verified');assert.equal(posts.length,4);jobs.set('wl-quality-review',xml('echo custom'));p=await planJenkinsBootstrap(options);assert.equal(p.status,'blocked');await assert.rejects(applyJenkinsBootstrap({...options,confirm:true,planHash:p.planHash}),/阻断/);assert.equal(jobContract(jobs.get('wl-quality-review')).script,'echo custom');
+});
+test('公共入口配置拒绝符号链接和注入路径',t=>{const f=fixture(t),v=installed(f);symlinkSync(path.dirname(v.result.clusterFile),path.join(f.base,'symlink'));assert.throws(()=>planJenkinsInstallation({...v.input,configDir:path.join(f.base,'symlink')}),/符号链接/);assert.throws(()=>nativePipelineEntry({...v.result.nativeEntry,loaderFile:"/tmp/evil'"}),/受控/);});
+
+test('公共任务已启用包内定时后仍可重复核验；未知定时和禁用任务拒绝冒充可用',async t=>{
+ const f=fixture(t),v=installed(f),script=nativePipelineEntry(v.result.nativeEntry);let spec='* * * * *',disabled=false;
+ const fetchImpl=async url=>{const role=decodeURIComponent(new URL(url).pathname.split('/')[2]);const trigger=role==='wl-quality-central'?`<org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty><triggers><hudson.triggers.TimerTrigger><spec>${spec}</spec></hudson.triggers.TimerTrigger></triggers></org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>`:'';return new Response(`<flow-definition><properties>${trigger}</properties><definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition"><script>${script}</script><sandbox>true</sandbox></definition><disabled>${disabled}</disabled></flow-definition>`);};
+ const options={configFile:v.result.clusterFile,env:{WL_JENKINS_CONFIG_USER:'service',WL_JENKINS_CONFIG_TOKEN:'fixture'},fetchImpl};assert.equal((await planJenkinsBootstrap(options)).status,'preview');spec='H * * * *';assert.equal((await planJenkinsBootstrap(options)).status,'blocked');spec='* * * * *';disabled=true;assert.equal((await planJenkinsBootstrap(options)).status,'blocked');
+});
+
+test('离线交接检查不造配置，缺登记和占位值列出责任方；不声称凭据/真实闭环通过',async t=>{
+ const {inspectJenkinsReadiness}=await import('../../lib/jenkins-readiness.js');const f=fixture(t),v=installed(f);let r=inspectJenkinsReadiness({clusterFile:v.result.clusterFile});assert.equal(r.status,'blocked');assert(r.steps.some(s=>s.id==='项目登记'&&s.status==='blocked'));assert.equal(r.networkExecuted,false);assert.equal(r.credentialVerification,'pending-jenkins');
+ await bind(f);const registry=JSON.parse(readFileSync(f.registryFile));registry.nativeEntry=v.result.nativeEntry;put(f.base,'bindings.json',registry);
+ const dir=path.dirname(v.result.clusterFile);for(const name of ['automation-config','governance-config','control-config','review-publish-config'])put(dir,name+'.json',{schemaVersion:1,projects:{demo:{}},sources:[{id:'demo'}],dataDir:f.base,publicKeyFile:'approved.pem',identity:{},authorizationIssuer:'fixture',reviewPrivateKeyEnv:'PRIVATE_FILE'});
+ put(dir,'jenkins-fleet.json',{schemaVersion:1,kind:'wl-gate-jenkins-fleet',jenkinsOrigin:'https://jenkins.example.invalid/',dataDir:path.join(f.base,'fleet'),registryFiles:[f.registryFile],automationConfigFile:path.join(dir,'automation-config.json'),selection:{projects:['wl-produce'],branches:['test']},approvers:['fixture']});r=inspectJenkinsReadiness({clusterFile:v.result.clusterFile});assert.equal(r.status,'handover-files-ready',JSON.stringify(r));assert.equal(r.businessClosure,'pending-field-acceptance');put(dir,'control-config.json',{schemaVersion:1,origin:'https://REPLACE_INTERNAL_HOST'});r=inspectJenkinsReadiness({clusterFile:v.result.clusterFile});assert.equal(r.status,'blocked');assert(r.steps.some(s=>s.detail.includes('占位')));
+});

@@ -180,11 +180,11 @@ test("部署队列坏原件与Review publication故障均触发执行提醒，�
 
 test("Review草稿和非作者授权结果分类通知，取消不显示通过；作者不能伪造正式批准", async (t) => {
   const f = chain(t, "10-review-notifications"); f.setMode("clean"); await f.tick();
-  f.fact({ category: "review", status: "draft" }); await f.tick(); assert(f.requests.some((request) => request.method === "POST" && request.body.card.header.title.content.includes("草稿 · 待确认")));
+  f.fact({ category: "review", status: "draft" }); await f.tick(); assert(f.requests.some((request) => request.method === "POST" && request.body.card.header.title.content.includes("待技术经理审核")));
   assert.throws(() => f.fact({ category: "review", status: "approved", sequence: 2, actorId: "author" }), /明确授权/);
-  f.fact({ category: "review", status: "approved", sequence: 2 }); await f.tick(); assert(f.requests.some((request) => request.method === "POST" && request.body.card.header.title.content.includes("已授权确认")));
+  f.fact({ category: "review", status: "approved", sequence: 2 }); await f.tick(); assert(f.requests.some((request) => request.method === "POST" && request.body.card.header.title.content.includes("审核已确认")));
   f.fact({ category: "review", status: "canceled", sequence: 3 }); await f.tick(); const card = f.requests.filter((request) => request.method === "POST").at(-1).body.card;
-  assert.match(card.header.title.content, /无有效批准/); assert.equal(card.header.template, "orange"); assert.equal(Object.keys(f.state().issues).length, 0);
+  assert.match(card.header.title.content, /不作为通过记录/); assert.equal(card.header.template, "orange"); assert.equal(Object.keys(f.state().issues).length, 0);
 });
 
 test("漏跑闭环：必需作业未创建先提醒，同运行真实补跑后独立验证可关闭且复扫证据不丢时间绑定", async (t) => {

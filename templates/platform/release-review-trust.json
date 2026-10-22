@@ -23,7 +23,8 @@
       "collectorConfigFile": "/srv/wl-quality/config/review-collector.frontend.json",
       "controlCatalogFile": "/srv/wl-quality/control/reviews.json",
       "technicalManager": "REPLACE_TEAM_LEAD",
-      "requireTechnicalManagerReview": true
+      "requireTechnicalManagerReview": true,
+      "requireResolvedFindings": true
     },
     "wl-produce": {
       "publicKeyFile": "/controlled/keys/review-public.pem",
@@ -46,7 +47,8 @@
       "collectorConfigFile": "/srv/wl-quality/config/review-collector.backend.json",
       "controlCatalogFile": "/srv/wl-quality/control/reviews.json",
       "technicalManager": "REPLACE_TEAM_LEAD",
-      "requireTechnicalManagerReview": true
+      "requireTechnicalManagerReview": true,
+      "requireResolvedFindings": true
     }
   }
 }

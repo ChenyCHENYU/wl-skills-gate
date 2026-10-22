@@ -19,7 +19,7 @@
         "REPLACE_FRONTEND_REVIEWER",
         "REPLACE_INDEPENDENT_VERIFIER"
       ],
-      "channel": "frontend",
+      "channel": "ci",
       "issueBaseUrl": "https://quality.example.internal/issues",
       "scopes": {
         "standard": {
@@ -49,6 +49,12 @@
             ],
             "deploymentLane": "release",
             "requireDeployment": true
+          },
+          "notification": {
+            "channel": "ci",
+            "surface": "ci-summary",
+            "branch": "REPLACE_WITH_APPROVED_TARGET_BRANCH",
+            "requireResolvedFindings": true
           }
         }
       },
@@ -59,7 +65,8 @@
       "domain": "生产",
       "technicalManager": "REPLACE_TEAM_LEAD",
       "requireRiskMentions": true,
-      "requireTechnicalManagerReview": true
+      "requireTechnicalManagerReview": true,
+      "managerSubmissionNotify": "REPLACE_MANAGER_SUBMISSION_OBSERVER"
     },
     "wl-produce": {
       "owner": "REPLACE_BACKEND_OWNER",
@@ -69,7 +76,7 @@
         "REPLACE_BACKEND_REVIEWER",
         "REPLACE_INDEPENDENT_VERIFIER"
       ],
-      "channel": "backend",
+      "channel": "ci",
       "issueBaseUrl": "https://quality.example.internal/issues",
       "scopes": {
         "standard": {
@@ -90,6 +97,12 @@
             ],
             "deploymentLane": "release",
             "requireDeployment": true
+          },
+          "notification": {
+            "channel": "ci",
+            "surface": "ci-summary",
+            "branch": "REPLACE_WITH_APPROVED_TARGET_BRANCH",
+            "requireResolvedFindings": true
           }
         }
       },
@@ -100,19 +113,20 @@
       "domain": "生产",
       "technicalManager": "REPLACE_TEAM_LEAD",
       "requireRiskMentions": true,
-      "requireTechnicalManagerReview": true
+      "requireTechnicalManagerReview": true,
+      "managerSubmissionNotify": "REPLACE_MANAGER_SUBMISSION_OBSERVER"
     }
   },
   "channels": {
-    "frontend": {
+    "project": {
       "type": "feishu",
-      "webhookEnv": "WL_FEISHU_FRONTEND_WEBHOOK",
-      "signingSecretEnv": "WL_FEISHU_FRONTEND_SECRET"
+      "webhookEnv": "WL_FEISHU_PROJECT_WEBHOOK",
+      "signingSecretEnv": "WL_FEISHU_PROJECT_SECRET"
     },
-    "backend": {
+    "ci": {
       "type": "feishu",
-      "webhookEnv": "WL_FEISHU_BACKEND_WEBHOOK",
-      "signingSecretEnv": "WL_FEISHU_BACKEND_SECRET"
+      "webhookEnv": "WL_FEISHU_CI_WEBHOOK",
+      "signingSecretEnv": "WL_FEISHU_CI_SECRET"
     }
   },
   "sla": {
@@ -244,6 +258,16 @@
       "feishu": {
         "idType": "open_id",
         "id": "ou_REPLACE_REPLACE_CHANNEL_OPERATOR"
+      }
+    },
+    "REPLACE_MANAGER_SUBMISSION_OBSERVER": {
+      "name": "REPLACE_MANAGER_SUBMISSION_OBSERVER",
+      "roles": [
+        "quality-observer"
+      ],
+      "feishu": {
+        "idType": "open_id",
+        "id": "ou_REPLACE_MANAGER_SUBMISSION_OBSERVER"
       }
     }
   }

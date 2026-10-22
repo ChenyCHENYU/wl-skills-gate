@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "kind": "wl-gate-jenkins-seed",
+  "gateRoot": "",
+  "jenkinsOrigin": "https://jenkins.walsin.com.cn/",
+  "agentLabel": "wl-quality-isolated",
+  "binding": {
+    "id": "wl-produce-pl-test",
+    "project": "wl-produce",
+    "scope": "test",
+    "branch": "test",
+    "validationBranch": true,
+    "repository": "https://gitlab.example.internal/REPLACE_NAMESPACE/wl-produce.git",
+    "scmCredentialId": "REPLACE_READONLY_SCM_CREDENTIAL_ID",
+    "jobs": {
+      "check": "REPLACE_ACTUAL_CHECK_JOB"
+    },
+    "reports": {
+      "archiveRoot": "/srv/wl-quality/report-archive"
+    }
+  }
+}

@@ -1,30 +1,35 @@
-// Centrally pinned job, isolated from project code and identity/event private keys.
+// Isolated protected signer. No source checkout; no author-controlled scripts.
+// Enable scheduling only after configuration and first run pass.
+// __WL_BOOTSTRAP__
 pipeline {
-  agent { label 'wl-review-signer-isolated' }
-  options { disableConcurrentBuilds(); skipDefaultCheckout(true) }
-  triggers { cron('H/2 * * * *') }
+  agent { label '__WL_AGENT__' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true); timeout(time: 15, unit: 'MINUTES') }
+  environment { WL_REVIEW_PUBLISH_CONFIG = '__WL_CENTRAL_CONFIG__/review-publish-config.json' }
   stages {
-    stage('Publish explicitly authorized nine-dimension Reviews') {
+    stage('节点环境自检') {
+      steps { script { wlGatePreflight(mode: 'review', gateRoot: '__WL_GATE_ROOT__') } }
+    }
+    stage('签发已明确授权的九维Review') {
       steps {
-        withCredentials([
-          file(credentialsId: 'wl-review-signing-key', variable: 'WL_REVIEW_PRIVATE_KEY_FILE'),
-          string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN')
-        ]) {
-          sh '''
-            set -eu
-            test -n "$WL_APPROVED_GATE_CLI"
-            test -n "$WL_REVIEW_PUBLISH_CONFIG"
-            node "$WL_APPROVED_GATE_CLI" review-publish --config "$WL_REVIEW_PUBLISH_CONFIG"
-          '''
+        withEnv(['WL_APPROVED_GATE_CLI=__WL_GATE_ROOT__/bin/wl-skills-gate.js', "PATH+WLGATE=${env.WL_NODE_BIN_DIR ?: '/usr/bin'}"]) {
+          withCredentials([
+            file(credentialsId: 'wl-review-signing-key', variable: 'WL_REVIEW_PRIVATE_KEY_FILE'),
+            string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN'),
+            usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')
+          ]) {
+            sh '''
+              set -eu
+              node "$WL_APPROVED_GATE_CLI" review-publish --config "$WL_REVIEW_PUBLISH_CONFIG"
+            '''
+          }
         }
       }
     }
   }
   post {
+    unsuccessful { script { wlGateFailureNotice() } }
     always {
-      // Archive a fixed approved output directory; it contains signed records'
-      // manifests and audit checks. Private keys are never copied into it.
-      archiveArtifacts artifacts: 'review-delivery/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: '.wl-gate-bootstrap/**,review-delivery/**', allowEmptyArchive: true
     }
   }
 }

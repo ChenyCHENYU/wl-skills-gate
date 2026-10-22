@@ -11,13 +11,14 @@ import { stableStringify } from '../../lib/util.js';
 const hash = (v) => createHash('sha256').update(v).digest('hex');
 const write = (file, value) => writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
 const sha = 'b'.repeat(40), digest = 'a'.repeat(64), now = Date.parse('2026-10-15T00:00:00Z'), origin = 'https://ci.example.invalid';
-export async function createReviewCollectFixture(t, { missing = false, failed = false, candidateContext, otherJobFailed = false, includeOtherJob = false, optionalMissing = [], sequence = 3, canonicalTypes = false, branch = "dev", scope = "standard", parent, pipelineId = 45, jobId = 60 } = {}) {
+export async function createReviewCollectFixture(t, { missing = false, failed = false, candidateContext, otherJobFailed = false, includeOtherJob = false, optionalMissing = [], sequence = 3, canonicalTypes = false, branch = "dev", scope = "standard", parent, pipelineId = 45, jobId = 60, sourceSummary, reviewPolicy, now = Date.parse("2026-10-15T00:00:00Z") } = {}) {
   const root = mkdtempSync(path.join(parent || realpathSync(tmpdir()), 'wl-review-collect-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(path.join(root, 'quality')); mkdirSync(path.join(root, 'quality-reports'));
+  const sha=sourceSummary?.run.commitSha || 'b'.repeat(40);
   const evidenceType = (id) => canonicalTypes ? ({ submission: 'commit-check', branch: 'branch-check', ui: 'ui-verification', review: 'impact-review', tests: 'test-verification', cicd: 'pipeline-verification', governance: 'ownership-verification' }[id]) : `${id}-evidence`;
-  const policy = { schemaVersion: 1, project: 'demo', dimensions: REVIEW_DIMENSIONS.map((d) => ({ id: d.id, applicable: true, requiredEvidenceTypes: [ ['coding', 'scan'].includes(d.id) ? 'gate-summary' : evidenceType(d.id) ] })) };
+  const policy = reviewPolicy || { schemaVersion: 1, project: 'demo', dimensions: REVIEW_DIMENSIONS.map((d) => ({ id: d.id, applicable: true, requiredEvidenceTypes: [ ['coding', 'scan'].includes(d.id) ? 'gate-summary' : evidenceType(d.id) ] })) };
   write(path.join(root, 'quality/review-policy.json'), policy);
-  const summary = { schemaVersion: 1, run: { project: 'demo', profile: 'standard', commitSha: sha, eventId: 'gate-1', startedAt: new Date(now).toISOString(), durationMs: 1, tool: 'gate', sourceBound: true, sourceDigest: digest },
+  const summary = sourceSummary || { schemaVersion: 1, run: { project: 'demo', profile: 'standard', commitSha: sha, eventId: 'gate-1', startedAt: new Date(now).toISOString(), durationMs: 1, tool: 'gate', sourceBound: true, sourceDigest: digest },
     policy: { policyHash: digest, ruleSetHash: digest, baselineHash: digest, waiversHash: digest, requiredCheckIds: ['CHECK'], lockedToolVersions: { CHECK: 'fixture@1' }, checksSelected: 1 },
     checks: [{ checkId: 'CHECK', status: 'ok', required: true, toolVersionVerified: true, toolVersion: 'fixture@1' }], findings: failed ? [{ fingerprint: digest, ruleId: 'R', file: 'src.js', severity: 'error', status: 'new' }] : [], counts: { blockingNew: failed ? 1 : 0 }, decision: { status: failed ? 'blocked' : 'passed', reasons: [] } };
   write(path.join(root, 'quality-reports/quality-summary.json'), summary);

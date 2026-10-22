@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "wl-gate-jenkins-fleet",
+  "jenkinsOrigin": "https://jenkins.walsin.com.cn/",
+  "dataDir": "/srv/wl-quality/fleet",
+  "registryFiles": ["./jenkins-bindings.json"],
+  "automationConfigFile": "./automation-config.json",
+  "selection": { "projects": ["wl-ui-produce", "wl-produce"], "branches": ["test"] },
+  "inventory": { "roots": [""], "maxJobs": 1000, "maxDepth": 8 },
+  "gitlab": {
+    "origin": "https://REPLACE_GITLAB_ORIGIN",
+    "tokenEnv": "WL_GITLAB_HOOK_TOKEN",
+    "secretEnv": "WL_GITLAB_JENKINS_WEBHOOK_SECRET"
+  },
+  "approvers": ["REPLACE_JENKINS_APPROVER_ID"]
+}

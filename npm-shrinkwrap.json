@@ -1,12 +1,12 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.12.0",
+  "version": "0.13.2",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@agile-team/wl-skills-gate",
-      "version": "0.12.0",
+      "version": "0.13.2",
       "license": "UNLICENSED",
       "dependencies": {
         "@secretlint/node": "13.0.7",
@@ -28,7 +28,8 @@
       "bin": {
         "wl-gate": "bin/wl-skills-gate.js",
         "wl-quality-setup": "bin/wl-quality-setup.js",
-        "wl-skills-gate": "bin/wl-skills-gate.js"
+        "wl-skills-gate": "bin/wl-skills-gate.js",
+        "wl-quality": "bin/wl-quality.js"
       },
       "engines": {
         "node": "^22.13.0 || >=24.0.0"
@@ -1193,7 +1194,7 @@
         "tapable": "^2.3.3"
       },
       "engines": {
-        "node": ">=10.13.0"
+        "node": ">=10.13.1"
       }
     },
     "node_modules/entities": {
@@ -1612,7 +1613,7 @@
         "is-glob": "^4.0.3"
       },
       "engines": {
-        "node": ">=10.13.0"
+        "node": ">=10.13.1"
       }
     },
     "node_modules/global-directory": {
@@ -1727,7 +1728,7 @@
       "integrity": "sha512-6xwYfHbajpoF0xLW+iwLkhwgvLoZDfjYfoFNu8ftMoXINzwuymNLd9u/KmwtdT2GbR+/Cz66otEGEVVUHX9QLQ==",
       "license": "MIT",
       "engines": {
-        "node": ">=10.13.0"
+        "node": ">=10.13.1"
       }
     },
     "node_modules/is-core-module": {
@@ -2432,7 +2433,7 @@
         "resolve": "^1.20.0"
       },
       "engines": {
-        "node": ">= 10.13.0"
+        "node": ">= 10.13.1"
       }
     },
     "node_modules/regexp-tree": {
@@ -2909,7 +2910,7 @@
         "tsconfig-paths": "^4.1.2"
       },
       "engines": {
-        "node": ">=10.13.0"
+        "node": ">=10.13.1"
       }
     },
     "node_modules/type-check": {

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "governanceConfigFile": "./governance-config.json",
+  "stateFile": "/srv/wl-quality/state/governance.json",
+  "dataDir": "/srv/wl-quality/automation",
+  "receiptPrivateKeyFile": "/srv/wl-quality/secrets/events-private.pem",
+  "intervalSeconds": 60,
+  "sources": [
+    {
+      "id": "produce-pl-check",
+      "configFile": "./ci-source.jenkins-test.json",
+      "actors": {
+        "REPLACE_ACTUAL_GITLAB_USER_ID": "REPLACE_BACKEND_OWNER",
+        "REPLACE_ACTUAL_GITLAB_USER_ID_DEVELOPER": "REPLACE_BACKEND_DEVELOPER",
+        "REPLACE_ACTUAL_GITLAB_USER_ID_TECHNICAL_MANAGER": "REPLACE_TEAM_LEAD"
+      },
+      "since": "REPLACE_APPROVED_INITIAL_ISO_TIME",
+      "review": {
+        "configFile": "./review-ci.backend.json",
+        "outRoot": "/srv/wl-quality/evidence/backend",
+        "publication": {
+          "manifestDir": "/srv/wl-quality/review-delivery",
+          "publicKeyFile": "/srv/wl-quality/config/review-public.pem",
+          "authorizationPublicKeyFile": "/srv/wl-quality/config/identity-authorization-public.pem",
+          "expectAuthorizationIssuer": "wl-quality-identity",
+          "expectReviewPolicyHash": "REPLACE_APPROVED_REVIEW_POLICY_SHA256",
+          "evidenceRoot": "/srv/wl-quality/evidence/backend",
+          "profile": "standard"
+        }
+      },
+      "buildDispatch": {
+        "registryFile": "/srv/wl-quality/config/jenkins-bindings.json",
+        "bindingId": "produce-pl-test"
+      }
+    },
+    {
+      "id": "produce-pl-build",
+      "configFile": "./ci-source.jenkins-build.json",
+      "actors": {
+        "gitlab:REPLACE_ACTUAL_GITLAB_USER_ID": "REPLACE_BACKEND_OWNER",
+        "gitlab:REPLACE_ACTUAL_GITLAB_USER_ID_DEVELOPER": "REPLACE_BACKEND_DEVELOPER",
+        "gitlab:REPLACE_ACTUAL_GITLAB_USER_ID_TECHNICAL_MANAGER": "REPLACE_TEAM_LEAD"
+      },
+      "since": "REPLACE_APPROVED_INITIAL_ISO_TIME",
+      "buildResultPath": "quality-reports/ci-integration/build-result.json"
+    }
+  ]
+}

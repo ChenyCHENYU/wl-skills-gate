@@ -45,6 +45,17 @@ test("实际分页发现→running事实→稳定重试不重复→success新gen
   assert.equal(Object.values(f.state().events).filter((e) => e.kind === "quality-event").length, 1);
   await f.tick(); assert.equal(Object.values(f.state().events).filter((e) => e.kind === "quality-event").length, 1);
 });
+test('纯CHECK来源可以不声明发布环境，不产生虚假的构建或部署成功事实',async(t)=>{
+  const f=fixture(t);delete f.config.sources[0].manifestPath;delete f.config.sources[0].environment;write(f.configFile,f.config);f.mode('success');
+  assert.doesNotThrow(()=>loadAutomationConfig(f.configFile));
+  const result=await f.tick();assert.equal(result.status,'ok',JSON.stringify(result.errors));
+  assert.equal(Object.values(f.state().events).filter(e=>e.kind==='quality-event').length,1);
+  assert.equal(Object.values(f.state().lifecycles).filter(e=>e.category==='build'||e.category==='deploy').length,0);
+});
+test('真实构建来源仍强制发布环境，不能因CHECK兼容而接受test或缺失环境',t=>{
+  const f=fixture(t);delete f.config.sources[0].environment;write(f.configFile,f.config);assert.throws(()=>loadAutomationConfig(f.configFile),/构建目标环境/);
+  f.config.sources[0].environment='test';write(f.configFile,f.config);assert.throws(()=>loadAutomationConfig(f.configFile),/构建目标环境/);
+});
 test("必需作业根本未创建仍自动建漏跑；同run补跑后不会遗留永远open旧序号", async (t) => {
   const f = fixture(t); f.missing(true); f.mode("success"); const first = await f.tick(); assert.equal(first.status, "attention"); assert.equal(first.sources[0].discovered, 1);
   assert.equal(Object.values(f.state().issues)[0].ruleId, "GOV/NOT-RUN"); f.missing(false);

@@ -1,0 +1,72 @@
+// One controlled maintenance job manages the approved Jenkins fleet.
+// No project checkout, build trigger, private plan or token is archived here.
+// __WL_BOOTSTRAP__
+def wlFleetRun(String action, String batch = '', String planHash = '') {
+  def code = 2
+  withEnv(['WL_APPROVED_GATE_CLI=__WL_GATE_ROOT__/bin/wl-skills-gate.js',
+    'WL_FLEET_CONFIG=__WL_CENTRAL_CONFIG__/jenkins-fleet.json',
+    "WL_FLEET_ACTION=${action}", "WL_FLEET_BATCH=${batch}", "WL_FLEET_HASH=${planHash}",
+    "PATH+WLGATE=${env.WL_NODE_BIN_DIR ?: '/usr/bin'}"]) {
+    withCredentials([
+      usernamePassword(credentialsId: 'wl-jenkins-config-manager', usernameVariable: 'WL_JENKINS_CONFIG_USER', passwordVariable: 'WL_JENKINS_CONFIG_TOKEN'),
+      string(credentialsId: 'wl-gitlab-hooks-token', variable: 'WL_GITLAB_HOOK_TOKEN'),
+      string(credentialsId: 'wl-gitlab-jenkins-webhook-secret', variable: 'WL_GITLAB_JENKINS_WEBHOOK_SECRET')
+    ]) {
+      code = sh(returnStatus: true, script: '''#!/bin/sh
+set -eu
+set +x
+rm -f wl-fleet-public/summary.json
+set -- jenkins fleet "$WL_FLEET_ACTION" --config "$WL_FLEET_CONFIG" --out wl-fleet-public/summary.json
+if [ -n "$WL_FLEET_BATCH" ]; then set -- "$@" --batch "$WL_FLEET_BATCH"; fi
+if [ -n "$WL_FLEET_HASH" ]; then set -- "$@" --plan-hash "$WL_FLEET_HASH" --confirm; fi
+node "$WL_APPROVED_GATE_CLI" "$@"
+''')
+    }
+  }
+  if (!fileExists('wl-fleet-public/summary.json')) error('未产生本次结果；按控制台缺项处理，不登记成功。')
+  def result = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-fleet-public/summary.json'))
+  archiveArtifacts artifacts: 'wl-fleet-public/summary.json', allowEmptyArchive: false
+  if (code != 0) error('批次仍有待处理项；查看归档逐项结果，修复后续跑或重新预览。')
+  return result
+}
+pipeline {
+  agent { label '__WL_AGENT__' }
+  options { disableConcurrentBuilds(); skipDefaultCheckout(true); timeout(time: 120, unit: 'MINUTES') }
+  parameters {
+    choice(name: 'ACTION', choices: ['盘点', '预览', '接入', '续跑', '核验', '回退'], description: '接入先预览再确认；不会触发业务构建')
+    string(name: 'BATCH', defaultValue: '', description: '续跑、核验、回退填写原批次ID；其他动作留空')
+  }
+  stages {
+    stage('节点环境自检') {
+      steps { script {
+        dir('wl-fleet-public') { deleteDir() }
+        wlGatePreflight(mode: 'fleet', gateRoot: '__WL_GATE_ROOT__')
+      } }
+    }
+    stage('批量任务管理') {
+      steps { script {
+        def action = params.ACTION ?: '盘点'
+        def batch = (params.BATCH ?: '').trim()
+        if (['盘点', '预览', '接入'].contains(action) && batch) error('本动作的批次ID应留空。')
+        if (['续跑', '核验', '回退'].contains(action) && !batch) error('请填写原批次ID。')
+        if (action == '盘点') { wlFleetRun('inventory') }
+        else if (action == '预览') { wlFleetRun('plan') }
+        else if (action == '核验') { wlFleetRun('verify', batch) }
+        else {
+          def preview = action == '接入' ? wlFleetRun('plan') : wlFleetRun('show', batch)
+          echo "批次 ${preview.planId}：${preview.counts}；完整任务清单见归档。"
+          if (!preview.approvers) error('未配置批准人，停止写入。')
+          timeout(time: 20, unit: 'MINUTES') {
+            def approvedBy = input message: "确认${action}这 ${preview.counts.total} 个任务？原部署逻辑有阻断时不可执行。", ok: '确认执行', submitter: preview.approvers.join(','), submitterParameter: 'APPROVED_BY'
+            writeFile file: 'wl-fleet-public/approval.txt', text: "batch=${preview.planId}\nplanHash=${preview.planHash}\naction=${action}\napprovedBy=${approvedBy}\n"
+          }
+          wlFleetRun(action == '回退' ? 'rollback' : 'apply', preview.planId.toString(), preview.planHash.toString())
+        }
+      } }
+    }
+  }
+  post {
+    unsuccessful { script { wlGateFailureNotice() } }
+    always { archiveArtifacts artifacts: '.wl-gate-bootstrap/**,wl-fleet-public/*', allowEmptyArchive: true }
+  }
+}

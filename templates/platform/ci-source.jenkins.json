@@ -16,10 +16,16 @@
     "job": "produce/REPLACE_WITH_ACTUAL_QUALITY_JOB",
     "paths": [
       "quality-reports/quality-summary.json",
-      "quality-reports/quality-report.html"
+      "quality-reports/quality-report.html",
+      "quality-reports/report-publication.json",
+      "quality-reports/report-publication-check.json",
+      "quality-reports/report-retention.json"
     ]
   },
   "qualitySummary": "quality-reports/quality-summary.json",
+  "reportPublication": {
+    "manifestPath": "quality-reports/report-publication.json"
+  },
   "maxArtifactBytes": 67108864,
   "actorSource": {
     "system": "gitlab",

@@ -10,6 +10,7 @@ import { signReviewRecord, verifyReview } from '../../lib/evidence.js';
 const hash = (value) => createHash('sha256').update(value).digest('hex'), now = Date.parse('2026-10-15T00:00:00Z'), origin = 'https://quality.example.invalid';
 const json = (file, value) => writeFileSync(file, JSON.stringify(value));
 export async function createControlReviewFixture(t, extra) {
+  const now=extra?.now ?? Date.parse('2026-10-15T00:00:00Z');
   const f = await createReviewCollectFixture(t, { ...extra, ...(extra?.supplement ? { canonicalTypes: true } : {}) }), keys = {};
   for (const name of ['receipt', 'authorization', 'identity', 'review']) {
     keys[name] = generateKeyPairSync('ed25519');
@@ -20,6 +21,10 @@ export async function createControlReviewFixture(t, extra) {
   json(governanceConfigFile, { schemaVersion: 1, issuer: 'central', publicKeyFile: path.join(f.root, 'receipt-public.pem'), allowedLinkOrigins: [origin], operators: ['operator'],
     projects: { demo: { owner: 'owner', backup: 'backup', escalationOwner: 'manager', reviewers: ['reviewer', 'author'], channel: 'group', issueBaseUrl: origin + '/issues',
       scopes: { [extra?.scope || 'standard']: { requiredChecks: ['CHECK'], policyHash: 'a'.repeat(64), rulesHash: 'a'.repeat(64), baselineHash: 'a'.repeat(64), waiversHash: 'a'.repeat(64) } } } }, channels: { group: { type: 'feishu', webhookEnv: 'GROUP_WEBHOOK', signingSecretEnv: 'GROUP_SECRET' } } });
+  if(extra?.sourceSummary){
+    const g=JSON.parse(readFileSync(governanceConfigFile)),p=extra.sourceSummary.policy,s=g.projects.demo.scopes[extra.scope || 'standard'];
+    Object.assign(s,{requiredChecks:p.requiredCheckIds,policyHash:p.policyHash,rulesHash:p.ruleSetHash,baselineHash:p.baselineHash,waiversHash:p.waiversHash});json(governanceConfigFile,g);
+  }
   if(extra?.technicalManager){
     const g=JSON.parse(readFileSync(governanceConfigFile));g.projects.demo.technicalManager=extra.technicalManager;g.projects.demo.requireTechnicalManagerReview=true;
     g.people=Object.fromEntries(['author','reviewer','other'].map(actor=>[actor,{name:actor,roles:[actor===extra.technicalManager?'technical-manager':'reviewer']}]));
@@ -38,7 +43,7 @@ export async function createControlReviewFixture(t, extra) {
     if (url !== c.identity.tokenEndpoint) return f.fetchImpl(url, init);
     assert.equal(url, c.identity.tokenEndpoint); const form = new URLSearchParams(init.body); assert.equal(form.get('code'), 'valid-code');
     assert.equal(hash(form.get('code_verifier')), Buffer.from(challenge, 'base64url').toString('hex'));
-    const parts = [Buffer.from(JSON.stringify({ alg: 'EdDSA', kid: 'identity-key' })).toString('base64url'), Buffer.from(JSON.stringify({ iss: c.identity.issuer, aud: 'quality', sub: subject, nonce, iat: now / 1000, exp: now / 1000 + 3600 })).toString('base64url')];
+    const parts = [Buffer.from(JSON.stringify({ alg: 'EdDSA', kid: 'identity-key' })).toString('base64url'), Buffer.from(JSON.stringify({ iss: c.identity.issuer, aud: 'quality', sub: subject, nonce, iat: Math.floor(now / 1000), exp: Math.floor(now / 1000) + 3600 })).toString('base64url')];
     const id_token = parts.join('.') + '.' + sign(null, Buffer.from(parts.join('.')), keys.identity.privateKey).toString('base64url'); return new Response(JSON.stringify({ id_token }));
   } });
   const http = ({ url = '/reviews/review-1', method = 'GET', cookie, body, chunks } = {}) => new Promise((resolve, reject) => {

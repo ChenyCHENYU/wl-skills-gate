@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { generateKeyPairSync, createHash, createHmac } from "node:crypto";
-import { signPlatformReceipt, ingestGovernance, ingestLifecycleGovernance, actionGovernance, reconcileGovernance, outboxGovernance, dispatchGovernance, migrateGovernanceConfig, governanceConfigIdentity } from "../../lib/governance.js";
+import { signPlatformReceipt, ingestGovernance, ingestLifecycleGovernance, actionGovernance, reconcileGovernance, outboxGovernance, dispatchGovernance, migrateGovernanceConfig, governanceConfigIdentity, loadGovernanceConfig } from "../../lib/governance.js";
 const digest = (x) => createHash("sha256").update(x).digest("hex");
 const hash = "a".repeat(64), sha = "b".repeat(40), now = Date.parse("2026-10-13T00:00:00Z");
 function fixture(t, type = "feishu") {
@@ -43,6 +43,16 @@ function fixture(t, type = "feishu") {
   };
   return { ...base, clock: () => 0, dir, config, receipt, ingest, state, issue, action, reconcile, env, verified };
 }
+test("经理本人提交同步人必须登记且不能误配为经理本人，通知配置不增加审批人", (t) => {
+  const f = fixture(t), c = f.config, project = c.projects.demo;
+  project.technicalManager = "manager"; project.managerSubmissionNotify = "observer";
+  c.people = { manager: { name: "技术经理", roles: ["technical-manager"], feishu: { idType: "open_id", id: "ou_manager" } }, observer: { name: "李月", roles: ["quality-observer"], feishu: { idType: "open_id", id: "ou_observer" } } };
+  const save = () => writeFileSync(f.configFile, JSON.stringify(c));
+  save(); assert.deepEqual(loadGovernanceConfig(f.configFile).projects.demo.reviewers, ["reviewer"]);
+  project.managerSubmissionNotify = "missing"; save(); assert.throws(() => loadGovernanceConfig(f.configFile), /须登记实名/);
+  project.managerSubmissionNotify = "manager"; save(); assert.throws(() => loadGovernanceConfig(f.configFile), /同一飞书人员/);
+  project.managerSubmissionNotify = "observer"; c.people.observer.feishu.id = "ou_manager"; save(); assert.throws(() => loadGovernanceConfig(f.configFile), /同一飞书人员/);
+});
 test("正式摄入按event去重，拒绝同编号冲突；旧轮次不回写当前状态", (t) => {
   const f = fixture(t), run = f.ingest({ sequence: 2 });
   assert.equal(ingestGovernance({ ...f, eventFile: f.receipt(run.payload), summaryFile: run.summaryFile, now }).status, "duplicate");
