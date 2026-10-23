@@ -27,7 +27,7 @@ wl-quality init
 
 ```bash
 npm exec --yes --ignore-scripts --registry=https://registry.npmjs.org/ \
-  --package=@agile-team/wl-skills-gate@0.13.2 -- wl-quality init
+  --package=@agile-team/wl-skills-gate@0.13.3 -- wl-quality init
 ```
 
 向导展示差异与实际安装计划，确认后执行；检查异常不能当成零问题。接入后日常由Hook自动检查；正式Review、远端强制检查、群消息与报告权限仍按现场清单验收。

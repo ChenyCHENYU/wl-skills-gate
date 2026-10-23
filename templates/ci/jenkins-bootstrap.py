@@ -55,7 +55,7 @@ def preflight(env):
     valid_root = root.is_absolute() and root.is_dir()
     check("gate-root", valid_root, "固定 Gate 目录可读取" if valid_root else "固定 Gate 目录不存在或不可读取",
           "在该Jenkins节点运行本包的接入Jenkins脚本；使用安装回执中的 gateHome。包内入口为 bin/wl-skills-gate.js。")
-    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.2")
+    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.3")
     try:
         package = json.loads((root / "package.json").read_text())
         correct = package.get("name") == "@agile-team/wl-skills-gate" and package.get("version") == expected
