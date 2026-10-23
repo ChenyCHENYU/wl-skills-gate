@@ -147,7 +147,7 @@ test("清单篡改、Hook丢失/漂移、冲突路径、无锁、项目外链接
 test("固定安装失败留逐阶段回执，恢复后只安装一次且不直接登记成功", (t) => {
   const root = fixture(t, "backend"), failed = fixtureRunner(root, "backend", [], { failInstall: true });
   const result = apply(root, failed); assert.equal(result.status, "workspace-initialization-blocked"); assert.match(result.failure, /退出17/);
-  assert.equal(result.stages[0].exitCode, 17); assert(existsSync(result.executionReceipt));
+  assert.equal(result.stages.find(stage=>stage.id==="dependencies-install").exitCode, 17); assert(existsSync(result.executionReceipt));
   const recovered = apply(root, fixtureRunner(root, "backend")); assert.equal(recovered.status, "workspace-approval-required"); assert.equal(recovered.localValidated, false);
 });
 
