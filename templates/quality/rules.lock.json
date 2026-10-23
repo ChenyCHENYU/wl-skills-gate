@@ -1,6 +1,6 @@
 {
   "lockVersion": 1,
-  "wl-skills-gate": "0.13.5",
+  "wl-skills-gate": "0.13.6",
   "tools": {
     "TS-TYPECHECK": "<填写 vue-tsc --version 的完整输出>",
     "FE-ESLINT": "<填写 eslint --version 的完整输出>"
