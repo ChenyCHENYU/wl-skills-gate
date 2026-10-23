@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync,realpathSync,symlinkSync} from 'node:fs';
@@ -6,7 +7,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {renderJenkinsMaintenance} from '../../lib/jenkins-bootstrap.js';
 import {GATE_VERSION,gateRuntimeHash,renderJenkinsEntry} from '../../lib/jenkins-integration.js';
-const base=new URL('../../',import.meta.url).pathname,python=readFileSync(new URL('../../templates/ci/jenkins-bootstrap.py',import.meta.url),'utf8');
+const base=fileURLToPath(new URL('../../',import.meta.url)),python=readFileSync(new URL('../../templates/ci/jenkins-bootstrap.py',import.meta.url),'utf8');
 const invoke=(code,env={})=>spawnSync('python3',['-c',`import types\nm=types.ModuleType('bootstrap')\nexec(${JSON.stringify(python)},m.__dict__)\n${code}`],{encoding:'utf8',env:{...process.env,...env}});
 test('所有交付入口内嵌同源自检和失败通知；无Gate时不依赖load或node；签名凭据仅在post绑定',()=>{
  const cfg={gateRoot:'/opt/wl-quality/gate-validation/node_modules/@agile-team/wl-skills-gate',agentLabel:'existing-node'};

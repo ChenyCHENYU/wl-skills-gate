@@ -28,7 +28,7 @@ function apply(options, plan) { options = { registry: REGISTRY, ...options }; pl
 function installIsolatedTools(root, kind) {
   const modules = path.join(root, kind === "backend" ? "quality-tools/node_modules" : "node_modules", "@agile-team");
   const gate = path.join(modules, "wl-skills-gate"); mkdirSync(gate, { recursive: true });
-  for (const file of ["package.json", "lib", "bin", "schemas", "templates"]) cpSync(path.join(PACKAGE, file), path.join(gate, file), { recursive: true });
+  for (const file of ["package.json", "npm-shrinkwrap.json", "lib", "bin", "schemas", "templates", "assets", "scripts"]) cpSync(path.join(PACKAGE, file), path.join(gate, file), { recursive: true });
   for (const [name, version] of kind === "backend" ? [["bd", "0.41.1"]] : [["kit", "2.33.1"], ["ui", "1.22.1"]]) {
     const directory = path.join(modules, `wl-skills-${name}`); put(directory, "package.json", { name: `@agile-team/wl-skills-${name}`, version });
     put(directory, `bin/${name === "kit" ? "wl-skills" : name === "ui" ? "wl-ui" : "wl-skills-bd"}.js`, `// isolated native version stub, not a business checker\nif (process.argv.includes("--version")) console.log("${version}");\n`);
@@ -63,6 +63,7 @@ test("complete 要求明确HTTPS源，计划安装argv关闭生命周期，预�
   const plan = planOnboarding({ ...options, registry: REGISTRY });
   assert.equal(plan.complete.status, "bootstrap-approval-required");
   assert.ok(plan.complete.installation.args.includes("--ignore-scripts"));
+  assert.ok(plan.complete.installation.args.includes("--no-frozen-lockfile"), "首次已确认的依赖声明迁移须可更新pnpm锁，避免CI默认frozen导致安装无法恢复");
   assert.equal(plan.complete.installation.registry, REGISTRY);
   assert.equal(existsSync(path.join(root, "node_modules")), false);
   assert.equal(plan.complete.native.length, 0);
@@ -76,6 +77,9 @@ test("安装失败停止后续，留下真实阶段回执而非configured=ready"
   assert.match(result.complete.failure, /退出17/); assert.equal(calls.filter((call) => call.args[0] === "install").length, 1);
   const receipt = JSON.parse(readFileSync(result.executionReceipt)); assert.equal(receipt.stages[0].exitCode, 17);
   assert.equal(existsSync(path.join(root, "quality/rules.lock.json")), false);
+  const resumed = JSON.parse(execFileSync(process.execPath, [path.join(PACKAGE, "bin/wl-quality.js"), "init", "--root", root, "--registry", REGISTRY, "--preview", "--json"], { encoding: "utf8" }));
+  assert.equal(resumed.plan.kind, "project-onboarding", "真实CLI应在已写workspace清单但失败的首次安装后，继续project流程");
+  assert.ok(resumed.plan.complete.installation, "同入口恢复必须保留未完成的真实依赖安装阶段");
 });
 
 test("安装成功只返回下一份实际资产审批，不隐式批准未知差异或首扫", (t) => {
@@ -159,7 +163,7 @@ test("doctor通过仍必须实际首扫；失败与旧绿报告均不能接入�
     const runner = (executable, args, opts) => args[0] === "hook" ? { status: mode === "failed" ? 1 : 0, stdout: "", stderr: mode === "failed" ? "quality blocker fixture" : "" } : native(executable, args, opts);
     const result = apply({ root, complete: true, registry: REGISTRY, runner });
     assert.equal(result.status, "onboarding-execution-blocked"); assert.equal(result.complete.localValidated, false);
-    assert.match(result.complete.failure, mode === "failed" ? /first-scan.*退出1/ : /未生成新报告/);
+    assert.match(result.complete.failure, /未生成新报告/);
     assert.ok(result.complete.stages.some((stage) => stage.id === "doctor" && stage.result.status === "ready-for-local-validation"));
     assert.ok(result.complete.stages.every((stage) => stage.id !== "git-commit-message-positive"));
     assert.ok(existsSync(result.executionReceipt));
@@ -168,13 +172,14 @@ test("doctor通过仍必须实际首扫；失败与旧绿报告均不能接入�
 });
 
 test("隔离真实Git和Gate完成首扫及提交说明正反验证，远端仍未验收", async (t) => {
-  for (const mode of ["clean", "controlled-lifecycle", "hook-mutates-source", "negative-executor-error", "forged-project", "forged-empty-checks"]) await t.test(mode, (sub) => {
+  for (const mode of ["clean", "controlled-lifecycle", "quality-blocked", "quality-blocked-forged-project", "quality-blocked-forged-scope", "quality-blocked-exit2", "hook-mutates-source", "negative-executor-error", "forged-project", "forged-empty-checks"]) await t.test(mode, (sub) => {
     const root = fixture(sub); const assets = path.join(root, "isolated-approved-assets");
     cpSync(path.join(PACKAGE, "templates/onboarding"), assets, { recursive: true });
     put(assets, "frontend/policy.yml", ["schemaVersion: 1", "project: fixture", "releaseRequires: [ISOLATED-REPORT]", "checks:", "  - id: ISOLATED-REPORT", "    dimension: 编码规范", "    tool: raw-json", "    command: node scripts/quality/isolated-producer.mjs", "    file: quality-reports/native/isolated.json", "    versionCommand: node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js --version", "    profiles: [standard, release]", ""].join("\n"));
     const pkgFile = path.join(root, "package.json"), pkg = JSON.parse(readFileSync(pkgFile)); pkg.packageManager = "pnpm@10.34.5"; pkg.devDependencies["vue-tsc"] = "3.0.0"; put(root, "package.json", pkg);
     put(root, "src/fixture.js", "export const fixture = true;\n");
-    put(root, "scripts/quality/isolated-producer.mjs", "import {mkdirSync,writeFileSync} from 'node:fs'; mkdirSync('quality-reports/native',{recursive:true});writeFileSync('quality-reports/native/isolated.json',JSON.stringify({toolVersion:'2.33.1',findings:[]}));\n");
+    const findings = mode.startsWith("quality-blocked") ? [{ ruleId: "QUALITY/REAL-BLOCKER", severity: "error", file: "src/fixture.js", line: 1, message: "真实检查产出的阻断问题" }] : [];
+    put(root, "scripts/quality/isolated-producer.mjs", "import {mkdirSync,writeFileSync} from 'node:fs'; mkdirSync('quality-reports/native',{recursive:true});writeFileSync('quality-reports/native/isolated.json',JSON.stringify({toolVersion:'2.33.1',findings:" + JSON.stringify(findings) + "}));\n");
     if (mode === "controlled-lifecycle") commonLifecycleFixture(root);
     apply({ root, assetRoot: assets }); installIsolatedTools(root, "frontend");
     if (mode === "hook-mutates-source") {
@@ -192,6 +197,13 @@ test("隔离真实Git和Gate完成首扫及提交说明正反验证，远端仍�
         else { report.checks = []; report.policy.requiredCheckIds = []; report.policy.checksSelected = 0; }
         put(root, "quality-reports/quality-summary.json", report);
       }
+      if (args.includes("pre-push") && mode.startsWith("quality-blocked-")) {
+        const file = path.join(root, "quality-reports/quality-summary.json"), report = JSON.parse(readFileSync(file));
+        if (mode === "quality-blocked-forged-project") report.run.project = "wrong-project";
+        if (mode === "quality-blocked-forged-scope") report.run.scope = "staged";
+        if (mode === "quality-blocked-exit2") result.status = 2;
+        put(root, "quality-reports/quality-summary.json", report);
+      }
       return result;
     };
     const result = apply({ root, assetRoot: assets, complete: true, registry: REGISTRY, runner });
@@ -200,10 +212,15 @@ test("隔离真实Git和Gate完成首扫及提交说明正反验证，远端仍�
       assert.equal(result.complete.localValidated, true); assert.match(result.complete.reportSha256, /^[a-f0-9]{64}$/);
       assert.ok(result.complete.stages.some((stage) => stage.id === "git-commit-message-negative" && stage.exitCode === 1));
       if (mode === "controlled-lifecycle") assert.ok(result.complete.stages.some((stage) => stage.id === "project-lifecycle-common-core-types" && stage.changed === 2 && stage.idempotent === true));
+    } else if (mode === "quality-blocked") {
+      assert.equal(result.status, "installed-quality-blocked", JSON.stringify(result.complete));
+      assert.equal(result.complete.installationValidated, true); assert.equal(result.complete.localValidated, false); assert.equal(result.complete.qualityPassed, false);
+      assert.equal(JSON.parse(readFileSync(path.join(root, "quality-reports/quality-summary.json"))).decision.status, "blocked");
+      assert.ok(result.complete.stages.some((stage) => stage.id === "git-commit-message-negative" && stage.exitCode === 1));
     } else {
       assert.equal(result.status, "onboarding-execution-blocked", JSON.stringify(result.complete));
       assert.equal(result.complete.localValidated, false);
-      assert.match(result.complete.failure, mode === "hook-mutates-source" ? /修改了项目源码/ : mode === "forged-project" ? /项目.*源码|项目不一致/ : mode === "forged-empty-checks" ? /遗漏.*必需检查/ : /执行异常/);
+      assert.match(result.complete.failure, mode === "hook-mutates-source" ? /修改了项目源码/ : ["forged-project", "quality-blocked-forged-project", "quality-blocked-forged-scope"].includes(mode) ? /项目.*源码|项目不一致/ : mode === "forged-empty-checks" ? /遗漏.*必需检查/ : mode === "quality-blocked-exit2" ? /退出2/ : /执行异常/);
     }
     assert.equal(result.complete.remoteValidated, false); assert.equal(result.complete.businessClosureValidated, false);
     assert.equal(git(root, "rev-list", "--count", "HEAD"), "1");

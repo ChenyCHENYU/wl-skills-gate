@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 import path from 'node:path';
-import {existsSync} from 'node:fs';
 import {runSetupCli} from '../lib/setup.js';
 import {writeExclusiveJson} from '../lib/control-store.js';
+import {projectInitializationRoute} from '../lib/init-route.js';
 try {
   const args=process.argv.slice(2),command=args.shift()||'init';
   if(command==='--version'){const {GATE_VERSION,gateRuntimeHash}=await import('../lib/jenkins-integration.js');console.log('wl-quality '+GATE_VERSION+' '+gateRuntimeHash());}
   else if(command==='init'){
     const forwarded=[...args];let root=process.cwd();const index=forwarded.indexOf('--root');if(index>=0)root=path.resolve(forwarded[index+1]||'.');
-    const existing=existsSync(path.join(root,'quality/workspace.json'));
-    if(existing){const sourceIndex=forwarded.indexOf('--registry');if(sourceIndex>=0)forwarded.splice(sourceIndex,2);}
-    process.exitCode=await runSetupCli([existing?'workspace':'project',...forwarded]);
+    const route=projectInitializationRoute({root});
+    if(route.mode==='workspace'){const sourceIndex=forwarded.indexOf('--registry');if(sourceIndex>=0)forwarded.splice(sourceIndex,2);}
+    else if(!forwarded.includes('--registry')&&route.registry)forwarded.push('--registry',route.registry);
+    process.exitCode=await runSetupCli([route.mode,...forwarded]);
   }else if(command==='jenkins'&&args[0]==='context'){
     args.shift();const options={},flags=new Set(['--verify-entry']);
     while(args.length){const k=args.shift();if(!['--role','--config','--out','--verify-entry'].includes(k)||Object.hasOwn(options,k))throw Error('未知或重复context参数');if(flags.has(k))options[k]=true;else{const v=args.shift();if(!v||v.startsWith('--'))throw Error('context参数缺值');options[k]=v;}}

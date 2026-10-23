@@ -18,18 +18,18 @@
     },
     {
       "path": "scripts/make_report.py",
-      "bytes": 26300,
-      "sha256": "852bfab84b11b38a8f10ada22d12ade0b76c3b05752a7ecf838121222ac77b90"
+      "bytes": 26933,
+      "sha256": "a390d0374611a1c173870f85ff0845f9ca02f14be1c7205c230f012b83555110"
     },
     {
       "path": "scripts/scan.py",
-      "bytes": 18932,
-      "sha256": "1fc747353327d30eb387eb03b230bc15efba23d02ea3d214efe02a68fe829848"
+      "bytes": 19304,
+      "sha256": "12937d52b51a404d11847795fd1e1ba8406d18c6939b920e3139316a58947d71"
     },
     {
       "path": "scripts/spotbugs.py",
-      "bytes": 20598,
-      "sha256": "ceabd68dec26223312d01cc2035a399a7081aaa1a5f00c6f870acdc918f0d085"
+      "bytes": 21676,
+      "sha256": "a77db59b73a0e431a7010a4bbc9e07463e1c0e59a971cda404b5efcdb6378134"
     },
     {
       "path": "config/checkstyle-codecc-42of43-sev.xml",

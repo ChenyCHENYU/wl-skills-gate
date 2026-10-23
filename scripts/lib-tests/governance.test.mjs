@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync, realpathSync, symlinkSync, existsSync, linkSync } from "node:fs";
@@ -159,7 +160,7 @@ test("损坏台账深字段拒绝，不靠NaN或缺省值继续", (t) => {
 });
 test("CLI预览已有未知投递返回2；输出symlink/断链不能覆盖输入或创建外部文件", async (t) => {
   const f = fixture(t); f.ingest(); await dispatchGovernance({ ...f, send: true, now, env: f.env, fetchImpl: async () => { throw new Error("unknown"); } });
-  const cli = new URL("../../bin/wl-skills-gate.js", import.meta.url).pathname;
+  const cli = fileURLToPath(new URL("../../bin/wl-skills-gate.js", import.meta.url));
   const args = [cli, "governance", "outbox", "--config", f.configFile, "--state", f.stateFile];
   assert.equal(spawnSync(process.execPath, args, { encoding: "utf8" }).status, 2);
   const original = readFileSync(f.configFile, "utf8"), alias = path.join(f.dir, "alias.json"); symlinkSync(f.configFile, alias);
@@ -188,7 +189,7 @@ test("CLI不覆盖配置公钥/硬链接，坏快照复验证据链接拒绝", (
   const f = fixture(t); f.ingest(); f.ingest({ sequence: 2, status: "passed", findings: [] });
   const publicFile = f.config.publicKeyFile, before = readFileSync(publicFile, "utf8"), ledger = readFileSync(f.stateFile, "utf8");
   const alias = path.join(f.dir, "public-alias.pem"); linkSync(publicFile, alias);
-  const cli = new URL("../../bin/wl-skills-gate.js", import.meta.url).pathname;
+  const cli = fileURLToPath(new URL("../../bin/wl-skills-gate.js", import.meta.url));
   for (const out of [publicFile, alias]) assert.equal(spawnSync(process.execPath, [cli, "governance", "outbox", "--config", f.configFile, "--state", f.stateFile, "--out", out], { encoding: "utf8" }).status, 2);
   assert.equal(readFileSync(publicFile, "utf8"), before); assert.equal(readFileSync(f.stateFile, "utf8"), ledger);
   const s = f.state(); const item = Object.values(s.outbox).find((x) => x.snapshot.pendingEvidence); item.snapshot.pendingEvidence.reportUrl = "https://evil.invalid/?token=secret"; writeFileSync(f.stateFile, JSON.stringify(s)); assert.throws(() => outboxGovernance({ ...f, now }), /凭据不合法/);

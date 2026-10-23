@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {stableToolVersion} from '../../lib/tool-version.js';
+const mac='Apache Maven 3.9.11 (build-X)\nMaven home: /opt/homebrew/maven\nJava version: 1.8.0_471, vendor: Azul, runtime: /Users/person/jdk8\nOS name: mac os x';
+const linux='Apache Maven 3.9.11 (build-X)\nMaven home: /opt/maven\nJava version: 1.8.0_471, vendor: Azul, runtime: /opt/jdk8\nOS name: linux';
+test('same Maven and compiler identity across hosts, old locks compare equal',()=>{const stable=stableToolVersion('mvn -version',mac);assert.equal(stable,'Apache Maven 3.9.11 | Java 1.8.0_471');assert.equal(stableToolVersion('mvn -version',linux),stable);assert.equal(stableToolVersion('mvn -version',stable),stable);assert.equal(stableToolVersion('mvn -version','\x1b[1m'+mac+'\x1b[0m'),stable);});
+test('different Maven/compiler stays different; unknown commands stay exact',()=>{assert.notEqual(stableToolVersion('mvn -version',mac.replace('3.9.11','3.9.12')),stableToolVersion('mvn -version',mac));assert.notEqual(stableToolVersion('mvn -version',mac.replace('1.8.0_471','21.0.12')),stableToolVersion('mvn -version',mac));assert.equal(stableToolVersion('custom -version',mac),mac);});

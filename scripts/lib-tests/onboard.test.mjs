@@ -123,7 +123,7 @@ test("CLI 参数严格，支持显式不激活；预览 JSON 可交给接入界�
 test("打包后仅靠 Gate 自带资产完成接入，不依赖作者规范目录", (t) => {
   const root = fixture(t); const detached = mkdtempSync(path.join(realpathSync(os.tmpdir()), "wl-onboard-package-"));
   t.after(() => rmSync(detached, { recursive: true, force: true }));
-  for (const rel of ["bin", "lib", "templates", "schemas", "package.json"]) cpSync(path.join(PACKAGE_ROOT, rel), path.join(detached, rel), { recursive: true });
+  for (const rel of ["bin", "lib", "templates", "schemas", "assets", "scripts", "package.json", "npm-shrinkwrap.json"]) cpSync(path.join(PACKAGE_ROOT, rel), path.join(detached, rel), { recursive: true });
   const args = [path.join(detached, "bin/wl-skills-gate.js"), "onboard", "--root", root];
   const preview = spawnSync(process.execPath, args, { encoding: "utf8" }); assert.equal(preview.status, 0, preview.stderr);
   const plan = JSON.parse(preview.stdout);

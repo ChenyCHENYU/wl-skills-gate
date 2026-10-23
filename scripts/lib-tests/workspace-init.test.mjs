@@ -8,6 +8,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, cpSync, rmSync, ex
 import { execFileSync, spawnSync } from "node:child_process";
 import { planWorkspaceInitialization, applyWorkspaceInitialization } from "../../lib/workspace-init.js";
 import { planOnboarding, applyOnboarding } from "../../lib/onboard.js";
+import { gateRuntimeHash } from "../../lib/jenkins-integration.js";
 
 const PACKAGE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const VERSION = JSON.parse(readFileSync(path.join(PACKAGE, "package.json"))).version;
@@ -53,7 +54,7 @@ function installFixedFixtureTools(root, kind) {
   // Only the package-manager operation is stubbed. Git dispatch and the Gate checker below are real.
   const prefix = kind === "backend" ? "quality-tools/" : "", modules = path.join(root, prefix, "node_modules/@agile-team");
   const gate = path.join(modules, "wl-skills-gate"); mkdirSync(gate, { recursive: true });
-  for (const entry of ["package.json", "bin", "lib", "schemas", "templates"]) cpSync(path.join(PACKAGE, entry), path.join(gate, entry), { recursive: true });
+  for (const entry of ["package.json", "npm-shrinkwrap.json", "bin", "lib", "schemas", "templates", "assets", "scripts"]) cpSync(path.join(PACKAGE, entry), path.join(gate, entry), { recursive: true });
   for (const [name, version] of kind === "backend" ? [["bd", "0.41.1"]] : [["kit", "2.33.1"], ["ui", "1.22.1"]]) put(modules, `wl-skills-${name}/package.json`, { name: `@agile-team/wl-skills-${name}`, version });
 }
 
@@ -94,6 +95,7 @@ test("前后端真实新克隆恢复固定Hook；自定义策略/POM保持原字
     assert.equal(spawnSync("git", ["-C", root, "config", "--local", "--get", "core.hooksPath"]).status, 1);
     const policy = readFileSync(path.join(root, "quality/policy.yml"), "utf8"), pom = kind === "backend" ? readFileSync(path.join(root, "pom.xml"), "utf8") : null;
     const calls = [], runner = fixtureRunner(root, kind, calls), first = planWorkspaceInitialization({ root, runner });
+    assert.equal(first.runtimeFingerprint, gateRuntimeHash(), "工作区审批须绑定传递实现的完整Gate运行时");
     assert.deepEqual(first.blockers, []); assert.equal(first.status, "workspace-planned");
     assert.ok(first.installation.args.includes("--ignore-scripts"));
     assert.ok(first.installation.args.includes(kind === "backend" ? "ci" : "--frozen-lockfile"));

@@ -3,5 +3,5 @@
 /.wl-skills/runs/
 /.wl-skills-cache/validate-v1.json
 /.wl-skills-ui/runs/
-/.wl-skills-bd/runs/
-/.wl-skills-bd/.state/source-index-cache-v1.json
+**/.wl-skills-bd/runs/
+**/.wl-skills-bd/.state/source-index-cache-v1.json

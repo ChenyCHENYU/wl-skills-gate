@@ -87,7 +87,7 @@ else { const text=fs.readFileSync('src/canary.txt','utf8'); console.log(JSON.str
       calls.push({ executable, args });
       const prefix = kind === 'frontend' ? '' : 'quality-tools/';
       const location = path.join(root, `${prefix}node_modules/@agile-team/wl-skills-gate`); mkdirSync(location, { recursive: true });
-      for (const file of ['package.json', 'lib', 'bin', 'schemas', 'templates']) cpSync(path.join(PACKAGE_ROOT, file), path.join(location, file), { recursive: true });
+      for (const file of ['package.json', 'npm-shrinkwrap.json', 'lib', 'bin', 'schemas', 'templates', 'assets', 'scripts']) cpSync(path.join(PACKAGE_ROOT, file), path.join(location, file), { recursive: true });
       for (const [name, version] of kind === 'frontend' ? [['kit', '2.33.1'], ['ui', '1.22.1']] : [['bd', '0.41.1']]) {
         put(root, `${prefix}node_modules/@agile-team/wl-skills-${name}/package.json`, { name: `@agile-team/wl-skills-${name}`, version });
         const bin = name === 'kit' ? 'wl-skills' : name === 'ui' ? 'wl-ui' : 'wl-skills-bd';

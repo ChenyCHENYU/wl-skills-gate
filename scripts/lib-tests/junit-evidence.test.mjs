@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { runGate } from "../../lib/run.js";
 import { loadConfig } from "../../lib/config.js";
-import { validatePassingSummary } from "../../lib/evidence.js";
+import { validatePassingSummary, validateExecutedSummary } from "../../lib/evidence.js";
 import { git } from "../../lib/source-state.js";
 import { run as cmdRun } from "../../lib/adapters/cmd-json.js";
 
@@ -75,6 +75,22 @@ test("多个 JUnit 检查共享同轮生产，失败模块的实际 XML 让整�
     assert.deepEqual(r.summary.checks.map((c) => c.production.reused), [false, true]);
     assert.ok(r.summary.checks.every((c) => c.status === "ok"));
   }
+});
+
+test("安装验收只接受完整执行的失败JUnit，正式放行仍拒绝；缺原件/范围/计数仍不能验收执行", async (t) => {
+  const { root } = fixture(t, { controlled: true, reports: { [fileA]: suite("suite.A"), [fileB]: suite("suite.B", "failure") }, exit: 1 });
+  const sha = git(["rev-parse", "HEAD"], root), config = loadConfig(root), result = await runGate({ argv: ["--root", root, "--sha", sha] });
+  const expected = { sha, project: "junit-fixture", profile: "standard", expectPolicyHash: config.policyHash, expectRulesHash: config.ruleSetHash };
+  assert.equal(result.exitCode, 1); assert.equal(result.summary.decision.status, "blocked");
+  assert.deepEqual(validateExecutedSummary(result.summary, expected), []);
+  assert.ok(validatePassingSummary(result.summary, expected).length > 0, "完整执行不代表质量通过，正式签发不变");
+  for (const mutate of [
+    value => { delete value.checks[0].production; },
+    value => { value.checks[0].testEvidence.requiredTests = []; },
+    value => { value.checks[0].testEvidence.counts.passed += 2; },
+    value => { value.checks[0].status = "invalid"; },
+    value => { value.checks[0].testEvidence.files[0].sha256 = "wrong"; },
+  ]) { const invalid = structuredClone(result.summary); mutate(invalid); assert.ok(validateExecutedSummary(invalid, expected).length > 0); }
 });
 
 for (const [name, reports, expected] of [

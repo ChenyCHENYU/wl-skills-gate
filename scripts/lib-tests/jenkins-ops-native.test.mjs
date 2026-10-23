@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync} from 'node:fs';
@@ -242,7 +243,7 @@ for (def mode in ['normal', 'no-bot', 'interrupted', 'claim-failure', 'claim-mis
 }
 println 'Operations native Groovy mock passed: normal/no-bot/interrupted/claim-failure/claim-missing/claim-unknown/already-started/ack-failure.'
 `);
-  const result = spawnSync(process.env.JAVA || 'java', ['-cp', jar, 'groovy.ui.GroovyMain', harness, new URL('../../templates/ci/jenkins-native.groovy', import.meta.url).pathname], {encoding: 'utf8', timeout: 30000});
+  const result = spawnSync(process.env.JAVA || 'java', ['-cp', jar, 'groovy.ui.GroovyMain', harness, fileURLToPath(new URL('../../templates/ci/jenkins-native.groovy', import.meta.url))], {encoding: 'utf8', timeout: 30000});
   assert.equal(result.status, 0, result.stderr + '\n' + result.stdout);
   assert.match(result.stdout, /Operations native Groovy mock passed/);
 });

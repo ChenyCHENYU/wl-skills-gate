@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, symlinkSync } from "node:fs";
@@ -6,7 +7,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { git } from "../../lib/source-state.js";
 
-const wrapper = new URL("../../templates/scripts-quality/java-unit.mjs", import.meta.url).pathname;
+const wrapper = fileURLToPath(new URL("../../templates/scripts-quality/java-unit.mjs", import.meta.url));
 function fixture(t, { prepare = true, controlled = false } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), "wl-gate-java-unit-wrapper-")); t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (file, content) => { mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); writeFileSync(path.join(root, file), content); };
