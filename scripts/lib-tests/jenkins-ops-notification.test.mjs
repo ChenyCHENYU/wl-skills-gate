@@ -18,7 +18,7 @@ test('运维缺项通知无需项目配置：时间、缺项、动作与真实@�
   assert.equal(out.mentionMappingComplete, true);
   assert.match(content, /2026年10月22日 09:02:03/);
   assert.match(content, /项目未安装Gate/); assert.match(content, /自动复检/); assert.match(content, /未接入不等于扫描通过/);
-  assert.match(content, /<at id=\\"verified-manager/); assert.match(content, /查看本次接入检查/);
+  assert.match(content, /<at id=\\"verified-manager/); assert.match(content, /artifact\/wl-ops-public\/index.html/); assert.match(content, /详情/); assert.match(content, /日志/);
 });
 test('姓名工号不推断飞书身份；无真实ID仍发送缺项卡', () => {
   const c = config(); c.people.manager.feishu.verified = false; c.people.author = { name: '杨晨誉', employeeId: '409322' };

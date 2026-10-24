@@ -24,7 +24,7 @@ node "$WL_APPROVED_GATE_CLI" "$@"
     }
   }
   if (!fileExists('wl-fleet-public/summary.json')) error('未产生本次结果；按控制台缺项处理，不登记成功。')
-  def result = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-fleet-public/summary.json'))
+  def result = readJSON(file: 'wl-fleet-public/summary.json', returnPojo: true)
   archiveArtifacts artifacts: 'wl-fleet-public/summary.json', allowEmptyArchive: false
   if (code != 0) error('批次仍有待处理项；查看归档逐项结果，修复后续跑或重新预览。')
   return result

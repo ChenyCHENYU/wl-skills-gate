@@ -56,7 +56,7 @@ def preflight(env):
     valid_root = root.is_absolute() and root.is_dir()
     check("gate-root", valid_root, "固定 Gate 目录可读取" if valid_root else "固定 Gate 目录不存在或不可读取：" + str(root),
           "在该Jenkins节点运行本包的接入Jenkins脚本；使用安装回执中的 gateHome。包内入口为 bin/wl-skills-gate.js。")
-    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.9")
+    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.10")
     try:
         package = json.loads((root / "package.json").read_text())
         observed = str(package.get("name")) + "@" + str(package.get("version"))
@@ -164,6 +164,9 @@ def failure_facts(report, env):
         pass
     stage = env.get("WL_GATE_PHASE", "公共入口／执行阶段")
     message = env.get("WL_GATE_FAILURE_MESSAGE", "")
+    if re.search(r"Scripts not permitted|RejectedAccessException|JsonSlurper|No such DSL method.*readJSON", message):
+        return [dict(category="sandbox", label="Jenkins沙箱兼容性", dimension="cicd", stage=stage, reason=message,
+                     action="增量更新受控公共入口；确认Pipeline Utility Steps插件已启用。新版使用readJSON，不关闭沙箱、不批准旧解析器签名。本轮尚未进入项目检查。")]
     return [dict(category="execution" if message else "diagnostic-missing", label="阶段执行失败" if message else "失败原因记录缺失", dimension="cicd", stage=stage,
                  reason=message or "Jenkins已停止本轮执行，但没有产生可用的具体失败记录；不能判断为代码、Review或Gate接入问题。",
                  action="运维更新受控公共入口后重跑本轮；新入口会归档实际错误。仍缺记录时提供本轮失败阶段原文，不能用旧报告放行。" if not message else "运维与执行人处理上述阶段原始错误后重跑；技术经理核对复检结果，后续构建暂不放行。")]
@@ -171,14 +174,21 @@ def failure_facts(report, env):
 
 def failure_people(env):
     config_dir = Path(env.get("WL_GATE_FAILURE_CONFIG_DIR", "/srv/wl-quality/config"))
-    try:
-        if not config_dir.is_absolute():
-            raise ValueError("config path")
-        config = local_json(config_dir / "jenkins-ops.json", 1048576)
-        if not isinstance(config, dict) or config.get("kind") != "wl-quality-jenkins-ops":
-            raise ValueError("config kind")
-    except (OSError, ValueError, TypeError):
-        config = {}
+    config, directory = {}, {}
+    if config_dir.is_absolute():
+        for filename, kind in (("jenkins-ops.json", "wl-quality-jenkins-ops"), ("ops-responsibility-directory.json", "wl-ops-responsibility-directory")):
+            try:
+                value = local_json(config_dir / filename, 1048576)
+                if isinstance(value, dict) and value.get("kind") == kind:
+                    if filename == "jenkins-ops.json":
+                        config = value
+                    else:
+                        directory = value
+            except (OSError, ValueError, TypeError):
+                pass
+    def merged(key):
+        a, b = directory.get(key, {}), config.get(key, {})
+        return {**(a if isinstance(a, dict) else {}), **(b if isinstance(b, dict) else {})}
     mappings = config.get("jobMappings", {}) if isinstance(config.get("jobMappings"), dict) else {}
     mapping = mappings.get(env.get("JOB_NAME"), {})
     project = (mapping.get("project") if isinstance(mapping, dict) else None) or env.get("WL_GATE_PROJECT", "")
@@ -191,39 +201,51 @@ def failure_people(env):
                     project = matches[0]["project"]
         except (OSError, ValueError, KeyError, TypeError):
             pass
-    people = config.get("people", {}) if isinstance(config.get("people"), dict) else {}
-    owners = config.get("owners", {}) if isinstance(config.get("owners"), dict) else {}
+    people, owners = merged("people"), merged("owners")
     owner = owners.get(project, {})
     if not isinstance(owner, dict):
         owner = {"technicalManager": owner}
-    executor = next((env.get(k) for k in ("BUILD_USER_ID", "gitlabUserUsername") if env.get(k) in people), None) or owner.get("executor")
+    trigger_id = env.get("WL_GATE_BUILD_USER_ID") or env.get("BUILD_USER_ID")
+    trigger_name = env.get("WL_GATE_BUILD_USER_NAME") or env.get("BUILD_USER") or trigger_id
+    public = not project and env.get("JOB_NAME", "").split("/")[-1] in ("wl-quality-doctor", "wl-quality-fleet", "wl-quality-central", "wl-quality-review", "wl-quality-verify")
+    executor = next((env.get(k) for k in ("WL_GATE_BUILD_USER_ID", "BUILD_USER_ID", "gitlabUserUsername") if env.get(k) in people), None) or owner.get("executor")
     manager = owner.get("technicalManager")
     def identity(actor):
         p = people.get(actor, {})
-        if not isinstance(p, dict):
-            return None
-        f = p.get("feishu", {})
-        if not isinstance(f, dict):
-            return None
-        value = f.get("id", "")
-        if not isinstance(value, str):
-            return None
-        return value if f.get("idType") in ("open_id", "user_id") and re.fullmatch(r"[A-Za-z0-9_-]{1,128}", value) and value != "all" and (f.get("idType") != "open_id" or value.startswith("ou_")) and (f.get("verified") is True or f.get("identityVerified") is True) else None
+        f = p.get("feishu", {}) if isinstance(p, dict) else {}
+        value = f.get("id", "") if isinstance(f, dict) else ""
+        return value if isinstance(value, str) and f.get("idType") in ("open_id", "user_id") and re.fullmatch(r"[A-Za-z0-9_-]{1,128}", value) and value != "all" and (f.get("idType") != "open_id" or value.startswith("ou_")) and (f.get("verified") is True or f.get("identityVerified") is True) else None
     same = executor and manager and (executor == manager or identity(executor) and identity(executor) == identity(manager))
     observer = owner.get("managerSubmissionNotify") if same else None
-    roles = [("执行人", executor), ("技术经理", manager)] + ([("经理本人提交同步人", observer)] if same else [])
+    public_cfg = config.get("publicTasks") or directory.get("publicTasks") or {}
+    public_ids = public_cfg.get("recipients", []) if isinstance(public_cfg, dict) else []
+    roles = [("公共任务责任人", actor) for actor in public_ids] if public else [("执行人", executor), ("技术经理", manager)] + ([("经理本人提交同步人", observer)] if same else [])
     missing, mentions, names = [], [], []
+    if public and not roles:
+        missing.append("公共任务责任人")
     for role, actor in roles:
         person = people.get(actor, {})
         if not isinstance(person, dict):
             person = {}
         value = identity(actor)
-        names.append(role + "：" + safe_text(person.get("name") or actor or "待登记", env, 50))
+        display = person.get("name") or (trigger_name if role == "执行人" else None) or actor or "待确认"
+        names.append(role + "：" + safe_text(display, env, 50))
         if not value:
             missing.append(role)
         elif value not in mentions:
             mentions.append(value)
-    return dict(project=project, names="　｜　".join(names), mentions=mentions, missing=missing)
+    trigger = (safe_text(trigger_name, env, 50) + ("（" + safe_text(trigger_id, env, 40) + "）" if trigger_id and trigger_id != trigger_name else "")) if trigger_name else {"timer": "定时巡检", "upstream": "上游任务", "event": "自动事件"}.get(env.get("WL_GATE_BUILD_TRIGGER"), "触发来源未核验")
+    return dict(project=project, public=public, names="　｜　".join(names), trigger=trigger, mentions=mentions, missing=missing,
+                networkAccess=config.get("networkAccess") or directory.get("networkAccess", "unknown"), jenkinsOrigin=directory.get("jenkinsOrigin"))
+
+
+def report_url(env, people):
+    origin = env.get("WL_GATE_JENKINS_ORIGIN") or people.get("jenkinsOrigin") or env.get("JENKINS_URL", "")
+    parsed = urllib.parse.urlparse(origin)
+    job, number = env.get("JOB_NAME", ""), env.get("BUILD_NUMBER", "")
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path not in ("", "/") or not re.fullmatch(r"[1-9][0-9]*", number) or not job or any(part in ("", ".", "..") for part in job.split("/")):
+        return None
+    return origin.rstrip("/") + "/" + "/".join("job/" + urllib.parse.quote(part, safe="") for part in job.split("/")) + "/" + number + "/"
 
 
 def card(report, env):
@@ -238,27 +260,29 @@ def card(report, env):
     facts, people = failure_facts(report, env), failure_people(env)
     category = "、".join(dict.fromkeys(safe_text(f.get("label", "阶段执行失败"), env, 80) for f in facts))
     dimensions = "、".join(dict.fromkeys(DIMENSIONS.get(f.get("dimension"), "CI/CD与发布") for f in facts))
-    elements = [text("⛔ 本次执行未通过｜后续构建暂不放行", "red", "heading-4"),
+    elements = [text("⛔ 公共巡检中断｜本轮未完成项目检查" if people["public"] else "⛔ 本次执行未通过｜后续构建暂不放行", "red", "normal"),
                 text("任务：" + env.get("JOB_NAME", "unknown") + " · #" + env.get("BUILD_NUMBER", "unknown")),
+                text("触发人：" + people["trigger"] + "　｜　" + datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")),
                 text(people["names"]), text("阻断分类：" + category + "　｜　九维定位：" + dimensions, "orange")]
     for i, fact in enumerate(facts[:3]):
         elements += [text(str(i + 1) + ". " + fact.get("stage", "执行阶段") + "｜" + fact.get("reason", "具体原因记录缺失"), "red"),
                      text("处理：" + fact.get("action", "运维补齐本轮失败原件后复查"), "blue")]
     if len(facts) > 3:
         elements.append(text("另有 " + str(len(facts) - 3) + " 项失败，完整记录见下方。", "grey"))
-    elements.append(text("代码风险：本条未取得完整有效扫描统计，不显示零问题；具体代码风险由质量卡片按极高／严重／警告／提示展示。", "grey", "notation"))
-    url = env.get("BUILD_URL", "")
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme == "https" and parsed.hostname and not parsed.username and not parsed.password and not parsed.query and not parsed.fragment:
+    elements.append(text("本轮未取得有效扫描结果；代码风险未判定。", "grey", "notation"))
+    url = report_url(env, people)
+    if url:
         def button(label, target):
             return {"tag": "button", "type": "default", "width": "fill", "text": {"tag": "plain_text", "content": label}, "behaviors": [{"type": "open_url", "default_url": target}]}
         elements.append({"tag": "column_set", "horizontal_spacing": "8px", "columns": [
-            {"tag": "column", "width": "weighted", "weight": 1, "elements": [button("查看本轮失败记录", url)]},
-            {"tag": "column", "width": "weighted", "weight": 1, "elements": [button("定位失败日志", url.rstrip("/") + "/console")]}]})
+            {"tag": "column", "width": "weighted", "weight": 1, "elements": [button("详情", url)]},
+            {"tag": "column", "width": "weighted", "weight": 1, "elements": [button("日志", url.rstrip("/") + "/console")]}]})
+    if people["networkAccess"] == "intranet-vpn":
+        elements.append(text("详情／日志需公司内网或VPN；手机4G无法直接访问。", "grey", "notation"))
     if people["mentions"]:
         elements.append({"tag": "markdown", "text_size": "normal", "content": " ".join('<at id="' + x + '"></at>' for x in people["mentions"]) + " 请关注上述阻断项，落实修复、复检与回归闭环。"})
     if people["missing"]:
-        elements.append(text("责任人提醒未完成：" + "、".join(people["missing"]) + "未匹配有效身份。技术经理在中央责任表补齐后复检；不以接口接收代替真实@。", "orange"))
+        elements.append(text("责任人提醒未完成：" + "、".join(people["missing"]) + "未匹配身份；补齐人员映射后复检。", "orange"))
     return {"msg_type": "interactive", "card": {"schema": "2.0", "header": {"template": "red", "title": {"tag": "plain_text", "content": (safe_text(people["project"], env, 80) + " · " if people["project"] else "公共任务 · ") + category}}, "body": {"padding": "10px 16px 12px 16px", "vertical_spacing": "6px", "elements": elements}}}
 
 

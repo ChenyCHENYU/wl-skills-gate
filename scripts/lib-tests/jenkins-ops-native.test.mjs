@@ -161,6 +161,7 @@ for (def mode in ['normal', 'no-bot', 'interrupted', 'claim-failure', 'claim-mis
   binding.setVariable('dir',{location,body->working<<location;try{return body()}finally{working.remove(working.size()-1)}})
   binding.setVariable('deleteDir',{->cleanups++;events<<'cleanup'})
   binding.setVariable('writeFile',{options->files[options.file]=options.text})
+  binding.setVariable('readJSON',{options->assert options.returnPojo==true;return parser.values[options.text ?: files[options.file.toString()]]})
   binding.setVariable('readFile',{location->def key=location.toString();assert files.containsKey(key):key;return files[key]})
   binding.setVariable('fileExists',{location->files.containsKey(location.toString())})
   binding.setVariable('archiveArtifacts',{options->events<<'archive'})

@@ -14,7 +14,7 @@ set +x
 node "$WL_QUALITY_CLI" jenkins ops inventory --cluster "$WL_OPS_CLUSTER" --out "$WL_OPS_PUBLIC/inventory.json"
 '''
         }
-        inventory = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-ops-public/inventory.json'))
+        inventory = readJSON(file: 'wl-ops-public/inventory.json', returnPojo: true)
         echo "巡检发现 ${inventory.jobsDiscovered} 个任务；目标 ${inventory.targets.size()} 项。"
       }
       stage('检查项目接入条件') { env.WL_GATE_PHASE = '检查项目接入条件';
@@ -84,7 +84,7 @@ node "$WL_QUALITY_CLI" jenkins ops finish --cluster "$WL_OPS_CLUSTER" --inventor
     }
   }
   if (fileExists('wl-ops-public/summary.json')) {
-    def summary = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-ops-public/summary.json'))
+    def summary = readJSON(file: 'wl-ops-public/summary.json', returnPojo: true)
     if (!summary.globalGaps) wlOpsContinue(cfg, summary)
   }
   if (outcome != 0) { currentBuild.result = 'UNSTABLE'; echo '运维巡检有待处理项或消息未确认送达；见本次归档，修复后下一轮自动复查。本结果不授予构建准入。' }
@@ -107,7 +107,7 @@ node "$WL_QUALITY_CLI" "$@"
 ''')
         }
         if (claimCode == 0 && fileExists("wl-ops-public/claim-${project.key}.json")) {
-        def claim = new groovy.json.JsonSlurperClassic().parseText(readFile("wl-ops-public/claim-${project.key}.json"))
+        def claim = readJSON(file: "wl-ops-public/claim-${project.key}.json", returnPojo: true)
         if (claim.status == 'claimed') {
           try {
             def started = build(job: claim.job, wait: false, waitForStart: true, propagate: false,
@@ -155,7 +155,7 @@ node "$WL_APPROVED_GATE_CLI" "$@"
     }
   }
   if (!fileExists('wl-fleet-public/summary.json')) error('未产生本次结果；按控制台缺项处理，不登记成功。')
-  def result = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-fleet-public/summary.json'))
+  def result = readJSON(file: 'wl-fleet-public/summary.json', returnPojo: true)
   archiveArtifacts artifacts: 'wl-fleet-public/summary.json', allowEmptyArchive: false
   if (code != 0) error('批次仍有待处理项；查看归档逐项结果，修复后续跑或重新预览。')
   return result
@@ -168,7 +168,7 @@ def wlPrepareJobs(Map cfg) {
     withCredentials([usernamePassword(credentialsId: 'wl-jenkins-config-manager', usernameVariable: 'WL_JENKINS_CONFIG_USER', passwordVariable: 'WL_JENKINS_CONFIG_TOKEN')]) {
       def planned = sh(returnStatus: true, script: 'node "$WL_QUALITY_CLI" jenkins bootstrap --config "$WL_CLUSTER_FILE" --out wl-bootstrap-plan.json')
       if (!fileExists('wl-bootstrap-plan.json')) error('未产生本轮公共任务计划，按控制台处理项修复。')
-      def plan = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-bootstrap-plan.json'))
+      def plan = readJSON(file: 'wl-bootstrap-plan.json', returnPojo: true)
       echo "公共任务：${plan.entries.collect { it.job + '：' + it.action }.join('；')}"
       plan.entries.findAll { it.reason }.each { echo "处理：${it.job} · ${it.reason}" }
       if (planned != 0 || plan.entries.any { it.action == 'blocked' }) error('同名任务有自定义配置，停止覆盖；见归档。')
@@ -176,7 +176,7 @@ def wlPrepareJobs(Map cfg) {
         timeout(time: 20, unit: 'MINUTES') { input message: '确认创建缺少的公共任务？不会启动业务构建或定时任务。', ok: '确认创建' }
         withEnv(["WL_BOOTSTRAP_PLAN_HASH=${plan.planHash}"]) {
           sh 'node "$WL_QUALITY_CLI" jenkins bootstrap --config "$WL_CLUSTER_FILE" --confirm --plan-hash "$WL_BOOTSTRAP_PLAN_HASH" --out wl-bootstrap-result.json'
-          def result = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-bootstrap-result.json'))
+          def result = readJSON(file: 'wl-bootstrap-result.json', returnPojo: true)
           echo "公共任务：${result.status}；共${result.entries.size()}项。"
         }
       } else echo '公共任务：common-jobs-verified；已有任务全部匹配，无需重复创建。'
@@ -186,6 +186,7 @@ def wlPrepareJobs(Map cfg) {
 }
 def call(Map cfg, def bootstrap) {
   env.WL_GATE_FAILURE_CONFIG_DIR = cfg.configDir
+  env.WL_GATE_JENKINS_ORIGIN = cfg.jenkinsOrigin ?: env.WL_GATE_JENKINS_ORIGIN
   env.WL_GATE_FAILURE_REGISTRY = cfg.registry ?: ''
   node(cfg.agentLabel) {
     withEnv(["WL_NODE_BIN_DIR=${env.WL_NODE_BIN_DIR ?: cfg.nodeBinDir ?: '/usr/bin'}", "PATH+WLNODE=${env.WL_NODE_BIN_DIR ?: cfg.nodeBinDir ?: '/usr/bin'}"]) {

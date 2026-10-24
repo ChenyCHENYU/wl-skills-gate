@@ -23,8 +23,8 @@ def call(Map cfg = [:]) {
       --out-dir "$WL_QUALITY_REPORT_ARCHIVE_ROOT" \
       --jenkins-build-url "$BUILD_URL" --out quality-reports/report-retention.json
   '''
-  def publication = new groovy.json.JsonSlurperClassic().parseText(readFile('quality-reports/report-publication.json'))
-  def retained = new groovy.json.JsonSlurperClassic().parseText(readFile('quality-reports/report-retention.json'))
+  def publication = readJSON(file: 'quality-reports/report-publication.json', returnPojo: true)
+  def retained = readJSON(file: 'quality-reports/report-retention.json', returnPojo: true)
   if (publication.archiveId != retained.archiveId || publication.htmlSha256 != retained.htmlSha256) error('持久归档与待发布报告不一致')
   publishHTML(target: [allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
     reportDir: "quality-reports/report-archives/batches/${publication.archiveId}",
@@ -42,6 +42,6 @@ def call(Map cfg = [:]) {
     }
   }
   // Central notifications consume this verified, build-specific URL; never latest/lastBuild.
-  return new groovy.json.JsonSlurperClassic().parseText(readFile('quality-reports/report-publication-check.json'))
+  return readJSON(file: 'quality-reports/report-publication-check.json', returnPojo: true)
 }
 return this

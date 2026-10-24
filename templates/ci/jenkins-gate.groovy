@@ -6,8 +6,8 @@ def call(Map cfg) {
   withEnv(["WL_GATE_CLI=${cfg.gateRoot}/bin/wl-skills-gate.js", "WL_GATE_BINDINGS=${cfg.registry}"]) {
     try {
       stage('接入预检') { env.WL_GATE_PHASE = '接入预检';
-        context = new groovy.json.JsonSlurperClassic().parseText(sh(returnStdout: true, script:
-          'node "$WL_GATE_CLI" jenkins inspect --registry "$WL_GATE_BINDINGS"').trim())
+        context = readJSON(text: sh(returnStdout: true, script:
+          'node "$WL_GATE_CLI" jenkins inspect --registry "$WL_GATE_BINDINGS"').trim(), returnPojo: true)
         env.WL_GATE_PROJECT = context.project
         echo "Gate：${context.project} / ${context.branch} / ${context.scope} / ${context.mode}"
       }
@@ -40,8 +40,8 @@ def call(Map cfg) {
             usernamePassword(credentialsId: context.credentials.jenkinsRead,
               usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')
           ]) {
-            admission = new groovy.json.JsonSlurperClassic().parseText(sh(returnStdout: true, script:
-              'node "$WL_GATE_CLI" jenkins admit --registry "$WL_GATE_BINDINGS"').trim())
+            admission = readJSON(text: sh(returnStdout: true, script:
+              'node "$WL_GATE_CLI" jenkins admit --registry "$WL_GATE_BINDINGS"').trim(), returnPojo: true)
           }
           if (admission.status != 'admitted' || !(admission.admissionHash ==~ /[a-f0-9]{64}/)) error('Gate未产生本轮严格准入，不执行构建')
         }
