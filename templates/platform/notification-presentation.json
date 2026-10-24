@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "wl-notification-presentation",
+  "revision": "display-1",
+  "density": "compact",
+  "metadataTextSize": "normal",
+  "brandSuffix": "World Leading",
+  "buttonLabels": {
+    "reportDetails": "查看九维检查详情",
+    "codeLocation": "直接定位编码问题",
+    "pipelineStages": "定位失败阶段",
+    "opsDetails": "查看接入检查与完整缺项"
+  }
+}

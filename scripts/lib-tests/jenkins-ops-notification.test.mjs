@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
+import {mkdtempSync,realpathSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 import { opsNotification, sendOpsNotification } from '../../lib/jenkins-ops-notification.js';
 
 const report = () => ({ kind: 'jenkins-ops-report', checkedAt: '2026-10-22T01:02:03Z', jenkinsOrigin: 'https://jenkins.example.invalid/', runUrl: 'https://jenkins.example.invalid/job/doctor/7/', status: 'attention', globalGaps: [], projects: [{ key: 'p:test', project: 'wl-produce', branch: 'test', jobs: ['p-test'], status: 'attention', gaps: [{ id: 'gate-package-missing', message: '项目未安装Gate', action: '技术经理执行项目接入，再自动复检' }], technicalManager: 'manager', executor: 'author' }], remoteModified: false, qualityPassed: false, buildAuthorized: false });
@@ -22,6 +25,16 @@ test('姓名工号不推断飞书身份；无真实ID仍发送缺项卡', () => 
   const out = opsNotification(report(), c);
   assert.equal(out.mentionMappingComplete, false); assert.deepEqual(out.mentions, []);
   assert.doesNotMatch(json(out.payload), /<at /); assert.match(json(out.payload), /真实 @ 尚未配置/);
+});
+test('缺执行人或隐藏项目缺技术经理都不可误记提醒完整，保留已配置人员@',()=>{
+  const r=report(),c=config();delete r.projects[0].executor;
+  const out=opsNotification(r,c);assert.equal(out.mentionMappingComplete,false);assert.deepEqual(out.mentions,['verified-manager']);
+  assert(out.mentionMissing.some(item=>item.role==='执行人'));
+  assert.match(json(out.payload),/执行人.*责任人待登记/);
+  r.projects=Array.from({length:4},(_,i)=>({...report().projects[0],key:'p'+i,project:'project-'+i}));
+  delete r.projects[3].technicalManager;
+  const hidden=opsNotification(r,c);assert.equal(hidden.notificationComplete,false);
+  assert(hidden.mentionMissing.some(item=>item.project==='project-3'&&item.role==='技术经理'));
 });
 test('同一人员去重，经理本人提交才同步指定观察人', () => {
   const r = report(); r.projects[0].executor = 'manager';
@@ -67,6 +80,15 @@ test('只读取CI机器人、正确签名和飞书确认；密钥不出现在回
   } });
   assert.equal(calls, 1); assert.equal(out.status, 'sent'); assert.equal(out.qualityPassed, false); assert.doesNotMatch(json(out), /fixture-secret|ci-fixture/);
 });
+test('运维发送端热读显示配置并返回版本，缺项与@事实不被显示配置改变',async t=>{
+ const dir=mkdtempSync(path.join(realpathSync(tmpdir()),'wl-ops-presentation-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const file=path.join(dir,'notification-presentation.json'),c={...config(),presentationFile:file};let sent;
+ const fetchImpl=async(url,options)=>{sent=JSON.parse(options.body);return {status:200,text:async()=>'{"code":0}'};};
+ const run=async revision=>{writeFileSync(file,JSON.stringify({schemaVersion:1,kind:'wl-notification-presentation',revision,brandSuffix:revision==='display-1'?'WL':'World Leading'}));return sendOpsNotification(report(),c,{env,fetchImpl});};
+ const first=await run('display-1');assert.equal(first.notificationPresentation.revision,'display-1');assert.match(sent.card.header.title.content,/WL$/);
+ const second=await run('display-2');assert.equal(second.notificationPresentation.revision,'display-2');assert.match(sent.card.header.title.content,/World Leading$/);assert.deepEqual(second.mentions,first.mentions);
+ assert.match(json(sent),/项目未安装Gate/);for(const id of first.mentions)assert(json(sent).includes(`<at id=\\"${id}\\"></at>`));
+});
 test('超时未知不重发；HTTP和provider错误不可记sent；异常文本去敏', async () => {
   let calls = 0;
   const unknown = await sendOpsNotification(report(), config(), { env, fetchImpl: async () => { calls++; throw new Error('private-secret-token'); } });
@@ -80,6 +102,8 @@ test('不降级项目机器人；带凭据地址拒绝；无@不会阻止有效C
   assert.equal((await sendOpsNotification(report(), {}, { env: { ...env, WL_FEISHU_CI_WEBHOOK: 'https://name:password@open.feishu.cn/open-apis/bot/v2/hook/ci' }, fetchImpl })).status, 'not-sent');
   assert.equal(calls, 0);
   const out = await sendOpsNotification(report(), {}, { env, fetchImpl }); assert.equal(out.status, 'sent'); assert.equal(out.mentionMappingComplete, false); assert.equal(calls, 1);
+  assert.equal(out.providerAccepted,true);assert.equal(out.notificationComplete,false);assert.equal(out.notificationStatus,'attention');
+  assert.equal(out.mentionDeliveryConfirmed,false);assert(out.mentionMissing.length>0);assert.match(out.reason,/提醒尚未完成/);
 });
 test('缺项信息中的token或地址凭据去敏；报告类型无效拒绝', () => {
   const r = report(); r.projects[0].gaps[0].message = 'secret=really-private https://name:pass@internal.invalid/path?token=private';

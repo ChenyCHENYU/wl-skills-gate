@@ -41,7 +41,7 @@ test("项目内报告与机器人拒绝CI，不能混用阶段", () => {
   assert.throws(() => renderProjectReviewReport(input), /CI报告/);
   assert.throws(() => projectCheckNotification(input, config), /CI报告/);
 });
-test("项目通知真实@两人，同一provider ID去重；仅姓名、all和错误ID类型不能发送阻断通知", () => {
+test("项目通知真实@两人，同一provider ID去重；仅姓名、all和错误ID类型明确标记提醒未完成", () => {
   const input = fixture(), notice = projectCheckNotification(input, config);
   assert.deepEqual(notice.mentions, ["ou_test_developer", "test_manager"]);
   const body = notice.payload.card.body.elements.find((e) => e.tag === "markdown").content;
@@ -50,13 +50,16 @@ test("项目通知真实@两人，同一provider ID去重；仅姓名、all和�
   assert.ok(!JSON.stringify(notice).includes("查看流水线")); assert.ok(!body.includes("北京时间"));
   assert.equal(buttons(notice.payload.card.body.elements).columns[0].elements[0].behaviors[0].default_url, input.presentation.reportUrl);
   const same = structuredClone(config); same.people.manager.feishu = same.people.developer.feishu;
-  assert.equal(projectCheckNotification(input, same).mentions.length, 1);
+  assert.equal(projectCheckNotification(input, same).notificationComplete, false, "经理本人提交缺同步人不能静默完成");
+  same.projects.produce.managerSubmissionNotify = "observer";
+  same.people.observer = { name: "李月", feishu: { idType: "user_id", id: "test_observer" } };
+  assert.deepEqual(projectCheckNotification(input, same).mentions, ["ou_test_developer", "test_observer"]);
   for (const kind of ["missing", "all", "union_id"]) {
     const broken = structuredClone(config);
     if (kind === "missing") delete broken.people.manager.feishu;
     else if (kind === "all") broken.people.manager.feishu.id = "all";
     else broken.people.manager.feishu.idType = "union_id";
-    assert.throws(() => projectCheckNotification(input, broken), /真实飞书ID/);
+    assert.equal(projectCheckNotification(input, broken).notificationComplete, false);
   }
 });
 test("详情只接受安全协议，本机地址仅在明确标记的模拟中使用", () => {
@@ -81,9 +84,9 @@ test("技术经理本人提交时本人只@一次，同时@李月；姓名缺ID�
   value.presentation.submitterId = "developer";
   assert.deepEqual(projectCheckNotification(value, alias).mentions, ["test_manager", "ou_test_observer"]);
   value.presentation.submitterId = "manager"; value.summary.findings = []; value.summary.decision.status = "passed";
-  assert.deepEqual(projectCheckNotification(value, c).mentions, ["ou_test_observer"], "经理本人提交即使零阻断也同步李月");
+  assert.deepEqual(projectCheckNotification(value, c).mentions, ["test_manager", "ou_test_observer"], "经理本人提交即使零阻断也同时提醒本人和李月");
   delete c.people.observer.feishu;
-  assert.throws(() => projectCheckNotification(value, c), /真实飞书ID/);
+  assert.equal(projectCheckNotification(value, c).notificationComplete, false);
 });
 test("个人分支只本地反馈，六目标MR和目标更新才进入群通知；不能从拟推送字段猜目标", () => {
   for (const targetBranch of QUALITY_TARGET_BRANCHES) {
@@ -184,4 +187,28 @@ test("前后端CI模板按同一六目标范围声明MR/push/schedule，验证�
     conditions.push(rules.map((rule) => rule.if || rule.when));
   }
   assert.deepEqual(conditions[0], conditions[1]);
+});
+test('项目卡所有结果均提醒提交人和经理，缺映射不能被零风险或策略降级隐藏', () => {
+  for (const [status, severity] of [['passed', null], ['passed', 'warning'], ['blocked', 'error'], ['invalid', null]]) {
+    const input = fixture(); input.summary.decision.status = status;
+    input.summary.findings = severity ? [{ ...input.summary.findings[0], severity }] : [];
+    const result = projectCheckNotification(input, config);
+    assert.deepEqual(result.mentions, ['ou_test_developer', 'test_manager']);
+    assert.equal(result.notificationComplete, true); assert.deepEqual(result.mentionMissing, []);
+    assert.match(JSON.stringify(result.payload), /当前检查结果 · 修复未核验/);
+    assert.ok(!JSON.stringify(result.payload).includes('已修复'));
+    const broken = structuredClone(config); delete broken.people.manager.feishu;
+    assert.equal(projectCheckNotification(input, broken).notificationComplete, false);
+    broken.projects.produce.requireRiskMentions = false;
+    const partial = projectCheckNotification(input, broken);
+    assert.deepEqual(partial.mentions, ['ou_test_developer']); assert.equal(partial.notificationComplete, false);
+    assert.equal(partial.mentionMissing[0].role, '技术经理'); assert.match(JSON.stringify(partial.payload), /通知尚未完成.*技术经理/);
+    assert.equal(partial.payload.card.header.template, ["blocked", "invalid"].includes(status) || severity === "error" ? "red" : "orange");
+    assert.match(partial.payload.card.header.title.content, /责任人提醒未完成/);
+    assert.ok(!JSON.stringify(partial.payload).includes('<at id=\\"all'));
+  }
+});
+test('飞书缺项可以如实提示，未登记的提交身份仍不能降级伪造责任人', () => {
+  const input = fixture(); input.presentation.submitterId = 'unknown';
+  assert.throws(() => projectCheckNotification(input, config), /责任人未登记/);
 });

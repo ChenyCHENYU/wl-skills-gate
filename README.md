@@ -49,7 +49,7 @@ Gate 是质量执行与裁决层，复用项目已有检查器和适用的 WL �
 wl-quality init
 ```
 
-本轮统一使用`0.13.6`固定版本；交付包与批准安装源的版本和字节摘要须一致，安装脚本自动核验。
+本轮统一使用`0.13.8`固定版本；交付包与批准安装源的版本和字节摘要须一致，安装脚本自动核验。
 
 | 项目 | 依赖装在哪里 | 业务构建 |
 | --- | --- | --- |
@@ -120,3 +120,5 @@ wl-quality init
 | [Design](https://github.com/ChenyCHENYU/wl-skills-design) | 需求与设计模型、交付契约 |
 
 使用授权见 [LICENSE](./LICENSE)。问题反馈请附包版本、执行命令和脱敏报告，提交至 [Issues](https://github.com/ChenyCHENYU/wl-skills-gate/issues)。
+
+消息按钮、布局和品牌从中央 `notification-presentation.json` 逐条热读取；风险、结论、责任人和门禁规则不由该文件控制。Gate执行逻辑仍按固定版本增量升级，不在Hook下载latest。

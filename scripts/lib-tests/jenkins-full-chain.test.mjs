@@ -171,7 +171,7 @@ test('中央实际卡片：仅提示也发送并严格拦截；最多三项、�
   assert.equal(preview.messages.length,1);const card=preview.messages[0].payload;
   assert.match(JSON.stringify(card),/提示 8/);assert.match(JSON.stringify(card),/另有 5 项问题/);assert.match(JSON.stringify(card),/剩余问题全部修复/);assert.equal(preview.messages[0].mentions.length,2);
   const configBytes=readFileSync(f.c.governanceConfigFile),config=JSON.parse(configBytes);delete config.people.author.feishu;write(f.c.governanceConfigFile,config);
-  await assert.rejects(dispatchGovernance({...options,send:true,env:fakeEnv,fetchImpl:async()=>assert.fail('缺映射不应假装发送')}),/映射/);writeFileSync(f.c.governanceConfigFile,configBytes);
+  await assert.rejects(dispatchGovernance({...options,send:true,env:fakeEnv,fetchImpl:async()=>assert.fail('未批准更换映射不应联网')}),/台账配置.*身份不一致/);writeFileSync(f.c.governanceConfigFile,configBytes);
   const state=json(f.c.stateFile),item=Object.values(state.outbox)[0];item.snapshot.totals.info=1;write(f.c.stateFile,state);assert.throws(()=>outboxGovernance(options),/快照/);
 });
 

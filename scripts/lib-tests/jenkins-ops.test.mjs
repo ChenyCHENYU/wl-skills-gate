@@ -29,8 +29,8 @@ function install(t) {
   const installed = applyJenkinsInstallation({...options, confirm: true, planHash: plan.planHash});
   const configFile = path.join(options.configDir, 'jenkins-ops.json');
   const config = JSON.parse(readFileSync(configFile));
-  config.people = {manager: {name: '技术经理', feishu: {idType: 'open_id', id: 'ou_fixture_manager', verified: true}}};
-  config.owners = {'wl-produce': {technicalManager: 'manager'}};
+  config.people = {manager: {name: '技术经理', feishu: {idType: 'open_id', id: 'ou_fixture_manager', verified: true}},executor: {name: '执行人', feishu: {idType: 'open_id', id: 'ou_fixture_executor', verified: true}}};
+  config.owners = {'wl-produce': {technicalManager: 'manager',executor:'executor'}};
   put(options.configDir, 'jenkins-ops.json', config);
   return {...f, installed, clusterFile: installed.clusterFile, configDir: options.configDir};
 }
@@ -128,7 +128,7 @@ test('无登记／中央配置也能真实盘点、发现项目缺Gate并通过C
   const report = await finishOps({clusterFile: f.clusterFile, inventory, results: [result], env: noticeEnv, send: true, fetchImpl: send});
   assert.equal(report.notification.status, 'sent');
   assert.equal(report.notification.mentionMappingComplete, true);
-  assert.deepEqual(report.notification.mentions, ['ou_fixture_manager']);
+  assert.deepEqual(report.notification.mentions, ['ou_fixture_executor','ou_fixture_manager']);
   assert.equal(report.qualityPassed, false);
   assert.equal(report.buildAuthorized, false);
   assert.match(JSON.stringify(sent[0]), /PROJECT-GATE|quality\/workspace|尚未完整接入Gate/);
@@ -154,6 +154,19 @@ test('飞书送达未知保留待核对；下一轮相同缺项不会自动补�
   assert.equal(sends, 1);
   const state = JSON.parse(readFileSync(path.join(f.configDir, 'ops-state/state.json')));
   assert(Object.values(state.notices).some(item => item.status === 'unknown'));
+});
+test('人员缺项以attention留存且重复轮次不刷屏，补齐人员自动产生新通知',async t=>{
+ const f=install(t),file=path.join(f.configDir,'jenkins-ops.json');
+ const complete=JSON.parse(readFileSync(file)),incomplete=structuredClone(complete);delete incomplete.owners['wl-produce'].executor;
+ put(f.configDir,'jenkins-ops.json',incomplete);
+ const provider=jenkinsProvider(new Map([['后端-test',scmXml()]]));
+ const inventory=await inventoryOps({clusterFile:f.clusterFile,env:readEnv,fetchImpl:provider.fetchImpl});
+ let sends=0;const send=async()=>{sends++;return new Response(JSON.stringify({code:0}));};
+ const run=async inventory=>finishOps({clusterFile:f.clusterFile,inventory,results:[failureResult(f,inventory)],env:noticeEnv,send:true,fetchImpl:send});
+ const first=await run(inventory);assert.equal(first.notification.status,'sent');assert.equal(first.notification.providerAccepted,true);assert.equal(first.notification.notificationComplete,false);assert.equal(first.notification.notificationStatus,'attention');
+ const again=await run(freshInventory(inventory));assert.equal(again.notification.status,'unchanged');assert.equal(again.notification.notificationComplete,false);assert.equal(again.notification.notificationStatus,'attention');assert.equal(sends,1);
+ put(f.configDir,'jenkins-ops.json',complete);
+ const corrected=await run(freshInventory(inventory));assert.equal(corrected.notification.status,'sent');assert.equal(corrected.notification.notificationComplete,true);assert.equal(sends,2);
 });
 
 test('动态参数不猜固定分支，多仓库不擅选；feature分支不进入目标检查', async t => {

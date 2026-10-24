@@ -99,6 +99,40 @@ test("漏跑对账和自然分钟SLA升级幂等，实际补跑后待复核", (t
   assert.equal(f.reconcile([e], now + 120000).escalated, 2); assert.equal(f.reconcile([e], now + 120000).escalated, 0);
   f.ingest({ at: now + 120000 }); f.reconcile([e], now + 120000); assert.equal(Object.values(f.state().issues).find((x) => x.category === "missing").status, "awaitingVerification");
 });
+test('provider接收不等于人员提醒完整：缺@持久attention且不重复发送',async t=>{
+ const f=fixture(t);f.ingest();let calls=0;
+ const fetchImpl=async()=>{calls++;return {ok:true,json:async()=>({code:0})};};
+ const first=await dispatchGovernance({...f,send:true,now,env:f.env,fetchImpl});
+ assert.equal(first.results[0].status,'delivered');assert.equal(first.results[0].providerAccepted,true);
+ assert.equal(first.results[0].notificationComplete,false);assert.equal(first.results[0].notificationStatus,'attention');
+ assert.equal(first.results[0].mentionDeliveryConfirmed,false);assert(first.results[0].mentionMissing.length>0);
+ assert.equal(first.incompleteNotifications.length,1);assert.equal(f.state().outbox[first.results[0].ids[0]].notificationStatus,'attention');
+ const second=await dispatchGovernance({...f,send:true,now,env:f.env,fetchImpl});assert.equal(second.results.length,0);assert.equal(second.incompleteNotifications.length,1);assert.equal(calls,1);
+ const cli=fileURLToPath(new URL('../../bin/wl-skills-gate.js',import.meta.url));
+ assert.equal(spawnSync(process.execPath,[cli,'governance','outbox','--config',f.configFile,'--state',f.stateFile],{encoding:'utf8'}).status,2);
+});
+test('中央通知显示配置每次出站重读，不改治理身份或报告事实，坏配置不吞@',async t=>{
+ const f=fixture(t);f.config.projects.demo.technicalManager='manager';
+ f.config.people={author:{name:'执行人',roles:['developer'],feishu:{idType:'user_id',id:'verified-author'}},manager:{name:'技术经理',roles:['technical-manager'],feishu:{idType:'user_id',id:'verified-manager'}}};
+ writeFileSync(f.configFile,JSON.stringify(f.config));f.ingest();
+ const file=path.join(f.dir,'notification-presentation.json'),ledger=readFileSync(f.stateFile,'utf8');
+ const profile=revision=>({schemaVersion:1,kind:'wl-notification-presentation',revision,brandSuffix:revision==='display-1'?'WL':'World Leading'});
+ writeFileSync(file,JSON.stringify(profile('display-1')));
+ const first=outboxGovernance({...f,now}).messages[0];assert.equal(first.notificationPresentation.revision,'display-1');assert.match(first.payload.card.header.title.content,/WL$/);
+ writeFileSync(file,JSON.stringify(profile('display-2')));
+ const second=outboxGovernance({...f,now}).messages[0];assert.equal(second.notificationPresentation.revision,'display-2');assert.match(second.payload.card.header.title.content,/World Leading$/);
+ assert.deepEqual(second.mentions,first.mentions);assert.equal(readFileSync(f.stateFile,'utf8'),ledger);
+ writeFileSync(file,'{"bad":"<at id=all>"}');
+ let sent;const dispatch=await dispatchGovernance({...f,send:true,now,env:f.env,fetchImpl:async(url,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({code:0})};}});
+ assert.equal(dispatch.results[0].notificationPresentation.status,'invalid-default');assert.equal(dispatch.results[0].notificationComplete,true);
+ for(const id of first.mentions)assert(JSON.stringify(sent).includes(`<at id=\\"${id}\\"></at>`));
+ assert(!JSON.stringify(sent).includes('<at id=all>'));
+ const persisted=JSON.parse(readFileSync(f.stateFile));
+ for(const item of Object.values(persisted.outbox)){
+  assert.deepEqual(item.notificationPresentation,dispatch.results[0].notificationPresentation);
+  assert.match(item.notificationPayloadHash,/^[a-f0-9]{64}$/);
+ }
+});
 test("warning仅摘要；默认dispatch完全不联网；正文控制字符清理", async (t) => {
   const f = fixture(t); f.ingest({ status: "passed", findings: [{ fingerprint: digest("warning"), ruleId: "R\n@all", severity: "warning", file: "A\r\n伪造", status: "new" }] });
   assert.equal(outboxGovernance({ ...f, now }).messages.length, 0);

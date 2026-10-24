@@ -36,7 +36,7 @@ test("流水线卡片标明准入拦截与未构建未部署，彩色数字、�
   assert.match(elements.at(-1).content, /ou_test_dev.*回归验证[\s\S]*ou_test_lead.*确认闭环/);
   assert.match(buttons(elements).columns[1].elements[0].behaviors[0].default_url, /#pipeline-stages$/);
   const missing = structuredClone(config); delete missing.people.lead.feishu;
-  assert.throws(() => pipelineCheckNotification(input(), missing), /真实飞书ID/);
+  assert.equal(pipelineCheckNotification(input(), missing).notificationComplete, false);
 });
 test("流水线详情完整九维与失败阶段，缺证和演示数据不伪造批准", () => {
   const html = renderPipelineReviewReport(input());
@@ -53,9 +53,9 @@ test("流水线技术经理本人触发时同步李月，额外@不产生审核�
   const notice = pipelineCheckNotification(value, c);
   assert.deepEqual(notice.mentions, ["ou_test_lead", "ou_ci_observer"]); assert.equal(notice.approved, false);
   value.summary.findings = []; value.summary.decision.status = "passed";
-  assert.deepEqual(pipelineCheckNotification(value, c).mentions, ["ou_ci_observer"]);
+  assert.deepEqual(pipelineCheckNotification(value, c).mentions, ["ou_test_lead", "ou_ci_observer"]);
   delete c.people.observer.feishu;
-  assert.throws(() => pipelineCheckNotification(value, c), /真实飞书ID/);
+  assert.equal(pipelineCheckNotification(value, c).notificationComplete, false);
 });
 test("流水线最多展示三条最高风险问题，更多去详情，正文只放一个强调字号", () => {
   const value = input();
@@ -77,4 +77,29 @@ test("两机器人共用原生彩色数据块，标签和数量一起着色且�
   ]);
   assert(columns.every((c) => c.elements[0].text.tag === "plain_text"));
   for (const invalid of ["1", -1, 0.5, NaN, undefined]) assert.throws(() => riskCountsElement({ blocker: 0, error: invalid, warning: 0, info: 0 }), /非负整数/);
+});
+test('CI所有结果均提醒触发人和技术经理，缺身份可显式降级但不能声称通知闭环', () => {
+  for (const [status, severity] of [['passed', null], ['passed', 'warning'], ['blocked', 'error'], ['invalid', null]]) {
+    const value = input(); value.summary.decision.status = status;
+    value.summary.findings = severity ? [{ ...value.summary.findings[0], severity }] : [];
+    const result = pipelineCheckNotification(value, config);
+    assert.deepEqual(result.mentions, ['ou_test_dev', 'ou_test_lead']); assert.equal(result.notificationComplete, true);
+    assert.match(JSON.stringify(result.payload), /当前检查结果 · 修复未核验/);
+    const broken = structuredClone(config); delete broken.people.lead.feishu;
+    assert.equal(pipelineCheckNotification(value, broken).notificationComplete, false);
+    broken.projects.produce.requireRiskMentions = false;
+    const partial = pipelineCheckNotification(value, broken);
+    assert.deepEqual(partial.mentions, ['ou_test_dev']); assert.equal(partial.notificationComplete, false);
+    assert.equal(partial.mentionMissing[0].role, '技术经理'); assert.match(JSON.stringify(partial.payload), /通知尚未完成.*技术经理/);
+    assert.equal(partial.payload.card.header.template, ['blocked', 'invalid'].includes(status) || severity === 'error' ? 'red' : 'orange');
+    assert.match(partial.payload.card.header.title.content, /责任人提醒未完成/);
+  }
+});
+test('CI未登记身份不作为普通飞书缺项降级，预览高危计数不能配绿色通过结论', () => {
+  const value = input(); value.presentation.submitterId = 'unknown';
+  assert.throws(() => pipelineCheckNotification(value, config), /责任人未登记/);
+  value.presentation.submitterId = 'dev'; value.summary.findings = []; value.summary.decision.status = 'passed';
+  value.notificationTotals = { blocker: 0, error: 2, warning: 0, info: 0 };
+  const result = pipelineCheckNotification(value, config); assert.equal(result.payload.card.header.template, 'red');
+  assert.match(result.payload.card.body.elements[0].text.content, /2 项严重/);
 });

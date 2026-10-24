@@ -13,6 +13,7 @@ const config = {
   people: {
     dev: { name: "开发甲", roles: ["developer"], feishu: { idType: "open_id", id: "ou_developer" } },
     lead: { name: "经理乙", roles: ["technical-manager"], feishu: { idType: "open_id", id: "ou_manager" } },
+    observer: { name: "李月", roles: ["quality-observer"], feishu: { idType: "user_id", id: "test_observer" } },
   },
   projects: {
     produce: {
@@ -20,6 +21,7 @@ const config = {
       owner: "owner",
       backup: "backup",
       technicalManager: "lead",
+      managerSubmissionNotify: "observer",
       requireRiskMentions: true,
       issueBaseUrl: "https://quality.example.invalid/issues",
     },
@@ -76,7 +78,7 @@ test("飞书卡片真实@技术经理与执行人，按provider ID去重并保�
   assert.match(body, /2026年10月19日/);
   assert.match(body, /第二道/);
   const same = issueNotification(items("lead"), config);
-  assert.equal(same.mentions.length, 1);
+  assert.deepEqual(same.mentions, ["ou_manager", "test_observer"]);
   const missing = structuredClone(config);
   delete missing.people.dev;
   assert.throws(() => issueNotification(items(), missing), /映射/);
@@ -115,7 +117,42 @@ test("正式治理通知沿用经理本人提交同步李月，群@不等于审�
   assert.deepEqual(result.mentions, ["ou_manager", "test_observer"]);
   assert.match(result.payload.card.body.elements.find((e) => e.tag === "markdown").content, /同步.*李月/);
   delete c.people.observer.feishu;
-  assert.throws(() => issueNotification(items("lead"), c), /实名@映射/);
+  const incomplete=issueNotification(items("lead"), c);assert.equal(incomplete.notificationComplete,false);assert.deepEqual(incomplete.mentions,['ou_manager']);assert.match(JSON.stringify(incomplete.payload),/通知尚未完成/);
+});
+test("警告、待复验、关闭均@执行人与技术经理；摘要多作者不漏通知", () => {
+  for (const status of ['open','awaitingVerification','closed']) {
+    const list=items();list[0].snapshot.severity='warning';list[0].snapshot.status=status;
+    const out=issueNotification(list,config);
+    assert.deepEqual(out.mentions,['ou_developer','ou_manager']);assert.equal(out.notificationComplete,true);
+    for(const id of out.mentions)assert(JSON.stringify(out.payload).includes(`<at id=\\"${id}\\"></at>`));
+  }
+  const c=structuredClone(config);c.people.dev2={name:'开发丙',roles:['developer'],feishu:{idType:'user_id',id:'verified-dev2'}};
+  const list=items();list[0].snapshot.severity='warning';const second=structuredClone(list[0]);second.snapshot.latestEvidence.authorId='dev2';list.push(second);
+  const out=issueNotification(list,c);assert.deepEqual(out.mentions,['ou_developer','ou_manager','verified-dev2']);
+  assert.equal((JSON.stringify(out.payload).match(/<at id=\\"ou_manager\\">/g)||[]).length,1);
+});
+test("成功的构建、发布与Review仍必须双人@；缺人不默默成功",()=>{
+  const base={project:'produce',scope:'sit',sha:'a'.repeat(40),authorId:'dev',reportUrl:'https://quality.example.invalid/report',pipelineUrl:'https://gitlab.example.invalid/job',occurredAt:'2026-10-19T11:00:51Z',source:{system:'jenkins',recordId:'job',observedAt:'2026-10-19T11:02:00Z'}};
+  for(const category of ['review','build','deploy']){
+    const out=lifecycleNotification({...base,category,status:category==='review'?'approved':'success'},config);
+    assert.deepEqual(out.mentions,['ou_developer','ou_manager']);assert.equal(out.notificationComplete,true);
+  }
+  const c=structuredClone(config);delete c.people.lead.feishu;
+  assert.equal(lifecycleNotification({...base,category:'build',status:'success'},c).notificationComplete,false);
+  c.projects.produce.requireRiskMentions=false;
+  const out=lifecycleNotification({...base,category:'build',status:'success'},c);
+  assert.deepEqual(out.mentions,['ou_developer']);assert.equal(out.notificationComplete,false);
+  assert.match(JSON.stringify(out.payload),/通知尚未完成.*技术经理/);
+});
+test('百条警告摘要的不同执行人均@且卡片仍在预算内，不重复技术经理@',()=>{
+ const c=structuredClone(config),list=Array.from({length:100},(_,i)=>{
+  const actor='dev-'+i;c.people[actor]={name:'执行人'+i,roles:['developer'],feishu:{idType:'user_id',id:'verified-'+actor}};
+  const [item]=items(actor);item.snapshot.severity='warning';return item;
+ });
+ const out=issueNotification(list,c),body=JSON.stringify(out.payload);
+ assert.equal(out.mentions.length,101);assert(Buffer.byteLength(body)<20000);
+ assert.equal((body.match(/<at id=\\"ou_manager\\">/g)||[]).length,1);
+ for(const id of out.mentions)assert(body.includes(`<at id=\\"${id}\\"></at>`));
 });
 test("构建、发布与采集健康的卡片和文字通知使用相同时间格式", () => {
   const fact = { category: "build", status: "failed", project: "produce", scope: "sit", sha: "a".repeat(40),

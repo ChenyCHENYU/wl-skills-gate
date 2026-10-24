@@ -38,9 +38,24 @@ test('real current Gate installation API returns unchanged with zero writes',asy
  const root=mkdtempSync(path.join(base,'real-')),prefix=path.join(root,'prefix'),config=path.join(root,'config'),home=fileURLToPath(new URL('../../',import.meta.url));
  const api=await import(pathToFileURL(path.join(home,'lib/jenkins-installation.js'))),rt=await import(pathToFileURL(path.join(home,'lib/jenkins-integration.js')));
  const input={prefix,configDir:config,jenkinsOrigin:'https://ci.example.test/',registryFiles:[path.join(config,'jenkins-bindings.json')],centralAgentLabel:'real-central',reviewSignerAgentLabel:'real-review'},p=api.planJenkinsInstallation(input);api.applyJenkinsInstallation({...input,confirm:true,planHash:p.planHash});
+ const profileFile=path.join(config,'notification-presentation.json');assert.equal(JSON.parse(readFileSync(profileFile)).kind,'wl-notification-presentation');
+ put(profileFile,j({schemaVersion:1,kind:'wl-notification-presentation',revision:'site-custom',density:'comfortable'}),0o600);
+ assert.equal(api.planJenkinsInstallation(input).files.find(f=>f.file===profileFile).action,'unchanged');
  put(path.join(prefix,'gate-installation.json'),j({gateHome:home,runtimeFingerprint:rt.gateRuntimeHash()}),0o600);
  const before=fprint(root),plan=await planIncrementalUpdate({root,manifest:{snapshot:'real',packages:[]},map:{gateVersion:JSON.parse(readFileSync(path.join(home,'package.json'))).version,runtimeFingerprint:rt.gateRuntimeHash()},settings:{installPrefix:prefix,centralConfigDir:config,jenkinsOrigin:input.jenkinsOrigin},mode:'jenkins',gateHome:home});
  assert.equal(plan.status,'unchanged',JSON.stringify(plan.files.map(({target,action,before,after,afterBase64})=>({target,action,before,after,afterText:Buffer.from(afterBase64,'base64').toString()}))));assert.equal((await apply(plan)).status,'unchanged');assert.deepEqual(fprint(root),before);
+});
+test('已接节点只补一次中央显示配置；后续自定义显示不被增量覆盖',async()=>{
+ const root=mkdtempSync(path.join(base,'presentation-')),prefix=path.join(root,'prefix'),config=path.join(root,'config'),home=fileURLToPath(new URL('../../',import.meta.url));
+ const api=await import(pathToFileURL(path.join(home,'lib/jenkins-installation.js'))),rt=await import(pathToFileURL(path.join(home,'lib/jenkins-integration.js')));
+ const options={prefix,configDir:config,jenkinsOrigin:'https://ci.example.test/',centralAgentLabel:'central',reviewSignerAgentLabel:'review'};
+ const first=api.planJenkinsInstallation(options);api.applyJenkinsInstallation({...options,confirm:true,planHash:first.planHash});
+ const display=path.join(config,'notification-presentation.json');rmSync(display);
+ put(path.join(prefix,'gate-installation.json'),j({gateHome:home,runtimeFingerprint:rt.gateRuntimeHash()}),0o600);
+ const input={root,manifest:{snapshot:'current',packages:[]},map:{gateVersion:JSON.parse(readFileSync(path.join(home,'package.json'))).version,runtimeFingerprint:rt.gateRuntimeHash()},settings:{installPrefix:prefix,centralConfigDir:config,jenkinsOrigin:options.jenkinsOrigin},mode:'jenkins',gateHome:home};
+ const plan=await planIncrementalUpdate(input);assert.equal(plan.status,'delta-ready');assert.deepEqual(plan.changes.map(x=>x.target),[display]);await apply(plan);
+ put(display,j({schemaVersion:1,kind:'wl-notification-presentation',revision:'site-2',brandSuffix:'Site WL'}),0o600);
+ const before=fprint(root);assert.equal((await planIncrementalUpdate(input)).status,'unchanged');assert.deepEqual(fprint(root),before);
 });
 test('v1→v2 updates only 4 changed managed files and preserves user config/old snapshot',async()=>{
  const f=await fixture(),oldSettings=fprint(f.config).filter(([name])=>name!=='jenkins-cluster.json'),p=await planIncrementalUpdate(f.input);

@@ -1,12 +1,12 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.13.6",
+  "version": "0.13.8",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@agile-team/wl-skills-gate",
-      "version": "0.13.6",
+      "version": "0.13.8",
       "license": "UNLICENSED",
       "dependencies": {
         "@secretlint/node": "13.0.7",

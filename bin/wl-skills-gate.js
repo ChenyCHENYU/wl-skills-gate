@@ -266,7 +266,7 @@ try {
     else if (operation === "migrate") result = g.migrateGovernanceConfig({ ...base, newConfigFile: o["--new-config"], authorizationFile: o["--authorization"] });
     else result = await g.dispatchGovernance({ ...base, send: !!o["--send"] });
     if (o["--out"]) writeJson(o["--out"], result); else process.stdout.write(JSON.stringify(result, null, 2) + "\n");
-    if (result.results?.some((x) => x.status !== "delivered") || result.unknownDeliveries?.length || result.deadLetters?.length) process.exitCode = 2;
+    if (result.results?.some((x) => x.status !== "delivered" || x.notificationComplete === false) || result.unknownDeliveries?.length || result.deadLetters?.length || result.incompleteNotifications?.length) process.exitCode = 2;
   } else if (command === "cost") {
     const o = options(["--usage", "--out"]);
     if (!o.positional[0] || !o["--out"]) throw new Error("cost 必须提供工件目录和 --out；不默认将完整统计塞入控制台");
