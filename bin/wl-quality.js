@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {recordJenkinsFailure} from '../lib/notification-diagnostics.js';
 import path from 'node:path';
 import {runSetupCli} from '../lib/setup.js';
 import {writeExclusiveJson} from '../lib/control-store.js';
@@ -27,4 +28,4 @@ try {
   }else if(command==='jenkins'&&args[0]==='ops'){args.shift();const {runOpsCli}=await import('../lib/jenkins-ops.js');process.exitCode=await runOpsCli(args);}
   else if(command==='jenkins'&&args[0]==='bootstrap'){args.shift();const {runBootstrapCli}=await import('../lib/jenkins-node-bootstrap.js');process.exitCode=await runBootstrapCli(args);}
   else throw Error('用法：wl-quality init；wl-quality jenkins context|install|bootstrap。');
-}catch(error){console.error('[wl-quality] '+error.message);process.exitCode=2;}
+}catch(error){recordJenkinsFailure(error,{command:process.argv.slice(2,4).join(' ')});console.error('[wl-quality] '+error.message);process.exitCode=2;}

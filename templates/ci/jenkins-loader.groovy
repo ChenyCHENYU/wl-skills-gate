@@ -4,6 +4,7 @@ def adapter = null
 def target = null
 withEnv(["WL_NODE_BIN_DIR=${env.WL_NODE_BIN_DIR ?: '__WL_NODE_BIN_DIR__'}", "PATH+WLNODE=${env.WL_NODE_BIN_DIR ?: '__WL_NODE_BIN_DIR__'}"]) {
 try {
+  env.WL_GATE_PHASE = '公共入口定位'
   wlGatePreflight(mode: 'node', gateRoot: '__WL_GATE_ROOT__', runtimeHash: '__WL_RUNTIME_HASH__')
   def routeDir = "wl-quality-route-${java.util.UUID.randomUUID().toString()}"
   dir(routeDir) {
@@ -15,6 +16,7 @@ try {
   }
   adapter = load('__WL_GATE_ROOT__/templates/ci/jenkins-native.groovy')
 } catch (Exception failure) {
+  wlGateCaptureFailure(failure)
   wlGateFailureNotice()
   throw failure
 }

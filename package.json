@@ -1,6 +1,6 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.13.8",
+  "version": "0.13.9",
   "description": "质量工程执行包 — 统一接入、九维Review证据授权、自动门禁、可信CI采集与分类治理通知",
   "type": "module",
   "main": "./lib/run.js",

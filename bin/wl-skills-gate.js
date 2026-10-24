@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {recordJenkinsFailure} from '../lib/notification-diagnostics.js';
 import path from "node:path";
 import { mkdirSync, writeFileSync, lstatSync, statSync, realpathSync } from "node:fs";
 import { git } from "../lib/source-state.js";
@@ -72,7 +73,8 @@ function proofOptions(o) {
 
 try {
   if (command === "run") {
-    process.exitCode = (await runGate({ argv: rest })).exitCode;
+    const result = await runGate({ argv: rest }); process.exitCode = result.exitCode;
+    if(result.exitCode===2)recordJenkinsFailure((result.summary?.decision?.reasons || ['本轮扫描失效，未取得有效结果']).join('；'),{command:'run'});
   } else if (command === "report-publication") {
     const action = rest.shift(), o = options(["--input", "--summary", "--review-index", "--out-dir", "--jenkins-build-url", "--manifest", "--jenkins-origin", "--user-env", "--token-env", "--out"]);
     const r = await import("../lib/report-publication.js");
@@ -125,6 +127,7 @@ try {
     const result = o["--apply"] ? prepareCiDependencies({ root: o["--root"], confirm: !!o["--confirm"], expectWorkspaceHash: o["--expect-workspace-hash"], expectLockHash: o["--expect-lock-hash"] }) : planCiPreparation({ root: o["--root"] });
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
     process.exitCode = result.status === "blocked" ? 2 : 0;
+    if(process.exitCode){const details=[...(result.blockers||[]).map(item=>`${item.id}：${item.reason||item.message||'接入前置未通过'}`),result.failure,...(result.stages||[]).filter(item=>item.exitCode).map(item=>(item.stderr||'').split(/\r?\n/).filter(line=>/error|failed|fatal|错误|失败/i.test(line)).slice(-3).join('；'))].filter(Boolean);recordJenkinsFailure(details.join('；')||'固定依赖准备未通过',{command:'ci-prepare'});}
   } else if (command === "verify-release-review") {
     const o = options(["--config", "--project", "--sha", "--record", "--evidence-root", "--publication-dir", "--out-dir"]);
     if (o.positional.length) throw new Error("verify-release-review 不接受位置参数");
@@ -352,4 +355,4 @@ try {
     const { runAllFixtures } = await import("../scripts/run-fixtures.mjs");
     process.exitCode = await runAllFixtures();
   } else throw new Error("用法: wl-skills-gate <setup|onboard|jenkins|ci-prepare|verify-release-review|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
-} catch (e) { console.error(`[${command || "wl-skills-gate"}] ${e.message}`); process.exitCode = 2; }
+} catch (e) { recordJenkinsFailure(e,{command:[command,...rest.slice(0,1)].join(' ')}); console.error(`[${command || "wl-skills-gate"}] ${e.message}`); process.exitCode = 2; }

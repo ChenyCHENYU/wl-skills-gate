@@ -6,7 +6,7 @@ def wlOpsRun(Map cfg) {
   def outcome = 2
   withEnv(["WL_QUALITY_CLI=${cfg.gateRoot}/bin/wl-quality.js", "WL_OPS_CLUSTER=${cfg.clusterFile}", "WL_OPS_PUBLIC=${publicRoot}"]) {
     try {
-      stage('发现项目与流水线') {
+      stage('发现项目与流水线') { env.WL_GATE_PHASE = '发现项目与流水线';
         withCredentials([usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')]) {
           sh '''#!/bin/sh
 set -eu
@@ -17,7 +17,7 @@ node "$WL_QUALITY_CLI" jenkins ops inventory --cluster "$WL_OPS_CLUSTER" --out "
         inventory = new groovy.json.JsonSlurperClassic().parseText(readFile('wl-ops-public/inventory.json'))
         echo "巡检发现 ${inventory.jobsDiscovered} 个任务；目标 ${inventory.targets.size()} 项。"
       }
-      stage('检查项目接入条件') {
+      stage('检查项目接入条件') { env.WL_GATE_PHASE = '检查项目接入条件';
         for (def target in inventory.targets) {
           withEnv(["WL_OPS_KEY=${target.key}", "WL_OPS_RESULT=${publicRoot}/projects/${target.key}.json"]) {
             def checkoutFailed = false
@@ -57,7 +57,7 @@ node "$WL_QUALITY_CLI" jenkins ops inspect --cluster "$WL_OPS_CLUSTER" --invento
     } finally {
       try {
       if (fileExists('wl-ops-public/inventory.json')) {
-        stage('记录缺项与飞书提醒') {
+        stage('记录缺项与飞书提醒') { env.WL_GATE_PHASE = '记录缺项与飞书提醒';
           try { withEnv(["WL_OPS_RETRY_NOTICE=${params.RETRY_NOTIFICATION == true ? '1' : '0'}"]) { withCredentials([
             string(credentialsId: 'wl-feishu-ci-webhook', variable: 'WL_FEISHU_CI_WEBHOOK'),
             string(credentialsId: 'wl-feishu-ci-signing-secret', variable: 'WL_FEISHU_CI_SECRET')
@@ -93,7 +93,7 @@ node "$WL_QUALITY_CLI" jenkins ops finish --cluster "$WL_OPS_CLUSTER" --inventor
 // Only package-verified CHECK jobs can be resumed; never arbitrary legacy deploy jobs.
 def wlOpsContinue(Map cfg, Map summary) {
   try {
-  stage('承接已就绪项目的九维检查') {
+  stage('承接已就绪项目的九维检查') { env.WL_GATE_PHASE = '承接已就绪项目的九维检查';
     for (def project in summary.projects.findAll { it.checkJob && (it.status == 'ready' || it.gaps.every { g -> g.id == 'CHECK-DISPATCH-UNKNOWN' }) }) {
       withEnv(["WL_QUALITY_CLI=${cfg.gateRoot}/bin/wl-quality.js", "WL_OPS_CLUSTER=${cfg.clusterFile}", "WL_OPS_RUN=${summary.runId}", "WL_OPS_KEY=${project.key}", "WL_OPS_CLAIM=wl-ops-public/claim-${project.key}.json", "WL_OPS_ACK=wl-ops-public/ack-${project.key}.json", "WL_OPS_RETRY_CHECK=${params.RETRY_UNCONFIRMED_CHECK == true ? '1' : '0'}"]) {
         def claimCode = 2
@@ -185,6 +185,8 @@ def wlPrepareJobs(Map cfg) {
   }
 }
 def call(Map cfg, def bootstrap) {
+  env.WL_GATE_FAILURE_CONFIG_DIR = cfg.configDir
+  env.WL_GATE_FAILURE_REGISTRY = cfg.registry ?: ''
   node(cfg.agentLabel) {
     withEnv(["WL_NODE_BIN_DIR=${env.WL_NODE_BIN_DIR ?: cfg.nodeBinDir ?: '/usr/bin'}", "PATH+WLNODE=${env.WL_NODE_BIN_DIR ?: cfg.nodeBinDir ?: '/usr/bin'}"]) {
     timeout(time: cfg.role == 'fleet' ? 120 : 30, unit: 'MINUTES') {
@@ -206,21 +208,21 @@ def call(Map cfg, def bootstrap) {
           }
           properties(options)
         }
-        stage('执行节点自检') { withEnv(["WL_CENTRAL_AUTOMATION_CONFIG=${cfg.configDir}/automation-config.json", "WL_REVIEW_PUBLISH_CONFIG=${cfg.configDir}/review-publish-config.json"]) { bootstrap.wlGatePreflight(mode: cfg.role == 'job' ? 'job' : cfg.role, gateRoot: cfg.gateRoot, runtimeHash: cfg.runtimeHash, registry: cfg.role == 'job' || cfg.role == 'verify' ? cfg.registry : '') } }
+        stage('执行节点自检') { env.WL_GATE_PHASE = '执行节点自检'; withEnv(["WL_CENTRAL_AUTOMATION_CONFIG=${cfg.configDir}/automation-config.json", "WL_REVIEW_PUBLISH_CONFIG=${cfg.configDir}/review-publish-config.json"]) { bootstrap.wlGatePreflight(mode: cfg.role == 'job' ? 'job' : cfg.role, gateRoot: cfg.gateRoot, runtimeHash: cfg.runtimeHash, registry: cfg.role == 'job' || cfg.role == 'verify' ? cfg.registry : '') } }
         withEnv(["WL_APPROVED_GATE_CLI=${cfg.gateRoot}/bin/wl-skills-gate.js", "WL_APPROVED_GATE_SETUP=${cfg.gateRoot}/bin/wl-quality-setup.js", "WL_CENTRAL_CONFIG=${cfg.configDir}", "WL_GATE_BINDINGS=${cfg.registry}", "PATH+WLGATE=${env.WL_NODE_BIN_DIR ?: '/usr/bin'}"]) {
           if (cfg.role == 'job') {
             load("${cfg.gateRoot}/templates/ci/jenkins-gate.groovy").call(cfg)
           } else if (cfg.role == 'node') {
-            if (params.TEST_NOTIFICATION) stage('飞书连通测试') { bootstrap.wlGateNotificationTest() }
+            if (params.TEST_NOTIFICATION) stage('飞书连通测试') { env.WL_GATE_PHASE = '飞书连通测试'; bootstrap.wlGateNotificationTest() }
             else wlOpsRun(cfg)
           } else if (cfg.role == 'verify') {
-            stage('核验Gate接线') {
+            stage('核验Gate接线') { env.WL_GATE_PHASE = '核验Gate接线';
               withCredentials([usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')]) {
                 sh 'node "$WL_APPROVED_GATE_CLI" jenkins verify-jobs --registry "$WL_GATE_BINDINGS"'
               }
             }
           } else if (cfg.role == 'review') {
-            stage('签发已明确授权的九维Review') {
+            stage('签发已明确授权的九维Review') { env.WL_GATE_PHASE = '签发已明确授权的九维Review';
               withCredentials([
                 file(credentialsId: 'wl-review-signing-key', variable: 'WL_REVIEW_PRIVATE_KEY_FILE'),
                 string(credentialsId: 'wl-ci-review-readonly-token', variable: 'WL_GITLAB_READ_TOKEN'),
@@ -229,7 +231,7 @@ def call(Map cfg, def bootstrap) {
               }
             }
           } else if (cfg.role == 'automation') {
-            stage('采集、对账与分类通知') {
+            stage('采集、对账与分类通知') { env.WL_GATE_PHASE = '采集、对账与分类通知';
               withCredentials([
                 string(credentialsId: 'wl-feishu-ci-webhook', variable: 'WL_FEISHU_CI_WEBHOOK'),
                 string(credentialsId: 'wl-feishu-ci-signing-secret', variable: 'WL_FEISHU_CI_SECRET'),
@@ -249,7 +251,7 @@ node "$WL_APPROVED_GATE_CLI" automation --config "$WL_CENTRAL_CONFIG/automation-
             }
           } else if (cfg.role == 'fleet') {
             dir('wl-fleet-public') { deleteDir() }
-            stage('批量接入维护') {
+            stage('批量接入维护') { env.WL_GATE_PHASE = '批量接入维护';
               def action = params.ACTION ?: '准备公共任务'
               def batch = (params.BATCH ?: '').trim()
               if (action == '准备公共任务') { wlPrepareJobs(cfg) }
@@ -273,6 +275,7 @@ node "$WL_APPROVED_GATE_CLI" automation --config "$WL_CENTRAL_CONFIG/automation-
           } else error('未知公共入口角色。')
         }
       } catch (Exception failure) {
+        bootstrap.wlGateCaptureFailure(failure)
         bootstrap.wlGateFailureNotice()
         throw failure
       } finally {

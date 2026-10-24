@@ -5,12 +5,13 @@ def call(Map cfg) {
   def cleanWorkspace = false
   withEnv(["WL_GATE_CLI=${cfg.gateRoot}/bin/wl-skills-gate.js", "WL_GATE_BINDINGS=${cfg.registry}"]) {
     try {
-      stage('接入预检') {
+      stage('接入预检') { env.WL_GATE_PHASE = '接入预检';
         context = new groovy.json.JsonSlurperClassic().parseText(sh(returnStdout: true, script:
           'node "$WL_GATE_CLI" jenkins inspect --registry "$WL_GATE_BINDINGS"').trim())
+        env.WL_GATE_PROJECT = context.project
         echo "Gate：${context.project} / ${context.branch} / ${context.scope} / ${context.mode}"
       }
-      stage('检出固定目标') {
+      stage('检出固定目标') { env.WL_GATE_PHASE = '检出固定目标';
         deleteDir()
         cleanWorkspace = true
         checkout(changelog: true, poll: false, scm: [
@@ -22,7 +23,7 @@ def call(Map cfg) {
         ])
       }
       if (context.mode == 'check') {
-        stage('质量检查与九维证据') {
+        stage('质量检查与九维证据') { env.WL_GATE_PHASE = '质量检查与九维证据';
           def checked = sh(returnStatus: true, script: 'node "$WL_GATE_CLI" jenkins check --registry "$WL_GATE_BINDINGS"')
           if (checked != 0) {
             env.WL_GATE_FAILURE_KIND = checked == 1 && fileExists('quality-reports/quality-summary.json') ? 'quality' : 'execution'
@@ -30,10 +31,10 @@ def call(Map cfg) {
           }
         }
       } else {
-        stage('固定依赖准备') {
+        stage('固定依赖准备') { env.WL_GATE_PHASE = '固定依赖准备';
           sh 'node "$WL_GATE_CLI" jenkins prepare --registry "$WL_GATE_BINDINGS"'
         }
-        stage('正式Review与严格准入') {
+        stage('正式Review与严格准入') { env.WL_GATE_PHASE = '正式Review与严格准入';
           withCredentials([
             string(credentialsId: context.credentials.gitlabRead, variable: 'WL_GITLAB_READ_TOKEN'),
             usernamePassword(credentialsId: context.credentials.jenkinsRead,
@@ -44,7 +45,7 @@ def call(Map cfg) {
           }
           if (admission.status != 'admitted' || !(admission.admissionHash ==~ /[a-f0-9]{64}/)) error('Gate未产生本轮严格准入，不执行构建')
         }
-        stage('批准业务构建') {
+        stage('批准业务构建') { env.WL_GATE_PHASE = '批准业务构建';
           withEnv(["WL_GATE_ADMISSION_HASH=${admission.admissionHash}"]) {
             def built = sh(returnStatus: true, script:
               'node "$WL_GATE_CLI" jenkins build --registry "$WL_GATE_BINDINGS" --admission-hash "$WL_GATE_ADMISSION_HASH"')
@@ -54,6 +55,9 @@ def call(Map cfg) {
           archiveArtifacts artifacts: 'quality-reports/ci-integration/build-result.json,quality-reports/ci-integration/business-artifacts.zip', allowEmptyArchive: false
         }
       }
+    } catch (Exception failure) {
+      env.WL_GATE_FAILURE_MESSAGE = (failure.message ?: failure.class.simpleName).take(1200)
+      throw failure
     } finally {
       try {
         // Never publish leftovers if failure occurred before the clean checkout.

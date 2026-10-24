@@ -9,14 +9,14 @@ function input(status='blocked'){
 }
 test('中央检查失效不能把已有严重问题丢掉后显示数量改善',()=>{
  const {report,event}=input('invalid'),snapshot=checkSnapshot(report,event,config.projects.produce.scopes.sit.notification);
- assert.deepEqual(snapshot.totals,{blocker:0,error:6,warning:3,info:0});
+ assert.deepEqual(snapshot.totals,{blocker:0,error:5,warning:3,info:0});
  const result=centralCheckNotification(snapshot,config);assert.deepEqual(result.mentions,['test_dev','test_lead']);assert.equal(result.notificationComplete,true);
- assert.match(JSON.stringify(result.payload),/严重 6/);assert.match(JSON.stringify(result.payload),/当前检查结果 · 修复未核验/);
- assert.equal(result.payload.card.header.template,'red');
+ assert.match(JSON.stringify(result.payload),/严重 5/);assert.match(JSON.stringify(result.payload),/当前检查结果 · 修复未核验/);
+ assert.equal(result.payload.card.header.template,'red');assert.equal(snapshot.presentation.diagnosticCount,1);assert.match(JSON.stringify(result.payload),/检查失效/);
 });
 test('中央仅截取三项预览但统计保留全量、无重复检查失效标记，范围不符拒绝',()=>{
  const {report,event}=input('invalid');report.findings.push({severity:'error',ruleId:'GOV/CHECK-INVALID',file:'quality/policy',message:'失效'});
- const snapshot=checkSnapshot(report,event,config.projects.produce.scopes.sit.notification);assert.equal(snapshot.summary.findings.length,3);assert.equal(snapshot.totals.error,6);
+ const snapshot=checkSnapshot(report,event,config.projects.produce.scopes.sit.notification);assert.equal(snapshot.summary.findings.length,3);assert.equal(snapshot.totals.error,5);
  assert.throws(()=>checkSnapshot(report,{...event,ref:'refs/heads/main'},config.projects.produce.scopes.sit.notification),/实际分支/);
 });
 test('中央项目合并或CI通过消息依旧@双方，缺一人映射仍报告风险且不标通知完成',()=>{

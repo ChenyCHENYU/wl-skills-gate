@@ -3,7 +3,7 @@
   "private": true,
   "engines": { "node": "^22.13.0 || >=24.0.0" },
   "devDependencies": {
-    "@agile-team/wl-skills-gate": "0.13.8",
+    "@agile-team/wl-skills-gate": "0.13.9",
     "@agile-team/wl-skills-bd": "0.41.1"
   }
 }

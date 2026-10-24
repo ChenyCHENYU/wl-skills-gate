@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {recordJenkinsFailure} from '../lib/notification-diagnostics.js';
 import { createInterface } from "node:readline/promises";
 import { runSetupCli } from "../lib/setup.js";
 
@@ -15,4 +16,4 @@ try {
     args = modes[choice];
   }
   process.exitCode = await runSetupCli(args);
-} catch (error) { console.error(`[quality-setup] ${error.message}`); process.exitCode = 2; }
+} catch (error) { recordJenkinsFailure(error,{command:process.argv.slice(2,4).join(' ')}); console.error(`[quality-setup] ${error.message}`); process.exitCode = 2; }
