@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "kind": "wl-quality-ci-check",
   "project": "REPLACE_WITH_ACTUAL_PROJECT",
-  "gateVersion": "0.13.12",
+  "gateVersion": "0.13.13",
   "workspaceHash": "REPLACE_WITH_APPROVED_WORKSPACE_SHA256",
   "lockHash": "REPLACE_WITH_APPROVED_LOCK_SHA256",
   "policyHash": "REPLACE_WITH_APPROVED_POLICY_SHA256",

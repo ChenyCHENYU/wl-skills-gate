@@ -170,3 +170,11 @@ node('wl-quality-router') { load('/opt/wl-quality/gate-validation/jenkins/entry.
 项目声明／锁／规则／证据计划未就绪时只告警，不把缺项计为代码风险，也不标记质量通过。已批准且锁定但尚未安装的依赖由CHECK自动准备。项目与登记、实际公共入口、目标分支触发及中央前置配置通过后，巡检可承接该项目固定SHA的CHECK；原有目标分支Hook继续负责后续变更触发。九维证据、实名Review授权、独立签发和BUILD准入仍由各自受控任务执行。未迁移的旧部署／回滚Job保持“未受控”，不能据此声称已经拦截；其Configure权限须限制在批准维护者。
 
 本轮JSON及HTML在doctor构建归档可访问，持久记录保存在中央配置目录的`ops-state/`。普通群成员仍需Jenkins报告只读权限；通知送达、真实@、CPS与插件接线均需现场验证。
+
+## Jenkins账号认证
+
+安装入口可选API Token（推荐）或登录密码，日常巡检也可沿用本次账号；沿用前须确认将认证保存到Jenkins凭据。账号不要求另建，身份、目标任务读取及实际运行分别验证。密码／Token均隐藏输入，不写本地参数或回执；未明确确认复用的安装认证仅留本次进程内存。
+
+`Username with password`凭据的密码字段可保存所选登录密码或API Token；既有`WL_JENKINS_*_TOKEN`绑定兼容。直接调用核心客户端时也支持对应`*_PASSWORD`环境变量；同时设置两种秘密时用`*_AUTH_MODE=token|password`明确选择。只读客户端仍只执行GET，账号现有权限不会因凭据名称而被缩小。
+
+密码写请求由核心维护会话Cookie及CSRF crumb，不关闭CSRF或TLS；仅明确的CSRF拒绝允许一次有界重试，未知写入结果先对账。单点登录或禁用密码Basic认证的环境使用API Token，以实际身份核验为准。[Jenkins认证说明](https://www.jenkins.io/doc/book/system-administration/authenticating-scripted-clients/)、[CSRF说明](https://www.jenkins.io/doc/book/security/csrf-protection/)。
