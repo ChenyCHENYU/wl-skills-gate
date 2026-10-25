@@ -73,14 +73,14 @@ test('源码检出和项目接入检查不持有Jenkins接口、飞书或签发�
       'read-only supervision cannot obtain write, dispatch, signing or SSO credentials');
   }
   const reader = scopes.find(scope => scope.body.includes('jenkins ops inventory'));
-  const notifier = scopes.find(scope => scope.body.includes('jenkins ops finish'));
+  const notifier = scopes.find(scope => scope.body.includes('jenkins ops notify'));
   assert(reader, 'inventory must use a scoped Jenkins read credential');
   assert(notifier, 'finish must use a scoped CI bot credential');
   assert.match(reader.declaration, /wl-jenkins-ci-readonly/);
   assert.doesNotMatch(reader.declaration, /feishu/);
   assert.match(notifier.declaration, /wl-feishu-ci-webhook/);
   assert.match(notifier.declaration, /wl-feishu-ci-signing-secret/);
-  assert.doesNotMatch(notifier.declaration, /wl-feishu-project|wl-jenkins-ci-readonly/);
+  assert.doesNotMatch(notifier.declaration, /wl-feishu-project/);assert.match(notifier.declaration,/wl-jenkins-ci-readonly/);
 });
 
 test('项目检查失败仍进入汇总，运维报告归档且不启动旧部署任务', () => {
@@ -130,7 +130,7 @@ test('人工终止不继续检出，通知凭据失败仍保留无发送汇总�
   assert.match(helper, /catch\s*\(org\.jenkinsci\.plugins\.workflow\.steps\.FlowInterruptedException interrupted\)\s*\{\s*throw interrupted\s*\}/);
   assert.match(helper, /finally\s*\{\s*deleteDir\(\)\s*\}/);
   const finishes = helper.split('\n').filter(command => /\bjenkins ops finish\b/.test(command));
-  assert(finishes.some(command => /--send\b/.test(command)), 'configured bot must send the summary');
+  assert.match(helper,/jenkins ops notify[\s\S]*--send/,'configured bot must notify only after archive');
   assert(finishes.some(command => !/--send\b/.test(command)), 'missing credential path must still generate a non-sending summary');
   assert.match(helper, /finally\s*\{\s*archiveArtifacts/);
 });
@@ -150,7 +150,7 @@ for (def mode in ['normal', 'no-bot', 'interrupted', 'claim-failure', 'claim-mis
   def events=[], files=[:], env=[:], currentBuild=[:], working=[], credentials=0, builds=0, cleanups=0, startedKeys=[], acknowledgedKeys=[]
   def multi=mode in ['claim-failure', 'claim-missing', 'claim-unknown', 'ack-failure']
   def inventory=[runId:'fixture-run', jobsDiscovered:2, targets:[[key:'a'*24, checkoutAllowed:true, branch:'test', repository:'https://gitlab.example.invalid/group/produce.git', credentialId:'scm'],[key:'b'*24, checkoutAllowed:false, branch:null]]]
-  def summary=[runId:'fixture-run', globalGaps:(mode in ['no-bot','interrupted'] ? [[id:'pending']] : []), projects:[[key:'a'*24, status:'ready', checkJob:'produce/CHECK']]]
+  def summary=[status:'ready', runId:'fixture-run', globalGaps:(mode in ['no-bot','interrupted'] ? [[id:'pending']] : []), projects:[[key:'a'*24, status:'ready', checkJob:'produce/CHECK']]]
   if(multi){inventory.targets[1]=[key:'b'*24,checkoutAllowed:true,branch:'test',repository:'https://gitlab.example.invalid/group/produce.git',credentialId:'scm'];summary.projects<<[key:'b'*24,status:'ready',checkJob:'produce/NEXT-CHECK']}
   def claim=[status:'claimed', job:'produce/CHECK', sha:'c'*40, dispatchId:'ops-fixture-approved-check']
   def nextClaim=[status:'claimed', job:'produce/NEXT-CHECK', sha:'d'*40, dispatchId:'ops-fixture-next-check']
@@ -197,6 +197,7 @@ for (def mode in ['normal', 'no-bot', 'interrupted', 'claim-failure', 'claim-mis
     String command=options instanceof Map?options.script:options
     if(command.contains('jenkins ops inventory')){assert env.WL_JENKINS_READ_TOKEN;assert !env.WL_FEISHU_CI_SECRET;files['wl-ops-public/inventory.json']='inventory';events<<'inventory'}
     else if(command.contains('jenkins ops inspect')){assert credentials==0;events<<'inspect'}
+    else if(command.contains('jenkins ops notify')){assert env.WL_JENKINS_READ_TOKEN&&env.WL_FEISHU_CI_SECRET;assert events.contains('archive');events<<'notify';return 0}
     else if(command.contains('jenkins ops finish')){if(command.contains('--send'))assert env.WL_FEISHU_CI_SECRET;else assert credentials==0;files['wl-ops-public/summary.json']='summary';events<<'finish';return mode in ['no-bot','interrupted']?2:0}
     else if(command.contains('jenkins ops claim-check')){
       assert env.WL_JENKINS_READ_TOKEN;assert !env.WL_FEISHU_CI_SECRET;events<<'claim'

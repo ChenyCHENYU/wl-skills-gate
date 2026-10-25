@@ -57,27 +57,32 @@ node "$WL_QUALITY_CLI" jenkins ops inspect --cluster "$WL_OPS_CLUSTER" --invento
     } finally {
       try {
       if (fileExists('wl-ops-public/inventory.json')) {
-        stage('记录缺项与飞书提醒') { env.WL_GATE_PHASE = '记录缺项与飞书提醒';
-          try { withEnv(["WL_OPS_RETRY_NOTICE=${params.RETRY_NOTIFICATION == true ? '1' : '0'}"]) { withCredentials([
-            string(credentialsId: 'wl-feishu-ci-webhook', variable: 'WL_FEISHU_CI_WEBHOOK'),
-            string(credentialsId: 'wl-feishu-ci-signing-secret', variable: 'WL_FEISHU_CI_SECRET')
-          ]) {
-            outcome = sh(returnStatus: true, script: '''#!/bin/sh
-set -eu
-set +x
-set -- jenkins ops finish --cluster "$WL_OPS_CLUSTER" --inventory "$WL_OPS_PUBLIC/inventory.json" --results "$WL_OPS_PUBLIC/projects" --out "$WL_OPS_PUBLIC/summary.json" --send
-if [ "$WL_OPS_RETRY_NOTICE" = '1' ]; then set -- "$@" --retry-notification; fi
-node "$WL_QUALITY_CLI" "$@"
-''')
-          } } } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException interrupted) { throw interrupted }
-          catch (Exception noticeFailure) {
-            echo '通知阶段未完成；请核对流水线机器人凭据。本次仍生成巡检原件，不登记消息送达。'
-            if (!fileExists('wl-ops-public/summary.json')) sh(returnStatus: true, script: '''#!/bin/sh
+        stage('记录缺项与飞书提醒') { env.WL_GATE_PHASE = '归档报告与通知';
+          sh(returnStatus: true, script: '''#!/bin/sh
 set -eu
 node "$WL_QUALITY_CLI" jenkins ops finish --cluster "$WL_OPS_CLUSTER" --inventory "$WL_OPS_PUBLIC/inventory.json" --results "$WL_OPS_PUBLIC/projects" --out "$WL_OPS_PUBLIC/summary.json"
 ''')
-            outcome = 2
+          archiveArtifacts artifacts: 'wl-ops-public/*.json,wl-ops-public/*.html,wl-ops-public/projects/*.json', allowEmptyArchive: false
+          def summary = readJSON(file: 'wl-ops-public/summary.json', returnPojo: true)
+          try {
+          withEnv(["WL_OPS_RUN=${summary.runId}", "WL_OPS_RETRY_NOTICE=${params.RETRY_NOTIFICATION == true ? '1' : '0'}"]) {
+            withCredentials([
+              usernamePassword(credentialsId: 'wl-jenkins-ci-readonly', usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN'),
+              string(credentialsId: 'wl-feishu-ci-webhook', variable: 'WL_FEISHU_CI_WEBHOOK'),
+              string(credentialsId: 'wl-feishu-ci-signing-secret', variable: 'WL_FEISHU_CI_SECRET')
+            ]) {
+              outcome = sh(returnStatus: true, script: '''#!/bin/sh
+set -eu
+set +x
+set -- jenkins ops notify --cluster "$WL_OPS_CLUSTER" --run-id "$WL_OPS_RUN" --out "$WL_OPS_PUBLIC/notification.json" --send
+if [ "$WL_OPS_RETRY_NOTICE" = '1' ]; then set -- "$@" --retry-notification; fi
+node "$WL_QUALITY_CLI" "$@"
+''')
+            }
           }
+          } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException interrupted) { throw interrupted }
+          catch (Exception noticeFailure) { outcome = 2; echo '报告已归档；通知或读取校验未完成，按本轮归档处理。' }
+          if (summary.status != 'ready') outcome = 2
         }
       }
       } finally { archiveArtifacts artifacts: 'wl-ops-public/*.json,wl-ops-public/*.html,wl-ops-public/projects/*.json', allowEmptyArchive: true }

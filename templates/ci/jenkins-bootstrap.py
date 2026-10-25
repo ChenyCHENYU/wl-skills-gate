@@ -56,7 +56,7 @@ def preflight(env):
     valid_root = root.is_absolute() and root.is_dir()
     check("gate-root", valid_root, "固定 Gate 目录可读取" if valid_root else "固定 Gate 目录不存在或不可读取：" + str(root),
           "在该Jenkins节点运行本包的接入Jenkins脚本；使用安装回执中的 gateHome。包内入口为 bin/wl-skills-gate.js。")
-    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.10")
+    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.11")
     try:
         package = json.loads((root / "package.json").read_text())
         observed = str(package.get("name")) + "@" + str(package.get("version"))
@@ -202,11 +202,20 @@ def failure_people(env):
         except (OSError, ValueError, KeyError, TypeError):
             pass
     people, owners = merged("people"), merged("owners")
+    corrections = directory.get("approvedCorrections", {})
+    for actor in corrections.get("people", []):
+        if actor in directory.get("people", {}):
+            people[actor] = directory["people"][actor]
+    for entry in owners.values():
+        if isinstance(entry, dict):
+            for change in corrections.get("technicalManagers", []):
+                if entry.get("technicalManager") == change.get("from"):
+                    entry["technicalManager"] = change.get("to")
     owner = owners.get(project, {})
     if not isinstance(owner, dict):
         owner = {"technicalManager": owner}
     trigger_id = env.get("WL_GATE_BUILD_USER_ID") or env.get("BUILD_USER_ID")
-    trigger_name = env.get("WL_GATE_BUILD_USER_NAME") or env.get("BUILD_USER") or trigger_id
+    trigger_name = people.get(trigger_id, {}).get("name") or env.get("WL_GATE_BUILD_USER_NAME") or env.get("BUILD_USER") or trigger_id
     public = not project and env.get("JOB_NAME", "").split("/")[-1] in ("wl-quality-doctor", "wl-quality-fleet", "wl-quality-central", "wl-quality-review", "wl-quality-verify")
     executor = next((env.get(k) for k in ("WL_GATE_BUILD_USER_ID", "BUILD_USER_ID", "gitlabUserUsername") if env.get(k) in people), None) or owner.get("executor")
     manager = owner.get("technicalManager")
