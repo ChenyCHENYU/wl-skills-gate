@@ -56,7 +56,7 @@ def preflight(env):
     valid_root = root.is_absolute() and root.is_dir()
     check("gate-root", valid_root, "固定 Gate 目录可读取" if valid_root else "固定 Gate 目录不存在或不可读取：" + str(root),
           "在该Jenkins节点运行本包的接入Jenkins脚本；使用安装回执中的 gateHome。包内入口为 bin/wl-skills-gate.js。")
-    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.11")
+    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.12")
     try:
         package = json.loads((root / "package.json").read_text())
         observed = str(package.get("name")) + "@" + str(package.get("version"))
@@ -257,20 +257,25 @@ def report_url(env, people):
     return origin.rstrip("/") + "/" + "/".join("job/" + urllib.parse.quote(part, safe="") for part in job.split("/")) + "/" + number + "/"
 
 
+def task_display_name(env):
+    job = env.get("JOB_NAME", "")
+    return {"wl-quality-doctor": "公共巡检", "wl-quality-fleet": "接入维护", "wl-quality-central": "质量消息采集", "wl-quality-review": "Review签发", "wl-quality-verify": "接线验证"}.get(job.split("/")[-1], job or "任务待识别")
+
+
 def card(report, env):
     def text(content, color="default", size="normal"):
         return {"tag": "div", "text": {"tag": "plain_text", "content": safe_text(content, env, 1800), "text_color": color, "text_size": size}}
     if env.get("WL_BOOTSTRAP_ACTION") == "notify-test":
         return {"msg_type": "interactive", "card": {"schema": "2.0", "header": {"template": "blue", "title": {"tag": "plain_text", "content": "流水线机器人 · 连通测试"}}, "body": {"elements": [
-            text("测试：" + env.get("JOB_NAME", "unknown") + " · #" + env.get("BUILD_NUMBER", "unknown")),
-            text("机器人签名消息已到群；请核对群与机器人名称。", "blue"),
+            text("测试来源：" + task_display_name(env) + " · 第" + env.get("BUILD_NUMBER", "unknown") + "次"),
+            text("这是一条机器人签名连通测试消息，请核对群与机器人名称。", "blue"),
             text("仅验证通知连通，不执行代码检查、构建、部署或签发，不表示质量通过。")
         ]}}}
     facts, people = failure_facts(report, env), failure_people(env)
     category = "、".join(dict.fromkeys(safe_text(f.get("label", "阶段执行失败"), env, 80) for f in facts))
     dimensions = "、".join(dict.fromkeys(DIMENSIONS.get(f.get("dimension"), "CI/CD与发布") for f in facts))
     elements = [text("⛔ 公共巡检中断｜本轮未完成项目检查" if people["public"] else "⛔ 本次执行未通过｜后续构建暂不放行", "red", "normal"),
-                text("任务：" + env.get("JOB_NAME", "unknown") + " · #" + env.get("BUILD_NUMBER", "unknown")),
+                text("检查来源：" + task_display_name(env) + " · 第" + env.get("BUILD_NUMBER", "unknown") + "次", "grey", "notation"),
                 text("触发人：" + people["trigger"] + "　｜　" + datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")),
                 text(people["names"]), text("阻断分类：" + category + "　｜　九维定位：" + dimensions, "orange")]
     for i, fact in enumerate(facts[:3]):

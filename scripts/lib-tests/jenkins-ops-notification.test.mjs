@@ -110,3 +110,28 @@ test('缺项信息中的token或地址凭据去敏；报告类型无效拒绝', 
   const content = json(opsNotification(r).payload); assert.doesNotMatch(content, /really-private|name:pass|token=private/);
   assert.throws(() => opsNotification({}), /真实运维接入检查报告/);
 });
+
+test('零项目认证失败只突出根因，内部任务及凭据编号不当作业务名称',()=>{
+  const r=report(),c=config();r.projects=[];r.execution={job:'wl-quality-doctor',number:105};
+  r.inventory={readerAccount:'existing-user',readVerified:false};
+  r.globalGaps=[{id:'JENKINS-AUTH',message:'巡检凭据wl-jenkins-ci-readonly认证失败（HTTP 401）'},
+    {id:'NO-TARGETS',message:'未识别业务项目'},{id:'REGISTRY',message:'项目登记未就绪：jenkins-bindings.json'}];
+  r.links={status:'unverified',reason:'详情归档HTTP 401'};c.publicTasks={recipients:['author','manager']};
+  const original=json(r),out=opsNotification(r,c),content=json(out.payload);
+  assert.match(content,/公共巡检｜账号认证失败/);assert.match(content,/第105次/);
+  assert.match(content,/existing-user/);assert.match(content,/真实Jenkins登录用户名/);
+  assert.match(content,/未检查项目Gate/);assert.match(content,/未执行九维/);
+  assert.doesNotMatch(content,/wl-quality-doctor|wl-jenkins-ci-readonly|jenkins-bindings|接入缺项 3|另有 2/);
+  assert.doesNotMatch(content,/open_url/);assert.equal(json(r),original);
+  assert.deepEqual(out.mentions.sort(),['verified-author','verified-manager']);
+});
+
+test('403、空范围和部分项目结果分别展示，避免错判认证失败或隐藏真实项目',()=>{
+  const r=report();r.projects=[];r.globalGaps=[{id:'JENKINS-PERMISSION',message:'任务HTTP 403'}];
+  let content=json(opsNotification(r,config()).payload);
+  assert.match(content,/任务读取受限/);assert.match(content,/ExtendedRead/);assert.doesNotMatch(content,/HTTP 401/);
+  r.globalGaps=[{id:'NO-TARGETS',message:'未找到目标分支'}];r.inventory={readVerified:true};
+  content=json(opsNotification(r,config()).payload);assert.match(content,/尚未识别可检查/);assert.doesNotMatch(content,/本轮未读取业务项目/);
+  r.projects=report().projects;r.globalGaps=[{id:'JENKINS-AUTH',message:'其他目录HTTP 401'}];
+  content=json(opsNotification(r,config()).payload);assert.match(content,/wl-produce/);assert.match(content,/项目未安装Gate/);
+});

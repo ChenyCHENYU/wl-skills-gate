@@ -60,6 +60,11 @@ test('连通测试卡片明确标识测试，不包含阻断结论或伪造检�
  const entry=renderJenkinsMaintenance({mode:'node'});assert.match(entry,/booleanParam\(name: 'TEST_NOTIFICATION', defaultValue: false/);assert.match(entry,/if \(env.WL_GATE_NOTIFICATION_TEST == 'true'\)/);
 });
 
+test('公共机器人连通卡用业务可读的来源名称，技术Job名不冒充项目',()=>{
+ const result=invoke(`import json\nenv={'WL_BOOTSTRAP_ACTION':'notify-test','JOB_NAME':'wl-quality-doctor','BUILD_NUMBER':'104'}\nr=m.card({},env)\ns=json.dumps(r,ensure_ascii=False)\nassert '测试来源：公共巡检 · 第104次' in s\nassert 'wl-quality-doctor' not in s\nassert '项目：' not in s\nassert '不表示质量通过' in s\nenv['JOB_NAME']='team/real-test-job'\ns=json.dumps(m.card({},env),ensure_ascii=False)\nassert 'team/real-test-job' in s\nprint('passed')`);
+ assert.equal(result.status,0,result.stderr);
+});
+
 test('批量维护入口仅归档公开摘要和本人批准记录，缺批准不写；凭据不传项目',()=>{
  const entry=renderJenkinsMaintenance({mode:'fleet',configDir:'/srv/config',agentLabel:'central-node'});
  assert.match(entry,/jenkins fleet/);assert.match(entry,/jenkins-fleet.json/);
