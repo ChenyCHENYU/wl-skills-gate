@@ -65,7 +65,7 @@ test('仅真实同源HTTPS本次记录可点击，缺失地址不伪造详情页
 });
 test('全局缺项分类且限前两条；恢复卡绿色但仍要求九维和Review', () => {
   const r = report(); r.globalGaps = Array.from({ length: 4 }, (_, i) => ({ id: 'credential-' + i, message: '公共凭据缺项' + i, action: '配置受控凭据' }));
-  assert.match(json(opsNotification(r).payload), /凭据／访问权限 4/);
+  assert.match(json(opsNotification(r).payload), /账号与访问 4/);
   r.globalGaps = []; r.projects[0].status = 'ready'; r.projects[0].gaps = []; r.status = 'ready'; r.recovered = true;
   const out = opsNotification(r, config()); assert.equal(out.payload.card.header.template, 'green'); assert.match(json(out.payload), /转入现有九维检查与Review准入/);
   r.globalGaps = [{ id: 'missing-config', message: '仍然缺配置' }]; assert.notEqual(opsNotification(r).payload.card.header.template, 'green');

@@ -56,7 +56,7 @@ def preflight(env):
     valid_root = root.is_absolute() and root.is_dir()
     check("gate-root", valid_root, "固定 Gate 目录可读取" if valid_root else "固定 Gate 目录不存在或不可读取：" + str(root),
           "在该Jenkins节点运行本包的接入Jenkins脚本；使用安装回执中的 gateHome。包内入口为 bin/wl-skills-gate.js。")
-    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.13")
+    expected = env.get("WL_BOOTSTRAP_GATE_VERSION", "0.13.19")
     try:
         package = json.loads((root / "package.json").read_text())
         observed = str(package.get("name")) + "@" + str(package.get("version"))
@@ -152,6 +152,10 @@ DIMENSIONS = {"submission": "代码提交", "branch": "分支管理", "coding": 
 
 
 def failure_facts(report, env):
+    if env.get("WL_GATE_FAILURE_KIND") == "timeout":
+        return [dict(category="timeout", label="执行超时", dimension="cicd", stage=env.get("WL_GATE_PHASE", "执行阶段"),
+                     reason=env.get("WL_GATE_FAILURE_MESSAGE") or "本阶段超过Jenkins执行时间预算，已停止执行。",
+                     action="核对本阶段实际耗时、排队及网络记录；恢复执行条件后重新检查，不将超时当作代码检查通过。")]
     blocked = [c for c in report.get("checks", []) if c.get("status") == "blocked"]
     if blocked:
         return [dict(category="environment", label="节点环境／接入缺项", dimension="cicd", stage="节点环境自检", reason=c.get("name", "自检") + "：" + c.get("detail", "未通过"), action=c.get("advice", "运维补齐该项后重跑节点复验")) for c in blocked]
@@ -274,13 +278,14 @@ def card(report, env):
     facts, people = failure_facts(report, env), failure_people(env)
     category = "、".join(dict.fromkeys(safe_text(f.get("label", "阶段执行失败"), env, 80) for f in facts))
     dimensions = "、".join(dict.fromkeys(DIMENSIONS.get(f.get("dimension"), "CI/CD与发布") for f in facts))
-    elements = [text("⛔ 公共巡检中断｜本轮未完成项目检查" if people["public"] else "⛔ 本次执行未通过｜后续构建暂不放行", "red", "normal"),
+    elements = [text("⛔ 公共巡检未完成｜业务任务状态不变" if people["public"] else "⛔ 本次执行未通过｜后续构建暂不放行", "red", "normal"),
                 text("检查来源：" + task_display_name(env) + " · 第" + env.get("BUILD_NUMBER", "unknown") + "次", "grey", "notation"),
                 text("触发人：" + people["trigger"] + "　｜　" + datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")),
                 text(people["names"]), text("阻断分类：" + category + "　｜　九维定位：" + dimensions, "orange")]
     for i, fact in enumerate(facts[:3]):
+        action = "公共任务责任人核对本轮错误；按需重跑巡检。业务检查和构建仍以各项目自己的门禁为准。" if people["public"] and fact.get("category") in ("execution", "diagnostic-missing") else fact.get("action", "运维补齐本轮失败原件后复查")
         elements += [text(str(i + 1) + ". " + fact.get("stage", "执行阶段") + "｜" + fact.get("reason", "具体原因记录缺失"), "red"),
-                     text("处理：" + fact.get("action", "运维补齐本轮失败原件后复查"), "blue")]
+                     text("处理：" + action, "blue")]
     if len(facts) > 3:
         elements.append(text("另有 " + str(len(facts) - 3) + " 项失败，完整记录见下方。", "grey"))
     elements.append(text("本轮未取得有效扫描结果；代码风险未判定。", "grey", "notation"))
@@ -297,11 +302,13 @@ def card(report, env):
         elements.append({"tag": "markdown", "text_size": "normal", "content": " ".join('<at id="' + x + '"></at>' for x in people["mentions"]) + " 请关注上述阻断项，落实修复、复检与回归闭环。"})
     if people["missing"]:
         elements.append(text("责任人提醒未完成：" + "、".join(people["missing"]) + "未匹配身份；补齐人员映射后复检。", "orange"))
-    return {"msg_type": "interactive", "card": {"schema": "2.0", "header": {"template": "red", "title": {"tag": "plain_text", "content": (safe_text(people["project"], env, 80) + " · " if people["project"] else "公共任务 · ") + category}}, "body": {"padding": "10px 16px 12px 16px", "vertical_spacing": "6px", "elements": elements}}}
+    return {"msg_type": "interactive", "card": {"schema": "2.0", "header": {"template": "red", "title": {"tag": "plain_text", "content": (safe_text(people["project"], env, 80) if people["project"] else task_display_name(env)) + " · " + category}}, "body": {"padding": "10px 16px 12px 16px", "vertical_spacing": "6px", "elements": elements}}}
 
 
 def notify(report, env, opener=None, now=None):
     # These two credentials are bound only in post-failure, never while running source.
+    if env.get("WL_GATE_FAILURE_KIND") == "cancelled":
+        return dict(status="skipped", reason="用户主动停止，已留痕，不发送系统故障或项目质量告警", providerAccepted=False, notificationRequired=False, originalFailurePreserved=True)
     webhook, secret = env.get("WL_FEISHU_CI_WEBHOOK", ""), env.get("WL_FEISHU_CI_SECRET", "")
     parsed = urllib.parse.urlparse(webhook)
     if parsed.scheme != "https" or parsed.hostname != "open.feishu.cn" or parsed.port or parsed.username or parsed.password or parsed.query or parsed.fragment or not re.fullmatch(r"/open-apis/bot/v2/hook/[A-Za-z0-9-]+", parsed.path) or not secret:
@@ -337,19 +344,28 @@ def main():
         return 2
     directory.mkdir(mode=0o700, exist_ok=True)
     filename = directory / (run + "-preflight.json")
-    if any((directory / (run + suffix)).is_symlink() for suffix in ("-preflight.json", "-notice.json", "-card.json")):
+    if any((directory / (run + suffix)).is_symlink() for suffix in ("-preflight.json", "-notice.json", "-card.json", "-stop.json")):
         print("阻断：本轮自检文件是符号链接，不读取、写入或推送。")
         return 2
+    if env.get("WL_BOOTSTRAP_ACTION") == "record-stop":
+        if env.get("WL_GATE_FAILURE_KIND") != "cancelled":
+            print("阻断：停止记录缺少Jenkins主动停止分类。")
+            return 2
+        receipt = {**notify({}, env), "job": env.get("JOB_NAME"), "buildNumber": env.get("BUILD_NUMBER"), "message": safe_text(env.get("WL_GATE_FAILURE_MESSAGE", ""), env), "qualityPassed": False, "buildAuthorized": False}
+        (directory / (run + "-stop.json")).write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
+        print(receipt["reason"])
+        return 0
     if env.get("WL_BOOTSTRAP_ACTION") in ("notify", "notify-test"):
         try:
             report = json.loads(filename.read_text())
         except (OSError, ValueError):
             report = {"checks": []}
-        (directory / (run + "-card.json")).write_text(json.dumps(card(report, env), ensure_ascii=False, indent=2) + "\n")
+        if env.get("WL_GATE_FAILURE_KIND") != "cancelled":
+            (directory / (run + "-card.json")).write_text(json.dumps(card(report, env), ensure_ascii=False, indent=2) + "\n")
         receipt = notify(report, env)
         (directory / (run + "-notice.json")).write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
         print("飞书通知：" + receipt["status"] + "；" + receipt["reason"])
-        return 0 if receipt["status"] == "sent" else 3
+        return 0 if receipt["status"] in ("sent", "skipped") else 3
     report = preflight(env)
     filename.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     for check in report["checks"]:

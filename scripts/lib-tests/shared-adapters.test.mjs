@@ -133,6 +133,12 @@ test("报告生产失败保留脱敏后的真实诊断，不向报告泄露口�
     assert(!result.reason.includes("fixture-secret"));
   }
 });
+test('原生Kit未验证仍阻断，但保留重复字典等真实上游原因并脱敏',async t=>{
+ const report={executionStatus:'failed',validationStatus:'unverified',summary:{errors:1},issues:[{rule:'VALIDATION',text:'src/views/rolling/dicts.ts: 字典编码重复: pz_mat_status password=fixture-secret'}]};
+ const ctx=fixture(t,{'native.mjs':`console.log(${JSON.stringify(JSON.stringify(report))})`});
+ const result=await cmdRun({command:'node native.mjs',format:'wl-kit'},ctx);
+ assert.equal(result.status,'invalid');assert.match(result.reason,/缺少实际执行回执/);assert.match(result.reason,/dicts.ts.*字典编码重复: pz_mat_status/);assert.doesNotMatch(result.reason,/fixture-secret/);assert.equal(result.findings,undefined);
+});
 
 test("Gate 完整决策：预警可通过、确定缺陷阻断、报告失效 invalid", async (t) => {
   const check = { id: "PMD", tool: "java-xml", format: "pmd", profiles: ["standard"], file: "quality-reports/pmd.xml", command: "node report.mjs" };

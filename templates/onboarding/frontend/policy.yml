@@ -22,7 +22,7 @@ checks:
     dimension: 编码规范
     tool: cmd-json
     format: wl-kit
-    command: node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js validate src/views --json
+    command: node node_modules/@agile-team/wl-skills-kit/bin/wl-skills.js validate src/views --typecheck --json
     captureStdout: true
     file: quality-reports/native/kit.json
     okExitCodes: [0, 1]

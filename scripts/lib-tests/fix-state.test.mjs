@@ -53,3 +53,11 @@ test('实际暂存区被绕过隔离修改时不回滚并发操作，保留人�
   assert.equal(git(['show', ':other.txt'], f.root), 'concurrent'); assert.equal(readFileSync(path.join(f.root, 'src.txt'), 'utf8'), 'fixed'); assert.deepEqual(result.fixReport.fixed, []);
   assert(existsSync(result.fixReport.originalIndexFile)); assert.equal(result.fixReport.recovery.automaticGitResetPerformed, false);
 });
+test('ESLint的局部fix标志不再隐式授权整文件所有规则修复',async t=>{
+ const f=fixture(t),file=path.join(f.root,'quality/policy.json');
+ const policy=JSON.parse(readFileSync(file));policy.checks[0].tool='eslint';policy.checks[0].command='node scan.mjs';writeFileSync(file,JSON.stringify(policy));
+ writeFileSync(path.join(f.root,'scan.mjs'),`console.log(JSON.stringify([{filePath:${JSON.stringify(path.join(f.root,'src.txt'))},messages:[{ruleId:'vue/attributes-order',severity:1,line:1,message:'排序',fix:{range:[0,1],text:'x'}}]}]));`);
+ const scan=await runGate({argv:['--root',f.root]});assert.equal(scan.exitCode,0);
+ const plan=buildFixPlan(path.join(f.root,'quality-reports/quality-summary.json'),{root:f.root}).plan;
+ assert.equal(plan.items[0].action,'manual');assert.equal(plan.items[0].command,null);assert.equal(readFileSync(path.join(f.root,'src.txt'),'utf8'),'bad');
+});

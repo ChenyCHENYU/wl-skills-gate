@@ -12,20 +12,27 @@ def call(Map cfg = [:]) {
     test -d "$WL_QUALITY_REPORT_ARCHIVE_ROOT"
     case "$WL_QUALITY_REPORT_ARCHIVE_ROOT/" in /*) ;; *) exit 2 ;; esac
     case "$WL_QUALITY_REPORT_ARCHIVE_ROOT/" in "$WORKSPACE/"*) printf '%s\\n' '报告持久卷不能是临时工作区'; exit 2 ;; esac
+    set --
+    if [ -n "${WL_GATE_BINDINGS:-}" ] && [ -n "${WL_GATE_FAILURE_CONFIG_DIR:-}" ]; then
+      set -- --registry "$WL_GATE_BINDINGS" --config-dir "$WL_GATE_FAILURE_CONFIG_DIR"
+    fi
     node "$WL_APPROVED_GATE_CLI" report-publication archive \
       --summary quality-reports/quality-summary.json \
       --review-index quality-reports/review-latest.json \
       --out-dir quality-reports/report-archives \
-      --jenkins-build-url "$BUILD_URL" --out quality-reports/report-publication.json
+      --jenkins-build-url "$BUILD_URL" --out quality-reports/report-publication.json "$@"
     node "$WL_APPROVED_GATE_CLI" report-publication archive \
       --summary quality-reports/quality-summary.json \
       --review-index quality-reports/review-latest.json \
       --out-dir "$WL_QUALITY_REPORT_ARCHIVE_ROOT" \
-      --jenkins-build-url "$BUILD_URL" --out quality-reports/report-retention.json
+      --jenkins-build-url "$BUILD_URL" --out quality-reports/report-retention.json "$@"
   '''
   def publication = readJSON(file: 'quality-reports/report-publication.json', returnPojo: true)
   def retained = readJSON(file: 'quality-reports/report-retention.json', returnPojo: true)
   if (publication.archiveId != retained.archiveId || publication.htmlSha256 != retained.htmlSha256) error('持久归档与待发布报告不一致')
+  // A message links to this specific build. Keep its published HTML and logs
+  // when the job's normal "last N builds" discarder runs.
+  currentBuild.keepLog = true
   publishHTML(target: [allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
     reportDir: "quality-reports/report-archives/batches/${publication.archiveId}",
     reportFiles: "${publication.relativeDirectory}/index.html",

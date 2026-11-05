@@ -1,6 +1,6 @@
 {
   "name": "@agile-team/wl-skills-gate",
-  "version": "0.13.13",
+  "version": "0.13.19",
   "description": "质量工程执行包 — 统一接入、九维Review证据授权、自动门禁、可信CI采集与分类治理通知",
   "type": "module",
   "main": "./lib/run.js",
@@ -11,9 +11,11 @@
     "wl-quality": "bin/wl-quality.js"
   },
   "scripts": {
+    "version": "node scripts/sync-package-version.mjs",
+    "prepack": "node scripts/sync-package-version.mjs --check",
     "verify:chain": "node scripts/verify-quality-chain.mjs",
-    "test": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs",
-    "verify": "node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs"
+    "test": "node scripts/sync-package-version.mjs --check && node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs",
+    "verify": "node scripts/sync-package-version.mjs --check && node --test scripts/lib-tests/*.test.mjs && node scripts/run-fixtures.mjs && node scripts/run-integration.mjs"
   },
   "files": [
     "npm-shrinkwrap.json",

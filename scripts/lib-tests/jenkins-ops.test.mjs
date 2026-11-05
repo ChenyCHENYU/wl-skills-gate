@@ -246,6 +246,21 @@ test('HTML把项目、Job和缺项当不可信文本转义，不形成脚本与�
   const html = opsReportHtml({checkedAt: '<script>alert(1)</script>', status: 'attention', globalGaps: [{message: '<img src=x onerror=alert(1)>', action: '& " < >'}], projects: [{key: 'x" onclick="alert(1)', project: '<script>project()</script>', branch: '<b>test</b>', jobs: ['<img src=x>'], gaps: [{id: '<svg>', message: '<iframe>', action: '<script>fix()</script>'}]}]});
   assert.doesNotMatch(html, /<script>|<img\b|<iframe>|<svg>|<b>test/);
   assert.match(html, /&lt;script&gt;project\(\)&lt;\/script&gt;/);
-  assert.match(html, /id="x&quot; onclick=&quot;alert\(1\)"/);
+  assert.match(html, /id="project-1"/);
+  assert.doesNotMatch(html, /id="x|onclick="alert/);
   assert.match(html, /&amp; &quot; &lt; &gt;/);
+});
+
+test('已批准的人工 CHECK 不误报缺少 Push，未经批准的自动触发仍拒绝',async t=>{
+ const f=await controlledProject(t),registry=JSON.parse(readFileSync(f.registryFile));
+ registry.bindings[0].checkTriggerMode='manual';put(path.dirname(f.registryFile),path.basename(f.registryFile),registry);
+ const binding=registry.bindings[0],script=nativePipelineEntry(registry.nativeEntry);
+ const manual=renderFleetJob({binding,script,mode:'check'});
+ assert(!manual.includes('GitLabPushTrigger'));
+ const provider=jenkinsProvider(new Map([[binding.jobs.check,manual]]));
+ const good=await inventoryOps({clusterFile:f.clusterFile,env:readEnv,fetchImpl:provider.fetchImpl});
+ assert(!good.targets[0].gaps.some(g=>g.id==='JOB-ENTRY'));
+ const pushed=renderFleetJob({binding:{...binding,checkTriggerMode:'push'},script,mode:'check',secret:'fixture'});
+ const bad=await inventoryOps({clusterFile:f.clusterFile,env:readEnv,fetchImpl:jenkinsProvider(new Map([[binding.jobs.check,pushed]])).fetchImpl});
+ assert(bad.targets[0].gaps.some(g=>g.id==='JOB-ENTRY'));
 });

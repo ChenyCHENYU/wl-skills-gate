@@ -4,6 +4,7 @@ def wlOpsRun(Map cfg) {
   dir('wl-ops-public') { deleteDir(); dir('projects') { writeFile file: '.keep', text: '' } }
   def inventory = null
   def outcome = 2
+  def collectionInterrupted = false
   withEnv(["WL_QUALITY_CLI=${cfg.gateRoot}/bin/wl-quality.js", "WL_OPS_CLUSTER=${cfg.clusterFile}", "WL_OPS_PUBLIC=${publicRoot}"]) {
     try {
       stage('发现项目与流水线') { env.WL_GATE_PHASE = '发现项目与流水线';
@@ -54,15 +55,18 @@ node "$WL_QUALITY_CLI" jenkins ops inspect --cluster "$WL_OPS_CLUSTER" --invento
           }
         }
       }
+    } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException stopped) {
+      collectionInterrupted = true
+      throw stopped
     } finally {
       try {
-      if (fileExists('wl-ops-public/inventory.json')) {
+      if (!collectionInterrupted && fileExists('wl-ops-public/inventory.json')) {
         stage('记录缺项与飞书提醒') { env.WL_GATE_PHASE = '归档报告与通知';
           sh(returnStatus: true, script: '''#!/bin/sh
 set -eu
 node "$WL_QUALITY_CLI" jenkins ops finish --cluster "$WL_OPS_CLUSTER" --inventory "$WL_OPS_PUBLIC/inventory.json" --results "$WL_OPS_PUBLIC/projects" --out "$WL_OPS_PUBLIC/summary.json"
 ''')
-          archiveArtifacts artifacts: 'wl-ops-public/*.json,wl-ops-public/*.html,wl-ops-public/projects/*.json', allowEmptyArchive: false
+          archiveArtifacts artifacts: 'wl-ops-public/*.json,wl-ops-public/*.html,wl-ops-public/*.css,wl-ops-public/projects/*.json', allowEmptyArchive: false
           def summary = readJSON(file: 'wl-ops-public/summary.json', returnPojo: true)
           try {
           withEnv(["WL_OPS_RUN=${summary.runId}", "WL_OPS_RETRY_NOTICE=${params.RETRY_NOTIFICATION == true ? '1' : '0'}"]) {
@@ -80,12 +84,17 @@ node "$WL_QUALITY_CLI" "$@"
 ''')
             }
           }
+          // Preserve the exact run referenced by a sent or uncertain notice.
+          if (fileExists('wl-ops-public/notification.json')) {
+            def notice = readJSON(file: 'wl-ops-public/notification.json', returnPojo: true)
+            if (notice.notification?.status in ['sent', 'unknown']) currentBuild.keepLog = true
+          }
           } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException interrupted) { throw interrupted }
           catch (Exception noticeFailure) { outcome = 2; echo '报告已归档；通知或读取校验未完成，按本轮归档处理。' }
           if (summary.status != 'ready') outcome = 2
         }
       }
-      } finally { archiveArtifacts artifacts: 'wl-ops-public/*.json,wl-ops-public/*.html,wl-ops-public/projects/*.json', allowEmptyArchive: true }
+      } finally { archiveArtifacts artifacts: 'wl-ops-public/*.json,wl-ops-public/*.html,wl-ops-public/*.css,wl-ops-public/projects/*.json', allowEmptyArchive: true }
     }
   }
   if (fileExists('wl-ops-public/summary.json')) {

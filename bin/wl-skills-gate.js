@@ -76,13 +76,14 @@ try {
     const result = await runGate({ argv: rest }); process.exitCode = result.exitCode;
     if(result.exitCode===2)recordJenkinsFailure((result.summary?.decision?.reasons || ['本轮扫描失效，未取得有效结果']).join('；'),{command:'run'});
   } else if (command === "report-publication") {
-    const action = rest.shift(), o = options(["--input", "--summary", "--review-index", "--out-dir", "--jenkins-build-url", "--manifest", "--jenkins-origin", "--user-env", "--token-env", "--out"]);
+    const action = rest.shift(), o = options(["--input", "--summary", "--review-index", "--out-dir", "--jenkins-build-url", "--manifest", "--jenkins-origin", "--user-env", "--token-env", "--out", "--registry", "--config-dir"]);
     const r = await import("../lib/report-publication.js");
     let result;
     if (action === "archive") {
       if (!!o["--input"] === !!o["--summary"] || !o["--out-dir"]) throw new Error("归档需要--input或--summary二选一，以及--out-dir");
       const { readFileSync } = await import("node:fs");
-      const input = o["--input"] ? JSON.parse(readFileSync(o["--input"], "utf8")) : r.publicationInput({ summaryFile: o["--summary"], reviewIndexFile: o["--review-index"] });
+      if (!!o["--registry"] !== !!o["--config-dir"] || (o["--input"] && o["--registry"])) throw Error("可信流水线展示需要--registry与--config-dir成对提供，并读取本轮--summary");
+      const input = o["--registry"] ? (await import('../lib/jenkins-report-presentation.js')).jenkinsReportInput({summaryFile:o["--summary"],reviewIndexFile:o["--review-index"],registryFile:o["--registry"],configDir:o["--config-dir"]}) : o["--input"] ? JSON.parse(readFileSync(o["--input"], "utf8")) : r.publicationInput({ summaryFile: o["--summary"], reviewIndexFile: o["--review-index"] });
       result = r.archiveQualityReport({ input, outDir: path.resolve(o["--out-dir"]), jenkinsBuildUrl: o["--jenkins-build-url"] || process.env.BUILD_URL });
     } else if (action === "verify") {
       if (!o["--manifest"] || !(o["--jenkins-origin"] || process.env.JENKINS_URL)) throw new Error("验收需要--manifest和批准的Jenkins入口");
@@ -283,6 +284,26 @@ try {
       rule: o["--rule"], limit: o["--limit"], maxBytes: o["--max-bytes"], cursor: o["--cursor"] });
     process.stdout.write(r.text);
     process.exitCode = r.exitCode;
+  } else if (command === "safe-repair") {
+    const o=options(["--root","--targets","--confirm","--out"]);
+    if(o.positional.length)throw Error('safe-repair 不接受位置参数');
+    const {planSafeRepair,applySafeRepair}=await import('../lib/safe-repair.js');
+    const plan=planSafeRepair({root:path.resolve(o['--root']||'.'),targets:o['--targets']?o['--targets'].split(','):['src']});
+    if(o['--out']){
+      const relative=path.relative(plan.root,path.resolve(o['--out']));
+      if(relative!== '..'&&!relative.startsWith('..'+path.sep)&&!path.isAbsolute(relative)&&!relative.startsWith('quality-reports'+path.sep))throw Error('安全修复预览只能写入quality-reports或项目外新文件，不能覆盖源码/配置');
+      protectOutput(o['--out'],plan.inventory.map(f=>path.join(plan.root,f.file)),plan.root);writeJson(o['--out'],plan);
+    }
+    console.log(`[safe-repair] 可修复 ${plan.items.length} 个文件、${plan.items.reduce((n,f)=>n+f.edits.length,0)} 处；保留人工核对 ${plan.skipped.length} 处。`);
+    if(o['--confirm']){
+      const receipt=applySafeRepair(plan,{confirm:true});
+      console.log(`[safe-repair] 已应用限定冗余语法修复；现在执行完整复扫。回执：${receipt.outDir}`);
+      const scan=await runGate({argv:['--root',plan.root,'--profile','standard']});
+      const result={...receipt,verification:scan.summary.decision.status,rescanEventId:scan.summary.run.eventId,rescanExitCode:scan.exitCode};
+      writeFileSync(path.join(receipt.outDir,'receipt.json'),JSON.stringify(result,null,2));
+      process.exitCode=scan.exitCode;
+      console.log(`[safe-repair] 复扫=${scan.summary.decision.status}；未签发正式Review、未启动构建或部署。`);
+    }else console.log('[safe-repair] 只读预览；加--confirm应用后自动复扫，未解决项继续拦截。');
   } else if (command === "fix") {
     const o = options(["--plan", "--apply", "--root", "--profile", "--confirm"]);
     if (!!o["--plan"] === !!o["--apply"]) throw new Error("fix 必须且只能选择 --plan 或 --apply");
@@ -354,5 +375,5 @@ try {
     if (rest.length) throw new Error("self-test 不接受额外参数");
     const { runAllFixtures } = await import("../scripts/run-fixtures.mjs");
     process.exitCode = await runAllFixtures();
-  } else throw new Error("用法: wl-skills-gate <setup|onboard|jenkins|ci-prepare|verify-release-review|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
+  } else throw new Error("用法: wl-skills-gate <setup|onboard|jenkins|ci-prepare|verify-release-review|run|doctor|automation|control|collect-ci|review-facts|review-ci|review-collect|review-publish|lifecycle-build|lifecycle-review|governance|inspect|cost|safe-repair|fix|validate-report|commit-message|manifest|attest|attest-collected|release-set|deployment|review-draft|review-sign|verify-artifact|promote|promote-apply|self-test>，详见 docs/README.md");
 } catch (e) { recordJenkinsFailure(e,{command:[command,...rest.slice(0,1)].join(' ')}); console.error(`[${command || "wl-skills-gate"}] ${e.message}`); process.exitCode = 2; }

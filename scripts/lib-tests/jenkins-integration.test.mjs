@@ -91,6 +91,21 @@ test('服务端接线预检自动读配置并生成摘要，漏Gate、误触发�
   const result=await verifyJenkinsJobs({registryFile:f.registryFile,env,fetchImpl});assert.equal(result.jobs.length,2);assert.equal(result.runtimeExecuted,false);assert.equal(result.jobs[0].jobConfigHash.length,64);assert.doesNotMatch(JSON.stringify(result),/fixture-secret|private/);
   for(const value of ['skip','wrong-branch','403']){mode=value;await assert.rejects(verifyJenkinsJobs({registryFile:f.registryFile,env,fetchImpl}));}
 });
+test('人工触发仅核验当前Job：无Webhook可通过，误拼部署代码或偷偷加定时立即拒绝',async t=>{
+ const f=fixture(t,{build:true});f.seed.binding.checkTriggerMode='manual';put(f.base,'seed.json',f.seed);const bound=await bind(f);
+ const escaped=bound.pipelineScript.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+ let script=escaped,triggers='',reads=[];
+ const fetchImpl=async url=>{reads.push(url);return new Response(`<flow-definition><definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition"><script>${script}</script><sandbox>true</sandbox></definition><disabled>false</disabled><triggers>${triggers}</triggers></flow-definition>`);};
+ const opts={registryFile:f.registryFile,job:'produce/CHECK',env:{WL_JENKINS_READ_USER:'fixture',WL_JENKINS_READ_TOKEN:'private'},fetchImpl};
+ const result=await verifyJenkinsJobs(opts);assert.equal(result.jobs.length,1);assert.equal(reads.length,2);assert(reads.every(u=>u.includes('/CHECK/')));
+ reads=[];script=escaped+'\npipeline { agent any; stages { stage("部署") { steps { echo "unexpected" } } } }';
+ await assert.rejects(verifyJenkinsJobs(opts),/漏接、改写或绕过/);assert.equal(reads.length,1);
+ script=escaped;triggers='<hudson.triggers.TimerTrigger><spec>H/5 * * * *</spec></hudson.triggers.TimerTrigger>';
+ await assert.rejects(verifyJenkinsJobs(opts),/人工检查任务不得/);
+ reads=[];await assert.rejects(verifyJenkinsJobs({...opts,job:'another/Job'}),/指定Job没有批准登记/);assert.equal(reads.length,0);
+ const template=readFileSync(path.join(GATE_ROOT,'templates/ci/jenkins-gate.groovy'),'utf8');
+ assert(template.indexOf('jenkins verify-jobs')<template.indexOf('checkout('));assert.match(template,/--job "\$JOB_NAME"/);assert.match(template,/job-wiring\.json/);
+});
 
 test('真实CLI预览/写入和inspect；错误参数/受控路径链接均返回非零',t=>{
   const f=fixture(t),cli=path.join(GATE_ROOT,'bin/wl-skills-gate.js');

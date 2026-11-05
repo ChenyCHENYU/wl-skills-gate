@@ -3,6 +3,7 @@ def call(Map cfg) {
   def context = null
   def admission = null
   def cleanWorkspace = false
+  def wiring = null
   withEnv(["WL_GATE_CLI=${cfg.gateRoot}/bin/wl-skills-gate.js", "WL_GATE_BINDINGS=${cfg.registry}"]) {
     try {
       stage('接入预检') { env.WL_GATE_PHASE = '接入预检';
@@ -10,6 +11,16 @@ def call(Map cfg) {
           'node "$WL_GATE_CLI" jenkins inspect --registry "$WL_GATE_BINDINGS"').trim(), returnPojo: true)
         env.WL_GATE_PROJECT = context.project
         echo "Gate：${context.project} / ${context.branch} / ${context.scope} / ${context.mode}"
+        // Only this Job is read twice. Credentials end before checkout and
+        // before any project command; no fleet polling or all-Job scan.
+        withCredentials([usernamePassword(credentialsId: context.reportReaderCredentialId,
+          usernameVariable: 'WL_JENKINS_READ_USER', passwordVariable: 'WL_JENKINS_READ_TOKEN')]) {
+          wiring = readJSON(text: sh(returnStdout: true, script: '''#!/bin/sh
+set -eu
+set +x
+node "$WL_GATE_CLI" jenkins verify-jobs --registry "$WL_GATE_BINDINGS" --job "$JOB_NAME"
+''').trim(), returnPojo: true)
+        }
       }
       stage('检出固定目标') { env.WL_GATE_PHASE = '检出固定目标';
         deleteDir()
@@ -21,13 +32,15 @@ def call(Map cfg) {
           extensions: [[$class: 'CloneOption', shallow: false, noTags: true, honorRefspec: true],
             [$class: 'LocalBranch', localBranch: context.branch]]
         ])
+        sh 'mkdir -p quality-reports/ci-integration'
+        writeJSON file: 'quality-reports/ci-integration/job-wiring.json', json: wiring
       }
       if (context.mode == 'check') {
         stage('质量检查与九维证据') { env.WL_GATE_PHASE = '质量检查与九维证据';
           def checked = sh(returnStatus: true, script: 'node "$WL_GATE_CLI" jenkins check --registry "$WL_GATE_BINDINGS"')
           if (checked != 0) {
             env.WL_GATE_FAILURE_KIND = checked == 1 && fileExists('quality-reports/quality-summary.json') ? 'quality' : 'execution'
-            error("质量检查未通过：${checked}；本次报告由中央采集后分类通知。")
+            error("质量检查未通过（退出码${checked}），后续构建停止。")
           }
         }
       } else {
@@ -62,9 +75,30 @@ def call(Map cfg) {
       try {
         // Never publish leftovers if failure occurred before the clean checkout.
         if (cleanWorkspace && context?.mode == 'check' && fileExists('quality-reports/quality-summary.json')) {
+          env.WL_GATE_PHASE = '报告发布与结果通知'
           withEnv(["WL_APPROVED_GATE_CLI=${cfg.gateRoot}/bin/wl-skills-gate.js", "WL_QUALITY_REPORT_ARCHIVE_ROOT=${context.reportArchiveRoot}"]) {
             try {
               load("${cfg.gateRoot}/templates/ci/jenkins-quality-report.groovy").call(readerCredentialId: context.reportReaderCredentialId)
+              // Quality reporting is event driven by this CHECK. It does not
+              // require the optional cluster inventory or a polling scheduler.
+              env.WL_GATE_FAILURE_KIND = 'quality'
+              withEnv(["WL_CHECK_NOTICE_CONFIG=${cfg.configDir}"]) {
+                withCredentials([
+                  string(credentialsId: 'wl-feishu-ci-webhook', variable: 'WL_FEISHU_CI_WEBHOOK'),
+                  string(credentialsId: 'wl-feishu-ci-signing-secret', variable: 'WL_FEISHU_CI_SECRET'),
+                  usernamePassword(credentialsId: context.reportReaderCredentialId, usernameVariable: 'WL_JENKINS_REPORT_USER', passwordVariable: 'WL_JENKINS_REPORT_TOKEN')
+                ]) {
+                  def notified = sh(returnStatus: true, script: '''#!/bin/sh
+set -eu
+set +x
+node "$WL_GATE_CLI" jenkins notify-check --registry "$WL_GATE_BINDINGS" --config-dir "$WL_CHECK_NOTICE_CONFIG" > quality-reports/ci-integration/notification.json
+''')
+                  if (notified != 0) {
+                    currentBuild.result = 'UNSTABLE'
+                    echo '当前检查报告已发布；通知未完整确认，查看本轮notification.json，禁止自动重发或据此放行。'
+                  }
+                }
+              }
             } catch (Exception publicationFailure) {
               env.WL_GATE_FAILURE_KIND = 'execution'
               throw publicationFailure

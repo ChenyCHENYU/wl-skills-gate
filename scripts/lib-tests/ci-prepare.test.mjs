@@ -8,6 +8,7 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {planOnboarding,applyOnboarding} from '../../lib/onboard.js';
 import {planCiPreparation,prepareCiDependencies} from '../../lib/ci-prepare.js';
+import {planWorkspaceInitialization} from '../../lib/workspace-init.js';
 const PACKAGE=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const VERSION=JSON.parse(readFileSync(path.join(PACKAGE,'package.json'))).version;
 const REGISTRY='https://registry.example.invalid/';
@@ -21,4 +22,17 @@ test('CI复用真实onboard提交清单，固定源按锁安装且不执行生�
 test('没有中央批准/错误摘要、脏checkout和未知prepare均在安装前拦截',t=>{const r=fixture(t),calls=[],run=runner(r,calls),p=planCiPreparation({root:r,runner:run});assert.throws(()=>prepareCiDependencies({root:r,runner:run,expectWorkspaceHash:p.workspaceHash,expectLockHash:p.lockHash}),/中央批准/);assert.throws(()=>prepareCiDependencies({root:r,runner:run,confirm:true,expectWorkspaceHash:'0'.repeat(64),expectLockHash:p.lockHash}),/中央批准摘要/);put(r,'unexpected.js','bad');assert.equal(apply(r,run).status,'blocked');rmSync(path.join(r,'unexpected.js'));const pkg=JSON.parse(readFileSync(path.join(r,'quality-tools/package.json')));pkg.scripts.postinstall='touch /tmp/wl-ci-must-not-execute';put(r,'quality-tools/package.json',pkg);commit(r);const malicious=planCiPreparation({root:r,runner:run});assert.equal(malicious.status,'blocked');assert.ok(malicious.blockers.some(x=>/生命周期|适配/.test(x.reason)));assert.equal(calls.filter(c=>c.args[0]==='ci').length,0);});
 test('安装失败、改变锁/源码及假工具版本都停止后续阶段并留实际失败回执',async t=>{for(const mode of ['install-fails','mutate-source','mutate-lock','wrong-version'])await t.test(mode,sub=>{const r=fixture(sub),calls=[],run=runner(r,calls,{mode});const result=apply(r,run);assert.equal(result.status,'blocked');assert.equal(result.qualityPassed,false);assert.ok(result.failure);assert.ok(existsSync(result.executionReceipt));assert.equal(spawnSync('git',['-C',r,'config','--get','core.hooksPath']).status,1);assert.equal(existsSync(path.join(r,'.quality-workspace.lock')),false);});});
 test('并发工作区锁阻止CI与本机同时安装；预览零项目写入',t=>{const r=fixture(t),calls=[],run=runner(r,calls),p=planCiPreparation({root:r,runner:run});put(r,'.quality-workspace.lock','foreign owner');assert.throws(()=>apply(r,run,p),/已有安装任务/);assert.equal(readFileSync(path.join(r,'.quality-workspace.lock'),'utf8'),'foreign owner');assert.equal(calls.filter(c=>c.args[0]==='ci').length,0);});
+test('Jenkins禁用本地Hook不是开发者绕过检查：CI保留禁用配置但仍核验提交资产，本地冲突继续阻断',t=>{
+ const r=fixture(t),calls=[],run=runner(r,calls);git(r,'config','core.hooksPath','/dev/null');
+ const saved=process.env.CI;
+ try{
+  delete process.env.CI;
+  const local=planWorkspaceInitialization({root:r,runner:run});assert(local.blockers.some(b=>/core.hooksPath/.test(b.reason)));
+  process.env.CI='true';
+  const p=planCiPreparation({root:r,runner:run});assert.equal(p.status,'preview',JSON.stringify(p.blockers));
+  assert.equal(apply(r,run,p).status,'dependencies-prepared');assert.equal(git(r,'config','--get','core.hooksPath'),'/dev/null');
+  const manifest=JSON.parse(readFileSync(path.join(r,'quality/workspace.json')));put(r,manifest.hookFiles[0].path,'changed hook');commit(r);
+  assert(planCiPreparation({root:r,runner:run}).blockers.some(b=>/Hook|漂移/.test(b.reason)));
+ }finally{if(saved===undefined)delete process.env.CI;else process.env.CI=saved;}
+});
 test('GitLab模板使用中央预装Gate准备，不运行任意安装脚本或动态Corepack',()=>{for(const kind of ['frontend','backend']){const text=readFileSync(path.join(PACKAGE,`templates/ci/gitlab-${kind}.yml`),'utf8');assert.match(text,/WL_APPROVED_BOOTSTRAP_GATE_CLI/);assert.match(text,/ci-prepare --root \. --apply --confirm/);assert.match(text,/WL_APPROVED_WORKSPACE_HASH/);assert.match(text,/WL_APPROVED_DEPENDENCY_LOCK_HASH/);assert.doesNotMatch(text,/corepack enable|pnpm install|npm ci/);}});

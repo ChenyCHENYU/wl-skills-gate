@@ -1,9 +1,11 @@
 {
   "name": "wl-produce-quality-tools",
   "private": true,
-  "engines": { "node": "^22.13.0 || >=24.0.0" },
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
   "devDependencies": {
-    "@agile-team/wl-skills-gate": "0.13.13",
+    "@agile-team/wl-skills-gate": "0.13.19",
     "@agile-team/wl-skills-bd": "0.41.1"
   }
 }

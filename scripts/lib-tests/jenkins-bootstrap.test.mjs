@@ -60,6 +60,16 @@ test('连通测试卡片明确标识测试，不包含阻断结论或伪造检�
  const entry=renderJenkinsMaintenance({mode:'node'});assert.match(entry,/booleanParam\(name: 'TEST_NOTIFICATION', defaultValue: false/);assert.match(entry,/if \(env.WL_GATE_NOTIFICATION_TEST == 'true'\)/);
 });
 
+test('主动停止只留痕不发故障告警；超时仍展示实际执行失败',t=>{
+ const cwd=mkdtempSync(path.join(realpathSync(tmpdir()),'wl-stop-'));t.after(()=>rmSync(cwd,{recursive:true,force:true}));
+ const env={...process.env,BUILD_NUMBER:'184',JOB_NAME:'wl-quality-doctor',WL_BOOTSTRAP_ACTION:'record-stop',WL_GATE_FAILURE_KIND:'cancelled',WL_GATE_FAILURE_MESSAGE:'Aborted by 409322'};
+ const r=spawnSync('python3',[path.join(base,'templates/ci/jenkins-bootstrap.py')],{cwd,env,encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+ const receipt=JSON.parse(readFileSync(path.join(cwd,'.wl-gate-bootstrap/184-stop.json')));assert.equal(receipt.status,'skipped');assert.equal(receipt.notificationRequired,false);assert.equal(receipt.qualityPassed,false);
+ const network=invoke(`class NeverSend:\n def open(self,*args,**kwargs):raise AssertionError('取消不得触发HTTP')\nr=m.notify({}, {'WL_GATE_FAILURE_KIND':'cancelled'}, NeverSend())\nassert r['status']=='skipped' and not r['providerAccepted']\nfacts=m.failure_facts({}, {'WL_GATE_FAILURE_KIND':'timeout','WL_GATE_FAILURE_MESSAGE':'Timeout has been exceeded','WL_GATE_PHASE':'检查项目'})\nassert facts[0]['category']=='timeout' and facts[0]['label']=='执行超时'\nprint('passed')`);assert.equal(network.status,0,network.stderr);
+ const entry=renderJenkinsMaintenance({mode:'node'});assert.match(entry,/failure instanceof org\.jenkinsci\.plugins\.workflow\.steps\.FlowInterruptedException/);assert.match(entry,/WL_GATE_FAILURE_KIND == 'cancelled'/);
+ const native=readFileSync(path.join(base,'templates/ci/jenkins-native.groovy'),'utf8');assert.match(native,/!collectionInterrupted && fileExists\('wl-ops-public\/inventory.json'\)/);
+});
+
 test('公共机器人连通卡用业务可读的来源名称，技术Job名不冒充项目',()=>{
  const result=invoke(`import json\nenv={'WL_BOOTSTRAP_ACTION':'notify-test','JOB_NAME':'wl-quality-doctor','BUILD_NUMBER':'104'}\nr=m.card({},env)\ns=json.dumps(r,ensure_ascii=False)\nassert '测试来源：公共巡检 · 第104次' in s\nassert 'wl-quality-doctor' not in s\nassert '项目：' not in s\nassert '不表示质量通过' in s\nenv['JOB_NAME']='team/real-test-job'\ns=json.dumps(m.card({},env),ensure_ascii=False)\nassert 'team/real-test-job' in s\nprint('passed')`);
  assert.equal(result.status,0,result.stderr);

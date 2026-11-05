@@ -2,6 +2,31 @@
 
 对应 6.1/6.2、A7。0.5 使用 schemaVersion=2 修复计划；旧计划需重新生成。
 
+## 先修可确定的冗余，再完整复扫
+
+```bash
+# 默认只读，输出具体文件与机械项数量
+wl-gate safe-repair --root .
+# 已确认执行时，一条命令应用并自动运行standard完整检查
+wl-gate safe-repair --root . --confirm
+```
+
+内置AST修复只删除同一导入声明中重复的相同绑定、相邻且同值的字面量对象字段。
+显式选择 `--targets scripts/tests` 时，还能修Node测试把文件URL直接当路径的问题，使用
+`fileURLToPath`兼容中文、空格及不同系统；不会处理浏览器或HTTP路径。默认范围为src，
+配置、依赖、Git暂存、部署和回滚脚本不在修复范围。含注释、动态值、不同值冲突、
+spread或无法确定的语法保留人工处理，不调用AI改写。
+
+此入口不依赖一份所有检查都成功执行的报告，避免其他失效项阻止已知安全修复。
+它仍核验当前HEAD、源码摘要、执行器、白名单及幂等性，留原件和回执；不能修改后直接
+宣布通过。应用后自动完整复扫，剩余错误或检查失效保留真实退出码，正式Review与构建
+仍须按准入流程执行。项目自己的编译／业务测试也须运行；编译成功不替代九维证据。
+
+CI公共入口保持只检查和通知；修复在开发者授权的隔离工作区完成，正常提交后人工启动
+同一业务Job复检，不让运维逐个项目修改业务代码。
+
+## 报告驱动的已批准修复器
+
 ```bash
 wl-skills-gate run --profile standard
 wl-skills-gate fix --plan quality-reports/quality-summary.json
@@ -11,7 +36,8 @@ wl-skills-gate fix --apply quality-reports/repair/fix-plan.json --confirm
 
 仅对 standard 全量报告生成机械计划，且全部检查有效。预览前核对报告对应的源码/HEAD、策略/规则/基线/例外，扫描后已有变化则先重新扫描。增量或 release 报告不能替代完整修复复扫。报告声明 autoFixable=true 且规则属于白名单才可自动执行；报告中任意 fixCommand 被忽略，权限/事务/数据等规则走人工。
 
-内置白名单支持 ESLint 可修复规则。其他机械 fixer 在 policy.json 登记：
+ESLint报告中的可修复标志不再自动转换成整文件 `eslint --fix`。需要其他机械动作时，
+在 policy.json 显式登记经过评审的规则、文件和命令：
 
 ```json
 {
